@@ -1,15 +1,16 @@
-import Link from "next/link";
+import { headers } from "next/headers";
 
-import { LatestPost } from "~/app/_components/post";
-import { auth } from "~/server/auth";
+import { AuthButton } from "~/app/_components/auth-button";
+import { SignedInPanel } from "~/app/_components/signed-in-panel";
+import { getSession } from "~/server/auth/session";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
   const hello = await api.post.hello({ text: "from tRPC" });
-  const session = await auth();
+  const session = await getSession(await headers());
 
   if (session?.user) {
-    void api.post.getLatest.prefetch();
+    void api.post.getSecretMessage.prefetch();
   }
 
   return (
@@ -24,25 +25,17 @@ export default async function Home() {
             companion data repository and explore your pipeline, tracker, and
             reports — read-only, repo-first.
           </p>
-          <div className="flex flex-col items-center gap-2">
+          <p className="text-sm text-white/50">
+            Stateless auth — sessions and GitHub tokens live in encrypted
+            cookies; no database required.
+          </p>
+          <div className="flex flex-col items-center gap-6">
             <p className="text-2xl text-white">
               {hello ? hello.greeting : "Loading tRPC query..."}
             </p>
-
-            <div className="flex flex-col items-center justify-center gap-4">
-              <p className="text-center text-2xl text-white">
-                {session && <span>Logged in as {session.user?.name}</span>}
-              </p>
-              <Link
-                href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-              >
-                {session ? "Sign out" : "Sign in with GitHub"}
-              </Link>
-            </div>
+            <AuthButton />
+            {session?.user ? <SignedInPanel /> : null}
           </div>
-
-          {session?.user && <LatestPost />}
         </div>
       </main>
     </HydrateClient>

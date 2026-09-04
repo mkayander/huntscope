@@ -1,10 +1,29 @@
-import NextAuth from "next-auth";
-import { cache } from "react";
+import { betterAuth } from "better-auth";
+import { nextCookies } from "better-auth/next-js";
 
-import { authConfig } from "./config";
+import { env } from "~/env";
 
-const { auth: uncachedAuth, handlers, signIn, signOut } = NextAuth(authConfig);
-
-const auth = cache(uncachedAuth);
-
-export { auth, handlers, signIn, signOut };
+export const auth = betterAuth({
+  baseURL: env.BETTER_AUTH_URL,
+  secret: env.BETTER_AUTH_SECRET,
+  socialProviders: {
+    github: {
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
+      scope: ["read:user", "user:email", "repo"],
+    },
+  },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 7 * 24 * 60 * 60,
+      strategy: "jwe",
+      refreshCache: true,
+    },
+  },
+  account: {
+    storeStateStrategy: "cookie",
+    storeAccountCookie: true,
+  },
+  plugins: [nextCookies()],
+});

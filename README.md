@@ -6,30 +6,20 @@ Huntscope connects to a companion data repo (for example a career-ops-style layo
 
 ## Stack
 
-Built with the [T3 Stack](https://create.t3.gg/):
+- [Next.js](https://nextjs.org) 15 (App Router)
+- [Better Auth](https://www.better-auth.com) — stateless GitHub OAuth (encrypted cookies, no database)
+- [tRPC](https://trpc.io) + [Tailwind CSS](https://tailwindcss.com)
 
-- [Next.js](https://nextjs.org) (App Router)
-- [NextAuth.js](https://next-auth.js.org) — GitHub OAuth
-- [Drizzle ORM](https://orm.drizzle.team) + Postgres
-- [tRPC](https://trpc.io)
-- [Tailwind CSS](https://tailwindcss.com)
+## Auth model
 
-## MVP direction
-
-1. **Read-only** — GitHub repo remains canonical; Huntscope reads via the GitHub API.
-2. **Auth** — Sign in with GitHub; connect one or more private repos.
-3. **Visuals** — Tracker tables, pipeline funnel, score trends (D3 later).
-4. **Deploy** — Vercel + Vercel Postgres for session/connection metadata only.
-
-Phase 2: optional BYOK AI over repo context.
+Sessions and GitHub OAuth tokens are stored in **encrypted cookies (JWE)** — no Postgres or KV required for MVP. GitHub is requested with `repo` scope so Huntscope can read private companion repos via the API.
 
 ## Getting started
 
 ```bash
 pnpm install
-cp .env.example .env   # fill in DATABASE_URL, AUTH_SECRET, AUTH_GITHUB_ID, AUTH_GITHUB_SECRET
-./start-database.sh    # local Postgres via Docker (optional)
-pnpm db:push
+cp .env.example .env
+# Fill BETTER_AUTH_SECRET (openssl rand -base64 32), GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
 pnpm dev
 ```
 
@@ -42,25 +32,21 @@ Open [http://localhost:3000](http://localhost:3000).
 | `pnpm dev` | Start dev server (Turbopack) |
 | `pnpm build` | Production build |
 | `pnpm check` | Lint + typecheck |
-| `pnpm db:push` | Push Drizzle schema to database |
-| `pnpm db:studio` | Open Drizzle Studio |
 
 ## Deploy (Vercel)
 
-The T3 env validator runs during `next build`. **All variables below must be set in Vercel → Project → Settings → Environment Variables** (Production, Preview, and Development) before the build will succeed.
+Set these in **Project → Settings → Environment Variables** (Production, Preview, Development):
 
 | Variable | Notes |
 |----------|--------|
-| `AUTH_SECRET` | `npx auth secret` |
-| `AUTH_GITHUB_ID` | GitHub OAuth app client ID |
-| `AUTH_GITHUB_SECRET` | GitHub OAuth app client secret |
-| `DATABASE_URL` | Postgres connection string ([Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) or Neon) |
+| `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
+| `BETTER_AUTH_URL` | `https://<your-vercel-domain>` |
+| `GITHUB_CLIENT_ID` | GitHub OAuth app client ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret |
 
-GitHub OAuth callback URL for production:
+GitHub OAuth callback URL:
 
 `https://<your-vercel-domain>/api/auth/callback/github`
-
-See [T3 Vercel deployment](https://create.t3.gg/en/deployment/vercel).
 
 ## License
 
