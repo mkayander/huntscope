@@ -45,9 +45,22 @@ Open [http://localhost:3000](http://localhost:3000).
 | `pnpm db:push` | Push Drizzle schema to database |
 | `pnpm db:studio` | Open Drizzle Studio |
 
-## Deploy
+## Deploy (Vercel)
 
-See [T3 Vercel deployment](https://create.t3.gg/en/deployment/vercel). Set environment variables from `.env.example` in the Vercel project settings.
+The T3 env validator runs during `next build`. **All variables below must be set in Vercel → Project → Settings → Environment Variables** (Production, Preview, and Development) before the build will succeed.
+
+| Variable | Notes |
+|----------|--------|
+| `AUTH_SECRET` | `npx auth secret` |
+| `AUTH_GITHUB_ID` | GitHub OAuth app client ID |
+| `AUTH_GITHUB_SECRET` | GitHub OAuth app client secret |
+| `DATABASE_URL` | Postgres connection string ([Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) or Neon) |
+
+GitHub OAuth callback URL for production:
+
+`https://<your-vercel-domain>/api/auth/callback/github`
+
+See [T3 Vercel deployment](https://create.t3.gg/en/deployment/vercel).
 
 ## License
 
