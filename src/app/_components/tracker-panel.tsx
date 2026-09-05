@@ -1,0 +1,285 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+import { ScoreBadge } from "~/app/_components/score-badge";
+import {
+  createDefaultTrackerQuery,
+  TrackerTableToolbar,
+} from "~/app/_components/tracker-table-toolbar";
+import { TrackerVirtualTable } from "~/app/_components/tracker-virtual-table";
+import { ApplicationDate } from "~/components/application-date";
+import { Button } from "~/components/ui/button";
+import { GlowPanel } from "~/components/ui/glow-panel";
+import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
+import { extractMarkdownLink, resolveRepoFileUrl } from "~/lib/career-ops/links";
+import { sortStatuses } from "~/lib/career-ops/status-meta";
+import {
+  DEFAULT_TRACKER_TABLE_QUERY,
+  queryTrackerApplications,
+  type TrackerSortColumn,
+  type TrackerTableQuery,
+} from "~/lib/career-ops/tracker-table";
+import type { ApplicationEntry } from "~/lib/career-ops/types";
+
+type TrackerView = "table" | "board";
+
+type TrackerPanelProps = {
+  repoFullName: string;
+  applications: ApplicationEntry[];
+  statusFilter: string | null;
+  onStatusFilterChange: (status: string | null) => void;
+};
+
+export function TrackerPanel({
+  repoFullName,
+  applications,
+  statusFilter,
+  onStatusFilterChange,
+}: TrackerPanelProps) {
+  const [view, setView] = useState<TrackerView>("table");
+  const [tableQuery, setTableQuery] = useState<TrackerTableQuery>(() =>
+    createDefaultTrackerQuery(statusFilter),
+  );
+
+  useEffect(() => {
+    setTableQuery((current) =>
+      current.statusFilter === statusFilter
+        ? current
+        : { ...current, statusFilter },
+    );
+  }, [statusFilter]);
+
+  const filteredApplications = useMemo(
+    () => queryTrackerApplications(applications, tableQuery),
+    [applications, tableQuery],
+  );
+
+  const groupedApplications = useMemo(
+    () => groupApplicationsByStatus(filteredApplications),
+    [filteredApplications],
+  );
+
+  const boardStatuses = useMemo(() => {
+    const statuses = sortStatuses(
+      Object.fromEntries(
+        [...groupedApplications.entries()].map(([status, entries]) => [
+          status,
+          entries.length,
+        ]),
+      ),
+    );
+
+    return statuses.length > 0 ? statuses : [...groupedApplications.keys()];
+  }, [groupedApplications]);
+
+  const handleQueryChange = (nextQuery: TrackerTableQuery) => {
+    setTableQuery(nextQuery);
+    if (nextQuery.statusFilter !== statusFilter) {
+      onStatusFilterChange(nextQuery.statusFilter);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setTableQuery(DEFAULT_TRACKER_TABLE_QUERY);
+    onStatusFilterChange(null);
+  };
+
+  const handleSort = (column: TrackerSortColumn) => {
+    setTableQuery((current) => {
+      if (current.sortColumn === column) {
+        return {
+          ...current,
+          sortDirection: current.sortDirection === "asc" ? "desc" : "asc",
+        };
+      }
+
+      return {
+        ...current,
+        sortColumn: column,
+        sortDirection: column === "num" || column === "date" ? "desc" : "asc",
+      };
+    });
+  };
+
+  return (
+    <GlowPanel
+      accent={DASHBOARD_SECTION_IDS.tracker}
+      className="flex max-h-[100dvh] flex-col overflow-hidden"
+      contentClassName="flex min-h-0 flex-1 flex-col"
+    >
+      <div className="shrink-0">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Application tracker</h3>
+            <p className="mt-1 text-sm text-white/60">
+              Search, filter, and sort applications. Overview status chips stay in sync
+              with the status filter here.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <ViewToggle
+              label="Table"
+              isActive={view === "table"}
+              onClick={() => setView("table")}
+            />
+            <ViewToggle
+              label="Board"
+              isActive={view === "board"}
+              onClick={() => setView("board")}
+            />
+          </div>
+        </div>
+
+        <TrackerTableToolbar
+          applications={applications}
+          query={tableQuery}
+          resultCount={filteredApplications.length}
+          onQueryChange={handleQueryChange}
+          onClearFilters={handleClearFilters}
+        />
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {filteredApplications.length === 0 ? (
+          <p className="mt-6 rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm text-white/60">
+            No applications match the current filters.
+          </p>
+        ) : view === "table" ? (
+          <TrackerVirtualTable
+            applications={filteredApplications}
+            repoFullName={repoFullName}
+            tableQuery={tableQuery}
+            onSort={handleSort}
+          />
+        ) : (
+          <TrackerBoard
+            statuses={boardStatuses}
+            groupedApplications={groupedApplications}
+            repoFullName={repoFullName}
+          />
+        )}
+      </div>
+    </GlowPanel>
+  );
+}
+
+function TrackerBoard({
+  statuses,
+  groupedApplications,
+  repoFullName,
+}: {
+  statuses: string[];
+  groupedApplications: Map<string, ApplicationEntry[]>;
+  repoFullName: string;
+}) {
+  return (
+    <div className="mt-4 min-h-0 flex-1 overflow-auto">
+      <div className="grid gap-4 xl:grid-cols-4">
+        {statuses.map((status) => {
+          const entries = groupedApplications.get(status) ?? [];
+
+          return (
+            <div
+              key={status}
+              className="rounded-xl border border-white/10 bg-black/20 p-3"
+            >
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h4 className="text-sm font-semibold text-white">{status}</h4>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                  {entries.length}
+                </span>
+              </div>
+
+              <ul className="space-y-3">
+                {entries.map((entry) => (
+                  <li
+                    key={entry.num}
+                    className="rounded-lg border border-white/10 bg-[#15162c] p-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-white">{entry.company}</p>
+                        <p className="mt-1 text-sm text-white/70">{entry.role}</p>
+                      </div>
+                      <ScoreBadge score={entry.score} />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
+                      <ApplicationDate value={entry.date} />
+                      <ArtifactLink repoFullName={repoFullName} value={entry.report} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ArtifactLink({
+  repoFullName,
+  value,
+}: {
+  repoFullName: string;
+  value: string;
+}) {
+  const markdownLink = extractMarkdownLink(value);
+  if (markdownLink) {
+    const href = markdownLink.href.startsWith("http")
+      ? markdownLink.href
+      : resolveRepoFileUrl(repoFullName, markdownLink.href);
+
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+      >
+        {markdownLink.label}
+      </a>
+    );
+  }
+
+  const trimmed = value.trim();
+  if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
+    return (
+      <a
+        href={resolveRepoFileUrl(repoFullName, trimmed)}
+        target="_blank"
+        rel="noreferrer"
+        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+      >
+        Report
+      </a>
+    );
+  }
+
+  return <span className="text-white/40">—</span>;
+}
+
+function ViewToggle({
+  label,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant={isActive ? "brand" : "brandSecondary"}
+      size="pill"
+      onClick={onClick}
+    >
+      {label}
+    </Button>
+  );
+}

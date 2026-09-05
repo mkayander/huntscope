@@ -40,13 +40,15 @@ Set these in **Project → Settings → Environment Variables** (Production, Pre
 | Variable | Notes |
 |----------|--------|
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | `https://<your-vercel-domain>` |
+| `BETTER_AUTH_URL` | `https://<your-vercel-domain>` (optional on Vercel — inferred from deployment URL) |
 | `GITHUB_CLIENT_ID` | GitHub OAuth app client ID |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth app client secret |
 
 GitHub OAuth callback URL:
 
 `https://<your-vercel-domain>/api/auth/callback/github`
+
+Optional: run `pnpm vercel:env` with `VERCEL_TOKEN`, `GITHUB_CLIENT_ID`, and `GITHUB_CLIENT_SECRET` in your shell to set variables via the Vercel API instead of the dashboard. For local builds without a `.env` file, use `SKIP_ENV_VALIDATION=1 pnpm build`.
 
 ## License
 
