@@ -4,6 +4,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Select the project's pinned Node version (.nvmrc) before touching pnpm so the
+# lockfile install and any generated artifacts are produced with Node 24.
+# shellcheck disable=SC1091
+source .cursor/use-node.sh
+echo "Using Node $(node -v) / pnpm $(corepack pnpm -v 2>/dev/null || echo '?')"
+
 corepack enable >/dev/null 2>&1 || true
 pnpm install --frozen-lockfile
 

@@ -5,7 +5,7 @@
   "terminals": [
     {
       "name": "next-dev",
-      "command": "pnpm dev"
+      "command": "bash .cursor/with-node.sh pnpm dev"
     }
   ],
   "ports": [
