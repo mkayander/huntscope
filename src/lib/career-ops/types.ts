@@ -40,7 +40,6 @@ export type GitHubRepoSummary = {
   private: boolean;
   updatedAt: string;
   description: string | null;
-  isCompanionRepo: boolean;
 };
 
 export type SelectedRepo = {

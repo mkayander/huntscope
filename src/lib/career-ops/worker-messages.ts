@@ -17,6 +17,7 @@ export type CareerOpsWorkerHeatmapRequest = {
   payload: {
     applications: ApplicationEntry[];
     periodWeeks: ActivityHeatmapPeriod;
+    locale?: string;
   };
 };
 

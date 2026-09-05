@@ -5,6 +5,7 @@ import {
   fetchCareerOpsRepoData,
   listUserRepos,
 } from "~/server/github/client";
+import { throwIfGitHubRateLimited } from "~/server/github/errors";
 import {
   getSelectedRepoFromCookies,
   setSelectedRepoCookie,
@@ -19,7 +20,12 @@ const selectedRepoSchema = z.object({
 
 export const githubRouter = createTRPCRouter({
   listRepos: protectedProcedure.query(async ({ ctx }) => {
-    return listUserRepos(ctx.headers);
+    try {
+      return await listUserRepos(ctx.headers);
+    } catch (error) {
+      throwIfGitHubRateLimited(error);
+      throw error;
+    }
   }),
 
   getSelectedRepo: protectedProcedure.query(async () => {
@@ -45,6 +51,11 @@ export const githubRouter = createTRPCRouter({
         });
       }
 
-      return fetchCareerOpsRepoData(repo, ctx.headers);
+      try {
+        return await fetchCareerOpsRepoData(repo, ctx.headers);
+      } catch (error) {
+        throwIfGitHubRateLimited(error);
+        throw error;
+      }
     }),
 });

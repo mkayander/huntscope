@@ -95,12 +95,14 @@ export function parseRepoDataInWorker(input: {
 export function buildHeatmapInWorker(
   applications: ApplicationEntry[],
   periodWeeks: ActivityHeatmapPeriod,
+  locale?: string,
 ): Promise<ActivityHeatmap> {
   return sendRequest({
     type: "heatmap",
     payload: {
       applications,
       periodWeeks,
+      locale,
     },
   }).then((response) => {
     if (response.type !== "heatmap") {

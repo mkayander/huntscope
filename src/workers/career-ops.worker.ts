@@ -29,6 +29,7 @@ self.onmessage = (event: MessageEvent<CareerOpsWorkerRequest>) => {
         payload: buildHeatmapFromApplications(
           message.payload.applications,
           message.payload.periodWeeks,
+          message.payload.locale,
         ),
       });
       return;

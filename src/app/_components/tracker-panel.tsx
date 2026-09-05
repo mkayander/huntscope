@@ -1,14 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ScoreBadge } from "~/app/_components/score-badge";
 import {
-  filterApplications,
-  groupApplicationsByStatus,
-} from "~/lib/career-ops/analytics";
+  createDefaultTrackerQuery,
+  TrackerTableToolbar,
+} from "~/app/_components/tracker-table-toolbar";
+import { TrackerVirtualTable } from "~/app/_components/tracker-virtual-table";
+import { ApplicationDate } from "~/components/application-date";
+import { Button } from "~/components/ui/button";
+import { GlowPanel } from "~/components/ui/glow-panel";
+import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
 import { extractMarkdownLink, resolveRepoFileUrl } from "~/lib/career-ops/links";
 import { sortStatuses } from "~/lib/career-ops/status-meta";
+import {
+  DEFAULT_TRACKER_TABLE_QUERY,
+  queryTrackerApplications,
+  type TrackerSortColumn,
+  type TrackerTableQuery,
+} from "~/lib/career-ops/tracker-table";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 type TrackerView = "table" | "board";
@@ -26,12 +38,22 @@ export function TrackerPanel({
   statusFilter,
   onStatusFilterChange,
 }: TrackerPanelProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [view, setView] = useState<TrackerView>("table");
+  const [tableQuery, setTableQuery] = useState<TrackerTableQuery>(() =>
+    createDefaultTrackerQuery(statusFilter),
+  );
+
+  useEffect(() => {
+    setTableQuery((current) =>
+      current.statusFilter === statusFilter
+        ? current
+        : { ...current, statusFilter },
+    );
+  }, [statusFilter]);
 
   const filteredApplications = useMemo(
-    () => filterApplications(applications, { statusFilter, searchQuery }),
-    [applications, searchQuery, statusFilter],
+    () => queryTrackerApplications(applications, tableQuery),
+    [applications, tableQuery],
   );
 
   const groupedApplications = useMemo(
@@ -52,123 +74,95 @@ export function TrackerPanel({
     return statuses.length > 0 ? statuses : [...groupedApplications.keys()];
   }, [groupedApplications]);
 
+  const handleQueryChange = (nextQuery: TrackerTableQuery) => {
+    setTableQuery(nextQuery);
+    if (nextQuery.statusFilter !== statusFilter) {
+      onStatusFilterChange(nextQuery.statusFilter);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setTableQuery(DEFAULT_TRACKER_TABLE_QUERY);
+    onStatusFilterChange(null);
+  };
+
+  const handleSort = (column: TrackerSortColumn) => {
+    setTableQuery((current) => {
+      if (current.sortColumn === column) {
+        return {
+          ...current,
+          sortDirection: current.sortDirection === "asc" ? "desc" : "asc",
+        };
+      }
+
+      return {
+        ...current,
+        sortColumn: column,
+        sortDirection: column === "num" || column === "date" ? "desc" : "asc",
+      };
+    });
+  };
+
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-white">Application tracker</h3>
-          <p className="mt-1 text-sm text-white/60">
-            Filter by status, search company or role, or switch to a read-only board view.
-          </p>
+    <GlowPanel
+      accent={DASHBOARD_SECTION_IDS.tracker}
+      className="flex max-h-[100dvh] flex-col overflow-hidden"
+      contentClassName="flex min-h-0 flex-1 flex-col"
+    >
+      <div className="shrink-0">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Application tracker</h3>
+            <p className="mt-1 text-sm text-white/60">
+              Search, filter, and sort applications. Overview status chips stay in sync
+              with the status filter here.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <ViewToggle
+              label="Table"
+              isActive={view === "table"}
+              onClick={() => setView("table")}
+            />
+            <ViewToggle
+              label="Board"
+              isActive={view === "board"}
+              onClick={() => setView("board")}
+            />
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <ViewToggle
-            label="Table"
-            isActive={view === "table"}
-            onClick={() => setView("table")}
-          />
-          <ViewToggle
-            label="Board"
-            isActive={view === "board"}
-            onClick={() => setView("board")}
-          />
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="flex flex-1 flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-white/50">
-            Search
-          </span>
-          <input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Company, role, status, notes…"
-            className="rounded-lg border border-white/15 bg-[#15162c] px-3 py-2 text-sm text-white outline-none focus:border-violet-400"
-          />
-        </label>
-
-        {statusFilter != null || searchQuery !== "" ? (
-          <button
-            type="button"
-            onClick={() => {
-              onStatusFilterChange(null);
-              setSearchQuery("");
-            }}
-            className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/15 transition hover:bg-white/15"
-          >
-            Clear filters
-          </button>
-        ) : null}
-      </div>
-
-      <p className="mt-3 text-sm text-white/50">
-        Showing {filteredApplications.length} of {applications.length} applications
-        {statusFilter ? ` · filtered to ${statusFilter}` : ""}
-      </p>
-
-      {filteredApplications.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm text-white/60">
-          No applications match the current filters.
-        </p>
-      ) : view === "table" ? (
-        <TrackerTable applications={filteredApplications} repoFullName={repoFullName} />
-      ) : (
-        <TrackerBoard
-          statuses={boardStatuses}
-          groupedApplications={groupedApplications}
-          repoFullName={repoFullName}
+        <TrackerTableToolbar
+          applications={applications}
+          query={tableQuery}
+          resultCount={filteredApplications.length}
+          onQueryChange={handleQueryChange}
+          onClearFilters={handleClearFilters}
         />
-      )}
-    </section>
-  );
-}
+      </div>
 
-function TrackerTable({
-  applications,
-  repoFullName,
-}: {
-  applications: ApplicationEntry[];
-  repoFullName: string;
-}) {
-  return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="min-w-full border-collapse text-left text-sm">
-        <thead>
-          <tr className="border-b border-white/10 text-white/60">
-            <th className="px-3 py-2 font-medium">#</th>
-            <th className="px-3 py-2 font-medium">Date</th>
-            <th className="px-3 py-2 font-medium">Company</th>
-            <th className="px-3 py-2 font-medium">Role</th>
-            <th className="px-3 py-2 font-medium">Score</th>
-            <th className="px-3 py-2 font-medium">Status</th>
-            <th className="px-3 py-2 font-medium">Report</th>
-            <th className="px-3 py-2 font-medium">Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {applications.map((entry) => (
-            <tr key={entry.num} className="border-b border-white/5 text-white/90">
-              <td className="px-3 py-2">{entry.num}</td>
-              <td className="px-3 py-2 text-white/70">{entry.date}</td>
-              <td className="px-3 py-2">{entry.company}</td>
-              <td className="px-3 py-2">{entry.role}</td>
-              <td className="px-3 py-2">
-                <ScoreBadge score={entry.score} />
-              </td>
-              <td className="px-3 py-2">{entry.status}</td>
-              <td className="px-3 py-2">
-                <ArtifactLink repoFullName={repoFullName} value={entry.report} />
-              </td>
-              <td className="max-w-xs px-3 py-2 text-white/70">
-                <span className="line-clamp-2">{entry.notes || "—"}</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {filteredApplications.length === 0 ? (
+          <p className="mt-6 rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm text-white/60">
+            No applications match the current filters.
+          </p>
+        ) : view === "table" ? (
+          <TrackerVirtualTable
+            applications={filteredApplications}
+            repoFullName={repoFullName}
+            tableQuery={tableQuery}
+            onSort={handleSort}
+          />
+        ) : (
+          <TrackerBoard
+            statuses={boardStatuses}
+            groupedApplications={groupedApplications}
+            repoFullName={repoFullName}
+          />
+        )}
+      </div>
+    </GlowPanel>
   );
 }
 
@@ -182,45 +176,47 @@ function TrackerBoard({
   repoFullName: string;
 }) {
   return (
-    <div className="mt-4 grid gap-4 xl:grid-cols-4">
-      {statuses.map((status) => {
-        const entries = groupedApplications.get(status) ?? [];
+    <div className="mt-4 min-h-0 flex-1 overflow-auto">
+      <div className="grid gap-4 xl:grid-cols-4">
+        {statuses.map((status) => {
+          const entries = groupedApplications.get(status) ?? [];
 
-        return (
-          <div
-            key={status}
-            className="rounded-xl border border-white/10 bg-black/20 p-3"
-          >
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <h4 className="text-sm font-semibold text-white">{status}</h4>
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
-                {entries.length}
-              </span>
-            </div>
+          return (
+            <div
+              key={status}
+              className="rounded-xl border border-white/10 bg-black/20 p-3"
+            >
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h4 className="text-sm font-semibold text-white">{status}</h4>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                  {entries.length}
+                </span>
+              </div>
 
-            <ul className="space-y-3">
-              {entries.map((entry) => (
-                <li
-                  key={entry.num}
-                  className="rounded-lg border border-white/10 bg-[#15162c] p-3"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-white">{entry.company}</p>
-                      <p className="mt-1 text-sm text-white/70">{entry.role}</p>
+              <ul className="space-y-3">
+                {entries.map((entry) => (
+                  <li
+                    key={entry.num}
+                    className="rounded-lg border border-white/10 bg-[#15162c] p-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-white">{entry.company}</p>
+                        <p className="mt-1 text-sm text-white/70">{entry.role}</p>
+                      </div>
+                      <ScoreBadge score={entry.score} />
                     </div>
-                    <ScoreBadge score={entry.score} />
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
-                    <span>{entry.date}</span>
-                    <ArtifactLink repoFullName={repoFullName} value={entry.report} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
+                    <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
+                      <ApplicationDate value={entry.date} />
+                      <ArtifactLink repoFullName={repoFullName} value={entry.report} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -243,7 +239,7 @@ function ArtifactLink({
         href={href}
         target="_blank"
         rel="noreferrer"
-        className="font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
       >
         {markdownLink.label}
       </a>
@@ -257,7 +253,7 @@ function ArtifactLink({
         href={resolveRepoFileUrl(repoFullName, trimmed)}
         target="_blank"
         rel="noreferrer"
-        className="font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
       >
         Report
       </a>
@@ -277,16 +273,13 @@ function ViewToggle({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant={isActive ? "brand" : "brandSecondary"}
+      size="pill"
       onClick={onClick}
-      className={
-        isActive
-          ? "rounded-full bg-violet-500 px-4 py-2 text-sm font-semibold text-white ring-1 ring-violet-300/40"
-          : "rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/15 hover:bg-white/15"
-      }
     >
       {label}
-    </button>
+    </Button>
   );
 }

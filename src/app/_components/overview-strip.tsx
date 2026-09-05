@@ -1,6 +1,9 @@
 import type { ApplicationAnalytics } from "~/lib/career-ops/analytics";
 import type { PipelineSummary } from "~/lib/career-ops/types";
 import { getStatusChipClassName, sortStatuses } from "~/lib/career-ops/status-meta";
+import { Button } from "~/components/ui/button";
+import { GlowPanel } from "~/components/ui/glow-panel";
+import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 
 type OverviewStripProps = {
   repoFullName: string;
@@ -22,7 +25,7 @@ export function OverviewStrip({
   const statuses = sortStatuses(analytics.statusCounts);
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <GlowPanel accent={DASHBOARD_SECTION_IDS.overview}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-white">{repoFullName}</h2>
@@ -70,29 +73,31 @@ export function OverviewStrip({
         <div className="mt-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium text-white/70">Status funnel</span>
-            <button
+            <Button
               type="button"
-              onClick={() => onStatusFilterChange(null)}
+              variant="chip"
               className={getStatusChipClassName("All", activeStatusFilter === null)}
+              onClick={() => onStatusFilterChange(null)}
             >
               All {analytics.total}
-            </button>
+            </Button>
             {statuses.map((status) => (
-              <button
+              <Button
                 key={status}
                 type="button"
+                variant="chip"
+                className={getStatusChipClassName(status, activeStatusFilter === status)}
                 onClick={() =>
                   onStatusFilterChange(activeStatusFilter === status ? null : status)
                 }
-                className={getStatusChipClassName(status, activeStatusFilter === status)}
               >
                 {status} {analytics.statusCounts[status]}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
       ) : null}
-    </section>
+    </GlowPanel>
   );
 }
 

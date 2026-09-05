@@ -3,13 +3,17 @@
 import { useState } from "react";
 
 import { ErrorAlert } from "~/app/_components/error-alert";
+import { Button } from "~/components/ui/button";
+import { GlowPanel } from "~/components/ui/glow-panel";
+import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import {
-  formatDisplayDate,
   type ActivityHeatmapPeriod,
   type ActivityLevel,
 } from "~/lib/career-ops/activity-heatmap";
 import { useActivityHeatmap } from "~/lib/career-ops/use-activity-heatmap";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
+import { formatDisplayDate, getWeekdayLabels } from "~/lib/i18n/date-format";
+import { useLocale } from "~/lib/i18n/locale-context";
 
 const PERIOD_OPTIONS: { value: ActivityHeatmapPeriod; label: string }[] = [
   { value: 12, label: "12 weeks" },
@@ -25,13 +29,13 @@ const LEVEL_CLASS_NAMES: Record<ActivityLevel, string> = {
   4: "bg-violet-300 ring-1 ring-violet-200/50",
 };
 
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 type ActivityHeatmapProps = {
   applications: ApplicationEntry[];
 };
 
 export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
+  const locale = useLocale();
+  const dayLabels = getWeekdayLabels(locale);
   const [periodWeeks, setPeriodWeeks] = useState<ActivityHeatmapPeriod>(52);
   const [hoveredDay, setHoveredDay] = useState<{
     date: string;
@@ -42,8 +46,8 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
   const summaryLabel =
     hoveredDay != null
       ? hoveredDay.count === 0
-        ? `No activity on ${formatDisplayDate(hoveredDay.date)}`
-        : `${hoveredDay.count} evaluation${hoveredDay.count === 1 ? "" : "s"} on ${formatDisplayDate(hoveredDay.date)}`
+        ? `No activity on ${formatDisplayDate(hoveredDay.date, locale)}`
+        : `${hoveredDay.count} evaluation${hoveredDay.count === 1 ? "" : "s"} on ${formatDisplayDate(hoveredDay.date, locale)}`
       : heatmap
         ? `${heatmap.totalActivities} evaluation${heatmap.totalActivities === 1 ? "" : "s"} in the last ${periodLabel(periodWeeks)}`
         : isLoading
@@ -51,7 +55,7 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
           : "No activity data available";
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <GlowPanel accent={DASHBOARD_SECTION_IDS.activity}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-white">Search activity</h3>
@@ -63,18 +67,15 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
 
         <div className="flex flex-wrap gap-2">
           {PERIOD_OPTIONS.map((option) => (
-            <button
+            <Button
               key={option.value}
               type="button"
+              variant={periodWeeks === option.value ? "brand" : "brandSecondary"}
+              size="pillSm"
               onClick={() => setPeriodWeeks(option.value)}
-              className={
-                periodWeeks === option.value
-                  ? "rounded-full bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-violet-300/40"
-                  : "rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/75 ring-1 ring-white/15 hover:bg-white/15"
-              }
             >
               {option.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -104,7 +105,7 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
 
             <div className="flex gap-2">
               <div className="flex flex-col gap-1 pt-0.5 text-[10px] leading-none text-white/40">
-                {DAY_LABELS.map((label, index) => (
+                {dayLabels.map((label, index) => (
                   <span
                     key={label}
                     className="flex h-3 items-center"
@@ -133,8 +134,8 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
                         <button
                           key={day.date}
                           type="button"
-                          aria-label={`${day.count} evaluation${day.count === 1 ? "" : "s"} on ${formatDisplayDate(day.date)}`}
-                          className={`h-3 w-3 rounded-[3px] transition hover:ring-2 hover:ring-white/40 ${LEVEL_CLASS_NAMES[day.level]}`}
+                          aria-label={`${day.count} evaluation${day.count === 1 ? "" : "s"} on ${formatDisplayDate(day.date, locale)}`}
+                          className={`h-3 w-3 cursor-pointer rounded-[3px] transition hover:ring-2 hover:ring-white/40 ${LEVEL_CLASS_NAMES[day.level]}`}
                           onMouseEnter={() =>
                             setHoveredDay({ date: day.date, count: day.count })
                           }
@@ -181,7 +182,7 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
           </div>
         </div>
       ) : null}
-    </section>
+    </GlowPanel>
   );
 }
 

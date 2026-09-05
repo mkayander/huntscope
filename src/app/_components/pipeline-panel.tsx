@@ -1,4 +1,6 @@
 import type { PipelineSummary } from "~/lib/career-ops/types";
+import { GlowPanel } from "~/components/ui/glow-panel";
+import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 
 type PipelinePanelProps = {
   pipeline: PipelineSummary;
@@ -6,7 +8,7 @@ type PipelinePanelProps = {
 
 export function PipelinePanel({ pipeline }: PipelinePanelProps) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <GlowPanel accent={DASHBOARD_SECTION_IDS.pipeline}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-lg font-semibold text-white">Pipeline inbox</h3>
         <div className="flex gap-2 text-xs">
@@ -35,6 +37,6 @@ export function PipelinePanel({ pipeline }: PipelinePanelProps) {
       ) : (
         <p className="mt-4 text-sm text-white/50">No pending URLs in the pipeline inbox.</p>
       )}
-    </section>
+    </GlowPanel>
   );
 }

@@ -2,9 +2,9 @@ import { headers } from "next/headers";
 
 import { AuthButton } from "~/app/_components/auth-button";
 import { Dashboard } from "~/app/_components/dashboard";
+import { DashboardAmbientBackground } from "~/app/_components/dashboard-ambient-background";
 import {
   LandingBackgroundCanvas,
-  LandingBackgroundPicker,
   LandingBackgroundProvider,
 } from "~/app/_components/landing-background/landing-background-shell";
 import { getSession } from "~/server/auth/session";
@@ -16,12 +16,11 @@ export default async function Home() {
   const session = await getSession(requestHeaders);
 
   if (session?.user) {
-    void api.github.listRepos.prefetch();
-    void api.github.getSelectedRepo.prefetch();
+    await api.github.getSelectedRepo.prefetch();
 
     const selectedRepo = await getSelectedRepoFromCookies();
     if (selectedRepo) {
-      void api.github.getRepoData.prefetch();
+      await api.github.getRepoData.prefetch(selectedRepo);
     }
   }
 
@@ -48,14 +47,13 @@ export default async function Home() {
               </div>
 
               <AuthButton />
-
-              <LandingBackgroundPicker />
             </div>
           </main>
         </LandingBackgroundProvider>
       ) : (
-        <main className="relative z-10 flex min-h-screen flex-col items-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-          <div className="container flex flex-col items-center gap-10 px-4 py-16">
+        <main className="relative z-10 flex min-h-screen flex-col items-center text-white">
+          <DashboardAmbientBackground />
+          <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center gap-4 text-center">
               <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
                 Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>

@@ -32,7 +32,7 @@ export function sortStatuses(statusCounts: Record<string, number>): string[] {
 
 export function getStatusChipClassName(status: string, isActive: boolean): string {
   const base =
-    "rounded-full px-3 py-1 text-xs font-medium ring-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300";
+    "cursor-pointer rounded-full px-3 py-1 text-xs font-medium ring-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300";
 
   const palette: Record<string, string> = {
     Evaluated: "bg-sky-500/15 text-sky-100 ring-sky-400/30",

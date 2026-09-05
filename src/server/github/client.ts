@@ -35,10 +35,15 @@ class GitHubApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly isRateLimited = false,
   ) {
     super(message);
     this.name = "GitHubApiError";
   }
+}
+
+export function isGitHubRateLimitError(error: unknown): boolean {
+  return error instanceof GitHubApiError && error.isRateLimited;
 }
 
 async function getGitHubAccessToken(headers: Headers): Promise<string> {
@@ -81,9 +86,15 @@ async function githubRequest<T>(
 
   if (!response.ok) {
     const message = await response.text();
+    const isRateLimited =
+      response.status === 403 && /rate limit exceeded/i.test(message);
+
     throw new GitHubApiError(
       response.status,
-      message || `GitHub API request failed (${response.status})`,
+      isRateLimited
+        ? "GitHub API rate limit reached. Please wait a few minutes and try again."
+        : message || `GitHub API request failed (${response.status})`,
+      isRateLimited,
     );
   }
 
@@ -127,30 +138,6 @@ function toRepoDataFile(item: GitHubContentResponse): RepoDataFile | null {
   };
 }
 
-async function repoHasCompanionData(
-  owner: string,
-  name: string,
-  accessToken: string,
-): Promise<boolean> {
-  const checks = ["data/applications.md", "data/pipeline.md"] as const;
-
-  for (const filePath of checks) {
-    try {
-      await githubRequest<GitHubContentResponse>(
-        `/repos/${owner}/${name}/contents/${filePath}`,
-        accessToken,
-      );
-      return true;
-    } catch (error) {
-      if (!(error instanceof GitHubApiError) || error.status !== 404) {
-        throw error;
-      }
-    }
-  }
-
-  return false;
-}
-
 export async function listUserRepos(headers: Headers): Promise<GitHubRepoSummary[]> {
   const accessToken = await getGitHubAccessToken(headers);
   const repos = await githubRequest<GitHubRepoResponse[]>(
@@ -158,19 +145,8 @@ export async function listUserRepos(headers: Headers): Promise<GitHubRepoSummary
     accessToken,
   );
 
-  const companionChecks = await Promise.all(
-    repos.map(async (repo) => ({
-      repo,
-      isCompanionRepo: await repoHasCompanionData(
-        repo.owner.login,
-        repo.name,
-        accessToken,
-      ),
-    })),
-  );
-
-  return companionChecks
-    .map(({ repo, isCompanionRepo }) => ({
+  return repos
+    .map((repo) => ({
       id: repo.id,
       owner: repo.owner.login,
       name: repo.name,
@@ -178,15 +154,8 @@ export async function listUserRepos(headers: Headers): Promise<GitHubRepoSummary
       private: repo.private,
       updatedAt: repo.updated_at,
       description: repo.description,
-      isCompanionRepo,
     }))
-    .sort((left, right) => {
-      if (left.isCompanionRepo !== right.isCompanionRepo) {
-        return left.isCompanionRepo ? -1 : 1;
-      }
-
-      return right.updatedAt.localeCompare(left.updatedAt);
-    });
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
 export async function fetchCareerOpsRepoData(

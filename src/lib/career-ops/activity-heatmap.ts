@@ -1,55 +1,5 @@
-const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-export function toDateKey(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
-}
-
-export function parseApplicationDate(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  if (DATE_KEY_PATTERN.test(trimmed)) {
-    return trimmed;
-  }
-
-  const slashMatch = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(trimmed);
-  if (slashMatch) {
-    return `${slashMatch[1]}-${pad2(Number(slashMatch[2]))}-${pad2(Number(slashMatch[3]))}`;
-  }
-
-  const dottedMatch = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(trimmed);
-  if (dottedMatch) {
-    return `${dottedMatch[3]}-${pad2(Number(dottedMatch[2]))}-${pad2(Number(dottedMatch[1]))}`;
-  }
-
-  const parsed = Date.parse(trimmed);
-  if (Number.isNaN(parsed)) {
-    return null;
-  }
-
-  return toDateKey(new Date(parsed));
-}
-
-export function formatDisplayDate(dateKey: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateKey);
-  if (!match) {
-    return dateKey;
-  }
-
-  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return date.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { parseApplicationDate, toDateKey } from "~/lib/career-ops/dates";
+import { formatMonthLabel } from "~/lib/i18n/date-format";
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -119,6 +69,7 @@ export function computeActivityHeatmap(
   dateKeys: string[],
   periodWeeks: ActivityHeatmapPeriod,
   endDate = new Date(),
+  locale?: string,
 ): ActivityHeatmap {
   const countsByDate = new Map<string, number>();
 
@@ -140,7 +91,7 @@ export function computeActivityHeatmap(
   for (let weekIndex = 0; weekIndex < periodWeeks; weekIndex += 1) {
     const weekStart = addDays(alignedStart, weekIndex * 7);
     const week: (ActivityDay | null)[] = [];
-    const monthLabel = weekStart.toLocaleDateString(undefined, { month: "short" });
+    const monthLabel = formatMonthLabel(weekStart, locale);
 
     if (monthLabel !== lastMonth) {
       monthLabels.push({ label: monthLabel, weekIndex });
@@ -199,6 +150,7 @@ export function computeActivityHeatmap(
 export function buildHeatmapFromApplications(
   applications: { date: string }[],
   periodWeeks: ActivityHeatmapPeriod,
+  locale?: string,
 ): ActivityHeatmap {
   const parsedDates: string[] = [];
   let undatedApplications = 0;
@@ -212,7 +164,7 @@ export function buildHeatmapFromApplications(
     }
   }
 
-  const heatmap = computeActivityHeatmap(parsedDates, periodWeeks);
+  const heatmap = computeActivityHeatmap(parsedDates, periodWeeks, new Date(), locale);
   return {
     ...heatmap,
     undatedApplications,

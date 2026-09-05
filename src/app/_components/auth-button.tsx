@@ -1,10 +1,15 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
-import { buttonPrimaryClassName, buttonSecondaryClassName } from "~/app/_components/button-styles";
-import { ErrorAlert } from "~/app/_components/error-alert";
+import { FeedbackRegion } from "~/app/_components/feedback-region";
+import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
+import { cn } from "~/lib/utils";
+
+const SESSION_BUTTON_CLASS =
+  "min-h-12 w-full min-w-[15.5rem] max-w-sm justify-center px-8";
 
 export function AuthButton() {
   const { data: session, isPending } = authClient.useSession();
@@ -13,24 +18,53 @@ export function AuthButton() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  if (isPending) {
-    return (
-      <span className="rounded-full bg-white/15 px-10 py-3 text-sm font-semibold text-white/70 ring-1 ring-white/20">
-        Loading session…
-      </span>
-    );
-  }
+  const isAuthenticated = Boolean(session?.user);
+  const isBusy = isPending || isSigningIn || isSigningOut;
+  const sessionLabel = isPending
+    ? "Checking session…"
+    : isAuthenticated
+      ? `Logged in as ${session?.user?.name ?? session?.user?.email}`
+      : null;
 
-  if (session?.user) {
-    return (
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-center text-2xl text-white">
-          Logged in as {session.user.name ?? session.user.email}
-        </p>
-        <button
-          type="button"
-          disabled={isSigningOut}
-          onClick={() => {
+  const buttonLabel = isPending
+    ? "Loading session"
+    : isAuthenticated
+      ? isSigningOut
+        ? "Signing out"
+        : "Sign out"
+      : isSigningIn
+        ? "Redirecting to GitHub"
+        : "Sign in with GitHub";
+
+  const feedbackErrorTitle = signOutError
+    ? "Could not sign out"
+    : signInError
+      ? "Could not sign in with GitHub"
+      : null;
+  const feedbackErrorMessage = signOutError ?? signInError;
+
+  return (
+    <div className="flex w-full max-w-md flex-col items-center gap-4">
+      {isPending || isAuthenticated ? (
+        <div
+          className={cn(
+            "flex min-h-10 w-full items-center justify-center text-center",
+            isAuthenticated ? "text-2xl text-white" : "text-sm text-white/60",
+          )}
+          aria-live="polite"
+        >
+          <p>{sessionLabel}</p>
+        </div>
+      ) : null}
+
+      <Button
+        type="button"
+        variant={isAuthenticated ? "brandSecondary" : "brand"}
+        size="cta"
+        className={SESSION_BUTTON_CLASS}
+        disabled={isBusy}
+        onClick={() => {
+          if (isAuthenticated) {
             setSignOutError(null);
             setIsSigningOut(true);
             void authClient
@@ -46,24 +80,9 @@ export function AuthButton() {
               .finally(() => {
                 setIsSigningOut(false);
               });
-          }}
-          className={buttonSecondaryClassName}
-        >
-          {isSigningOut ? "Signing out…" : "Sign out"}
-        </button>
-        {signOutError ? (
-          <ErrorAlert title="Could not sign out" message={signOutError} />
-        ) : null}
-      </div>
-    );
-  }
+            return;
+          }
 
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <button
-        type="button"
-        disabled={isSigningIn}
-        onClick={() => {
           setSignInError(null);
           setIsSigningIn(true);
           void authClient
@@ -88,13 +107,15 @@ export function AuthButton() {
               setIsSigningIn(false);
             });
         }}
-        className={`${buttonPrimaryClassName} px-10 py-3 text-base`}
       >
-        {isSigningIn ? "Redirecting to GitHub…" : "Sign in with GitHub"}
-      </button>
-      {signInError ? (
-        <ErrorAlert title="Could not sign in with GitHub" message={signInError} />
-      ) : null}
+        {isBusy ? <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden="true" /> : null}
+        <span>{buttonLabel}</span>
+      </Button>
+
+      <FeedbackRegion
+        errorTitle={feedbackErrorTitle}
+        errorMessage={feedbackErrorMessage}
+      />
     </div>
   );
 }

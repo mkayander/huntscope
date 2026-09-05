@@ -1,3 +1,5 @@
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+
 type ErrorAlertProps = {
   title: string;
   message: string;
@@ -5,12 +7,12 @@ type ErrorAlertProps = {
 
 export function ErrorAlert({ title, message }: ErrorAlertProps) {
   return (
-    <div
-      role="alert"
-      className="rounded-lg border border-red-400/50 bg-red-500/20 px-4 py-3 text-left"
+    <Alert
+      variant="destructive"
+      className="border-destructive/50 bg-destructive/15 text-left"
     >
-      <p className="font-semibold text-red-50">{title}</p>
-      <p className="mt-1 text-sm text-red-100">{message}</p>
-    </div>
+      <AlertTitle className="text-red-50">{title}</AlertTitle>
+      <AlertDescription className="text-red-100">{message}</AlertDescription>
+    </Alert>
   );
 }
