@@ -24,6 +24,21 @@ const ThreeEffect = dynamic(
   },
 );
 
+const GraphGridEffect = dynamic(
+  () =>
+    import("~/app/_components/landing-background/effects/graph-grid-effect").then(
+      (module) => module.GraphGridEffect,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="absolute inset-0 flex items-center justify-center text-sm text-white/40">
+        Loading graph grid…
+      </div>
+    ),
+  },
+);
+
 function EffectRenderer({
   effect,
   interactive,
@@ -41,6 +56,8 @@ function EffectRenderer({
         return <ConstellationEffect />;
       case "three":
         return <ThreeEffect />;
+      case "graph-grid":
+        return <GraphGridEffect />;
       default:
         return <ScopeEffect />;
     }
@@ -59,7 +76,10 @@ export function LandingBackgroundCanvas() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-[#2e026d] to-[#15162c]" />
-      <EffectRenderer effect={effect} interactive={effect === "three"} />
+      <EffectRenderer
+        effect={effect}
+        interactive={effect === "three" || effect === "graph-grid"}
+      />
       <GradientOverlay />
     </div>
   );

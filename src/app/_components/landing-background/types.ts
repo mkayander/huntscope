@@ -1,4 +1,9 @@
-export type LandingBackgroundEffect = "galaxy" | "scope" | "constellation" | "three";
+export type LandingBackgroundEffect =
+  | "galaxy"
+  | "scope"
+  | "constellation"
+  | "three"
+  | "graph-grid";
 
 export type LandingBackgroundOption = {
   value: LandingBackgroundEffect;
@@ -26,5 +31,10 @@ export const LANDING_BACKGROUND_OPTIONS: LandingBackgroundOption[] = [
     value: "three",
     label: "F · 3D particle field",
     description: "WebGL point cloud with slow orbit motion",
+  },
+  {
+    value: "graph-grid",
+    label: "G · 3D graph grid",
+    description: "Plexus mesh with simplified depth-of-field (sharp center, soft edges)",
   },
 ];
