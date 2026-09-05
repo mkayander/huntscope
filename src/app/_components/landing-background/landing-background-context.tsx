@@ -22,9 +22,9 @@ const LandingBackgroundContext = createContext<LandingBackgroundContextValue | n
 );
 
 export function LandingBackgroundProvider({ children }: { children: ReactNode }) {
-  const [effect, setEffect] = useState<LandingBackgroundEffect>("scope");
+  const [effect, setEffect] = useState<LandingBackgroundEffect>("three");
   const [scopeOverlayEnabled, setScopeOverlayEnabled] = useState(true);
-  const [scopeOverlayLayer, setScopeOverlayLayer] = useState<ScopeOverlayLayer>("front");
+  const [scopeOverlayLayer, setScopeOverlayLayer] = useState<ScopeOverlayLayer>("back");
 
   return (
     <LandingBackgroundContext.Provider

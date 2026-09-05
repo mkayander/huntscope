@@ -102,6 +102,11 @@ export function LandingBackgroundCanvas() {
   const { effect, scopeOverlayEnabled, scopeOverlayLayer } = useLandingBackground();
   const isInteractive3d = effect === "three" || effect === "graph-grid";
   const showScopeOverlay = scopeOverlayEnabled && effect !== "scope";
+  const scopeBehindParticles = effect === "three";
+  const showScopeBack =
+    showScopeOverlay && (scopeBehindParticles || scopeOverlayLayer === "back");
+  const showScopeFront =
+    showScopeOverlay && !scopeBehindParticles && scopeOverlayLayer === "front";
 
   return (
     <div
@@ -113,19 +118,27 @@ export function LandingBackgroundCanvas() {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#2e026d] to-[#15162c]" />
 
-      {showScopeOverlay && scopeOverlayLayer === "back" ? (
-        <ScopeOverlayLayer placement="back" />
+      {showScopeBack ? (
+        scopeBehindParticles ? (
+          <CanvasTiltWrapper>
+            <ScopeOverlayLayer placement="back" />
+          </CanvasTiltWrapper>
+        ) : (
+          <ScopeOverlayLayer placement="back" />
+        )
       ) : null}
 
-      <div className="absolute inset-0 z-[0]">
+      <div
+        className={
+          scopeBehindParticles ? "absolute inset-0 z-[1]" : "absolute inset-0 z-[0]"
+        }
+      >
         <EffectRenderer effect={effect} />
       </div>
 
       <GradientOverlay />
 
-      {showScopeOverlay && scopeOverlayLayer === "front" ? (
-        <ScopeOverlayLayer placement="front" />
-      ) : null}
+      {showScopeFront ? <ScopeOverlayLayer placement="front" /> : null}
     </div>
   );
 }

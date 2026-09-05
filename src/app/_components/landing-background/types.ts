@@ -32,7 +32,7 @@ export const LANDING_BACKGROUND_OPTIONS: LandingBackgroundOption[] = [
   {
     value: "three",
     label: "F · 3D particle field",
-    description: "WebGL point cloud with slow orbit motion",
+    description: "WebGL point cloud with depth-of-field and slow orbit motion",
   },
   {
     value: "graph-grid",
