@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { OverviewStrip } from "~/app/_components/overview-strip";
 import { PipelinePanel } from "~/app/_components/pipeline-panel";
@@ -89,6 +90,8 @@ function RepoDataContent() {
         activeStatusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
       />
+
+      <ActivityHeatmapPanel applications={data.applications} />
 
       <RecentApplications applications={analytics.recentApplications} />
 
