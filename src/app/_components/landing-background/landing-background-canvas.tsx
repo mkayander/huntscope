@@ -2,6 +2,10 @@
 
 import dynamic from "next/dynamic";
 
+import {
+  CanvasTiltWrapper,
+  ThreeSceneWrapper,
+} from "~/app/_components/landing-background/canvas-tilt-wrapper";
 import { GalaxyEffect } from "~/app/_components/landing-background/effects/galaxy-effect";
 import { ConstellationEffect } from "~/app/_components/landing-background/effects/constellation-effect";
 import { ScopeEffect } from "~/app/_components/landing-background/effects/scope-effect";
@@ -39,47 +43,61 @@ const GraphGridEffect = dynamic(
   },
 );
 
-function EffectRenderer({
-  effect,
-  interactive,
-}: {
-  effect: LandingBackgroundEffect;
-  interactive: boolean;
-}) {
-  const content = (() => {
-    switch (effect) {
-      case "galaxy":
-        return <GalaxyEffect />;
-      case "scope":
-        return <ScopeEffect />;
-      case "constellation":
-        return <ConstellationEffect />;
-      case "three":
-        return <ThreeEffect />;
-      case "graph-grid":
-        return <GraphGridEffect />;
-      default:
-        return <ScopeEffect />;
-    }
-  })();
-
-  return (
-    <div className={interactive ? "pointer-events-auto absolute inset-0" : "absolute inset-0"}>
-      {content}
-    </div>
-  );
+function EffectRenderer({ effect }: { effect: LandingBackgroundEffect }) {
+  switch (effect) {
+    case "galaxy":
+      return (
+        <CanvasTiltWrapper>
+          <GalaxyEffect />
+        </CanvasTiltWrapper>
+      );
+    case "scope":
+      return (
+        <CanvasTiltWrapper>
+          <ScopeEffect />
+        </CanvasTiltWrapper>
+      );
+    case "constellation":
+      return (
+        <CanvasTiltWrapper>
+          <ConstellationEffect />
+        </CanvasTiltWrapper>
+      );
+    case "three":
+      return (
+        <ThreeSceneWrapper>
+          <ThreeEffect />
+        </ThreeSceneWrapper>
+      );
+    case "graph-grid":
+      return (
+        <ThreeSceneWrapper>
+          <GraphGridEffect />
+        </ThreeSceneWrapper>
+      );
+    default:
+      return (
+        <CanvasTiltWrapper>
+          <ScopeEffect />
+        </CanvasTiltWrapper>
+      );
+  }
 }
 
 export function LandingBackgroundCanvas() {
   const { effect } = useLandingBackground();
+  const isInteractive3d = effect === "three" || effect === "graph-grid";
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div
+      className={
+        isInteractive3d
+          ? "pointer-events-auto fixed inset-0 z-0 overflow-hidden"
+          : "pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      }
+    >
       <div className="absolute inset-0 bg-gradient-to-b from-[#2e026d] to-[#15162c]" />
-      <EffectRenderer
-        effect={effect}
-        interactive={effect === "three" || effect === "graph-grid"}
-      />
+      <EffectRenderer effect={effect} />
       <GradientOverlay />
     </div>
   );

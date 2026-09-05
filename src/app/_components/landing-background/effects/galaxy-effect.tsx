@@ -2,7 +2,11 @@
 
 import { useMemo } from "react";
 
-import { clearCanvas, useCanvasAnimation } from "~/app/_components/landing-background/canvas-utils";
+import {
+  clearCanvas,
+  computeGalaxyScale,
+  useCanvasAnimation,
+} from "~/app/_components/landing-background/canvas-utils";
 
 type SpiralStar = {
   radius: number;
@@ -13,28 +17,28 @@ type SpiralStar = {
   twinkle: number;
 };
 
-const ARM_COUNT = 4;
-const STAR_COUNT = 2800;
-const TILT_RADIANS = 0.92;
+const ARM_COUNT = 6;
+const STAR_COUNT = 3600;
+const TILT_RADIANS = 0.88;
 const PERSPECTIVE = 5.4;
 
 function createSpiralGalaxy(): SpiralStar[] {
   const stars: SpiralStar[] = [];
 
   for (let index = 0; index < STAR_COUNT; index += 1) {
-    const radius = Math.pow(Math.random(), 0.55);
+    const radius = Math.pow(Math.random(), 0.5);
     const arm = index % ARM_COUNT;
     const armOffset = (arm / ARM_COUNT) * Math.PI * 2;
-    const spiralTightness = 5.4;
-    const spiralAngle = Math.log(radius * 0.92 + 0.12) * spiralTightness + armOffset;
-    const armScatter = (Math.random() - 0.5) * (0.22 - radius * 0.08);
+    const spiralTightness = 6.4;
+    const spiralAngle = Math.log(radius * 0.92 + 0.1) * spiralTightness + armOffset;
+    const armScatter = (Math.random() - 0.5) * (0.14 - radius * 0.05);
     const angle = spiralAngle + armScatter;
 
     stars.push({
       radius,
       angle,
-      height: (Math.random() - 0.5) * 0.08 * (1 - radius * 0.35),
-      size: Math.random() * 1.35 + 0.35,
+      height: (Math.random() - 0.5) * 0.07 * (1 - radius * 0.35),
+      size: Math.random() * 1.25 + 0.35,
       tone: Math.random(),
       twinkle: Math.random() * Math.PI * 2,
     });
@@ -64,7 +68,7 @@ function projectGalaxyPoint(
   const tiltedZ = diskY * Math.sin(TILT_RADIANS) + star.height * Math.cos(TILT_RADIANS);
   const perspective = PERSPECTIVE / (PERSPECTIVE + tiltedZ + 0.35);
   const x = centerX + diskX * perspective * scale;
-  const y = centerY + tiltedY * perspective * scale * 0.88;
+  const y = centerY + tiltedY * perspective * scale * 0.9;
 
   return {
     x,
@@ -80,11 +84,11 @@ export function GalaxyEffect() {
     (frame, time) => {
       clearCanvas(frame);
 
-      const { ctx, width, height, pointer, reducedMotion } = frame;
-      const centerX = width * 0.52 + pointer.x * 26;
-      const centerY = height * 0.46 + pointer.y * 18;
-      const galaxyScale = Math.min(width, height) * 0.42;
-      const spin = reducedMotion ? 0 : time * 0.00011;
+      const { ctx, width, height, reducedMotion } = frame;
+      const centerX = width * 0.5;
+      const centerY = height * 0.5;
+      const galaxyScale = computeGalaxyScale(width, height);
+      const spin = reducedMotion ? 0 : -time * 0.00012;
 
       const projected = stars.map((star) => ({
         star,
@@ -93,10 +97,10 @@ export function GalaxyEffect() {
 
       projected.sort((left, right) => left.depth - right.depth);
 
-      const coreRadius = galaxyScale * 0.22;
+      const coreRadius = galaxyScale * 0.2;
       const core = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius);
-      core.addColorStop(0, "rgba(255, 244, 230, 0.34)");
-      core.addColorStop(0.18, "rgba(216, 180, 254, 0.22)");
+      core.addColorStop(0, "rgba(255, 244, 230, 0.38)");
+      core.addColorStop(0.18, "rgba(216, 180, 254, 0.24)");
       core.addColorStop(0.55, "rgba(109, 40, 217, 0.08)");
       core.addColorStop(1, "rgba(21, 22, 44, 0)");
       ctx.fillStyle = core;
@@ -135,7 +139,7 @@ export function GalaxyEffect() {
           galaxyScale * 0.08,
           centerX,
           centerY,
-          galaxyScale * 0.72,
+          galaxyScale * 0.82,
         );
         haze.addColorStop(0, "rgba(124, 58, 237, 0.05)");
         haze.addColorStop(0.45, "rgba(76, 29, 149, 0.035)");

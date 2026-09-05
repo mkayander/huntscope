@@ -5,7 +5,6 @@ export type CanvasFrameContext = {
   width: number;
   height: number;
   dpr: number;
-  pointer: { x: number; y: number };
   reducedMotion: boolean;
 };
 
@@ -18,7 +17,6 @@ export function useCanvasAnimation(
   options: CanvasAnimationOptions = {},
 ): RefObject<HTMLCanvasElement | null> {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const pointerRef = useRef({ x: 0, y: 0 });
   const deps = options.deps ?? [];
 
   useEffect(() => {
@@ -53,19 +51,6 @@ export function useCanvasAnimation(
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
-    const onPointerMove = (event: PointerEvent) => {
-      const parent = canvas.parentElement;
-      if (!parent) {
-        return;
-      }
-
-      const rect = parent.getBoundingClientRect();
-      pointerRef.current = {
-        x: (event.clientX - rect.left) / rect.width - 0.5,
-        y: (event.clientY - rect.top) / rect.height - 0.5,
-      };
-    };
-
     const tick = (time: number) => {
       const parent = canvas.parentElement;
       if (!parent) {
@@ -81,7 +66,6 @@ export function useCanvasAnimation(
           width: parent.clientWidth,
           height: parent.clientHeight,
           dpr: Math.min(window.devicePixelRatio || 1, 2),
-          pointer: pointerRef.current,
           reducedMotion,
         },
         time,
@@ -93,13 +77,11 @@ export function useCanvasAnimation(
 
     resize();
     window.addEventListener("resize", resize);
-    window.addEventListener("pointermove", onPointerMove);
     animationFrame = window.requestAnimationFrame(tick);
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", resize);
-      window.removeEventListener("pointermove", onPointerMove);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- draw identity is controlled by callers via deps
   }, deps);
@@ -109,4 +91,12 @@ export function useCanvasAnimation(
 
 export function clearCanvas(frame: CanvasFrameContext): void {
   frame.ctx.clearRect(0, 0, frame.width, frame.height);
+}
+
+export function computeGalaxyScale(width: number, height: number): number {
+  return Math.min(width * 0.92, height * 0.96, Math.hypot(width, height) * 0.52);
+}
+
+export function computeScopeRadius(width: number, height: number): number {
+  return Math.min(width * 0.72, height * 0.78, Math.hypot(width, height) * 0.42);
 }

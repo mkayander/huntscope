@@ -69,9 +69,7 @@ export function ConstellationEffect() {
     (frame, time, delta) => {
       clearCanvas(frame);
 
-      const { ctx, width, height, pointer, reducedMotion } = frame;
-      const offsetX = pointer.x * 20;
-      const offsetY = pointer.y * 14;
+      const { ctx, width, height, reducedMotion } = frame;
 
       for (const edge of graph.edges) {
         const from = graph.nodes[edge.from];
@@ -80,10 +78,10 @@ export function ConstellationEffect() {
           continue;
         }
 
-        const x1 = from.x * width + offsetX;
-        const y1 = from.y * height + offsetY;
-        const x2 = to.x * width + offsetX;
-        const y2 = to.y * height + offsetY;
+        const x1 = from.x * width;
+        const y1 = from.y * height;
+        const x2 = to.x * width;
+        const y2 = to.y * height;
 
         ctx.beginPath();
         ctx.strokeStyle = "rgba(167, 139, 250, 0.16)";
@@ -110,8 +108,8 @@ export function ConstellationEffect() {
           node.pulse += delta * 1.2;
         }
 
-        const x = node.x * width + offsetX;
-        const y = node.y * height + offsetY;
+        const x = node.x * width;
+        const y = node.y * height;
         const glow = 0.45 + Math.sin(node.pulse + time * 0.0015) * 0.2;
 
         ctx.beginPath();

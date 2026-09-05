@@ -2,7 +2,11 @@
 
 import { useMemo } from "react";
 
-import { clearCanvas, useCanvasAnimation } from "~/app/_components/landing-background/canvas-utils";
+import {
+  clearCanvas,
+  computeScopeRadius,
+  useCanvasAnimation,
+} from "~/app/_components/landing-background/canvas-utils";
 
 type Blip = {
   angle: number;
@@ -20,19 +24,15 @@ function createBlips(count: number): Blip[] {
   }));
 }
 
-function computeScopeRadius(width: number, height: number): number {
-  return Math.min(width * 0.72, height * 0.78, Math.hypot(width, height) * 0.42);
-}
-
 export function ScopeEffect() {
   const blips = useMemo(() => createBlips(28), []);
   const canvasRef = useCanvasAnimation(
     (frame, time, delta) => {
       clearCanvas(frame);
 
-      const { ctx, width, height, pointer, reducedMotion } = frame;
-      const centerX = width * 0.5 + pointer.x * 18;
-      const centerY = height * 0.5 + pointer.y * 12;
+      const { ctx, width, height, reducedMotion } = frame;
+      const centerX = width * 0.5;
+      const centerY = height * 0.5;
       const baseRadius = computeScopeRadius(width, height);
       const sweepAngle = (time * 0.00035) % (Math.PI * 2);
 
