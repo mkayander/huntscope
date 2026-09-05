@@ -1,11 +1,33 @@
 "use client";
 
+import { ErrorAlert } from "~/app/_components/error-alert";
 import { api } from "~/trpc/react";
 
 export function RepoDataView() {
-  const [selectedRepo] = api.github.getSelectedRepo.useSuspenseQuery();
+  const selectedRepoQuery = api.github.getSelectedRepo.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
 
-  if (!selectedRepo) {
+  if (selectedRepoQuery.isLoading) {
+    return (
+      <section className="w-full max-w-5xl rounded-2xl border border-white/10 bg-white/5 p-6">
+        <p className="text-sm text-white/70">Loading saved repository…</p>
+      </section>
+    );
+  }
+
+  if (selectedRepoQuery.error) {
+    return (
+      <section className="w-full max-w-5xl rounded-2xl border border-white/10 bg-white/5 p-6">
+        <ErrorAlert
+          title="Could not read your saved repository"
+          message={selectedRepoQuery.error.message}
+        />
+      </section>
+    );
+  }
+
+  if (!selectedRepoQuery.data) {
     return (
       <section className="w-full max-w-5xl rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-center">
         <p className="text-white/70">
@@ -34,9 +56,8 @@ function RepoDataContent() {
 
   if (error) {
     return (
-      <section className="w-full max-w-5xl rounded-2xl border border-red-400/30 bg-red-500/10 p-6">
-        <h2 className="text-xl font-semibold text-red-100">Could not load repo data</h2>
-        <p className="mt-2 text-sm text-red-100/90">{error.message}</p>
+      <section className="w-full max-w-5xl rounded-2xl border border-white/10 bg-white/5 p-6">
+        <ErrorAlert title="Could not load repository data" message={error.message} />
       </section>
     );
   }
