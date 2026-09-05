@@ -22,6 +22,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable}`}>
+      <head>
+        {/* Dark Reader must see this literal empty meta — Metadata `other` skips empty values. */}
+        <meta name="darkreader-lock" />
+      </head>
       <body>
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
