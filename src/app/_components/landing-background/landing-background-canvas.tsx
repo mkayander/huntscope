@@ -43,6 +43,20 @@ const GraphGridEffect = dynamic(
   },
 );
 
+function ScopeOverlayLayer({ placement }: { placement: "back" | "front" }) {
+  return (
+    <div
+      className={
+        placement === "front"
+          ? "pointer-events-none absolute inset-0 z-[2]"
+          : "pointer-events-none absolute inset-0 z-[0]"
+      }
+    >
+      <ScopeEffect variant={placement === "front" ? "overlay-front" : "overlay-back"} />
+    </div>
+  );
+}
+
 function EffectRenderer({ effect }: { effect: LandingBackgroundEffect }) {
   switch (effect) {
     case "galaxy":
@@ -54,7 +68,7 @@ function EffectRenderer({ effect }: { effect: LandingBackgroundEffect }) {
     case "scope":
       return (
         <CanvasTiltWrapper>
-          <ScopeEffect />
+          <ScopeEffect variant="primary" />
         </CanvasTiltWrapper>
       );
     case "constellation":
@@ -78,15 +92,16 @@ function EffectRenderer({ effect }: { effect: LandingBackgroundEffect }) {
     default:
       return (
         <CanvasTiltWrapper>
-          <ScopeEffect />
+          <ScopeEffect variant="primary" />
         </CanvasTiltWrapper>
       );
   }
 }
 
 export function LandingBackgroundCanvas() {
-  const { effect } = useLandingBackground();
+  const { effect, scopeOverlayEnabled, scopeOverlayLayer } = useLandingBackground();
   const isInteractive3d = effect === "three" || effect === "graph-grid";
+  const showScopeOverlay = scopeOverlayEnabled && effect !== "scope";
 
   return (
     <div
@@ -97,8 +112,20 @@ export function LandingBackgroundCanvas() {
       }
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#2e026d] to-[#15162c]" />
-      <EffectRenderer effect={effect} />
+
+      {showScopeOverlay && scopeOverlayLayer === "back" ? (
+        <ScopeOverlayLayer placement="back" />
+      ) : null}
+
+      <div className="absolute inset-0 z-[0]">
+        <EffectRenderer effect={effect} />
+      </div>
+
       <GradientOverlay effect={effect} />
+
+      {showScopeOverlay && scopeOverlayLayer === "front" ? (
+        <ScopeOverlayLayer placement="front" />
+      ) : null}
     </div>
   );
 }

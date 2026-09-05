@@ -1,3 +1,5 @@
+export type ScopeOverlayLayer = "front" | "back";
+
 export type LandingBackgroundEffect =
   | "galaxy"
   | "scope"
