@@ -48,6 +48,8 @@ GitHub OAuth callback URL:
 
 `https://<your-vercel-domain>/api/auth/callback/github`
 
+Optional: if you prefer the Vercel REST API over the dashboard, run `pnpm vercel:env` with `VERCEL_TOKEN`, `GITHUB_CLIENT_ID`, and `GITHUB_CLIENT_SECRET` in your shell. The Cursor Vercel integration can inspect deployments but cannot write project environment variables.
+
 ## License
 
 Private — not affiliated with career-ops or any third-party job-search tooling.
