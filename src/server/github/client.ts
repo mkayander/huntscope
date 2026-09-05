@@ -1,9 +1,7 @@
 import { TRPCError } from "@trpc/server";
 
-import { parseApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
-import { parsePipelineMarkdown } from "~/lib/career-ops/parse-pipeline";
 import type {
-  CareerOpsRepoData,
+  RawCareerOpsRepoData,
   GitHubRepoSummary,
   RepoDataFile,
   SelectedRepo,
@@ -194,7 +192,7 @@ export async function listUserRepos(headers: Headers): Promise<GitHubRepoSummary
 export async function fetchCareerOpsRepoData(
   repo: SelectedRepo,
   headers: Headers,
-): Promise<CareerOpsRepoData> {
+): Promise<RawCareerOpsRepoData> {
   const accessToken = await getGitHubAccessToken(headers);
 
   const [applicationsContent, pipelineContent, dataDirectory, reportsDirectory] =
@@ -235,10 +233,8 @@ export async function fetchCareerOpsRepoData(
     owner: repo.owner,
     name: repo.name,
     fullName: repo.fullName,
-    applications: applicationsContent
-      ? parseApplicationsMarkdown(applicationsContent)
-      : [],
-    pipeline: pipelineContent ? parsePipelineMarkdown(pipelineContent) : null,
+    applicationsMarkdown: applicationsContent,
+    pipelineMarkdown: pipelineContent,
     dataFiles: dataDirectory
       .map(toRepoDataFile)
       .filter((item): item is RepoDataFile => item !== null),

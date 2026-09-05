@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { ErrorAlert } from "~/app/_components/error-alert";
@@ -8,7 +8,7 @@ import { OverviewStrip } from "~/app/_components/overview-strip";
 import { PipelinePanel } from "~/app/_components/pipeline-panel";
 import { RecentApplications } from "~/app/_components/recent-applications";
 import { TrackerPanel } from "~/app/_components/tracker-panel";
-import { computeApplicationAnalytics } from "~/lib/career-ops/analytics";
+import { useParsedRepoData } from "~/lib/career-ops/use-parsed-repo-data";
 import { api } from "~/trpc/react";
 
 export function RepoDataView() {
@@ -51,14 +51,10 @@ export function RepoDataView() {
 
 function RepoDataContent() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const { data, error, isLoading } = api.github.getRepoData.useQuery(undefined, {
+  const { data: raw, error, isLoading } = api.github.getRepoData.useQuery(undefined, {
     refetchOnWindowFocus: false,
   });
-
-  const analytics = useMemo(
-    () => (data ? computeApplicationAnalytics(data.applications) : null),
-    [data],
-  );
+  const { parsed, isParsing, parseError } = useParsedRepoData(raw);
 
   if (isLoading) {
     return (
@@ -76,41 +72,55 @@ function RepoDataContent() {
     );
   }
 
-  if (!data || !analytics) {
-    return null;
+  if (parseError) {
+    return (
+      <section className="w-full max-w-5xl rounded-2xl border border-white/10 bg-white/5 p-6">
+        <ErrorAlert title="Could not parse repository data" message={parseError} />
+      </section>
+    );
+  }
+
+  if (!raw || !parsed) {
+    return (
+      <section className="w-full max-w-5xl rounded-2xl border border-white/10 bg-white/5 p-6">
+        <p className="text-sm text-white/70">
+          {isParsing ? "Parsing repository data in the background…" : "No repository data available."}
+        </p>
+      </section>
+    );
   }
 
   return (
     <section className="flex w-full max-w-5xl flex-col gap-6">
       <OverviewStrip
-        repoFullName={data.fullName}
-        analytics={analytics}
-        pipeline={data.pipeline}
-        reportsCount={data.reportsCount}
+        repoFullName={raw.fullName}
+        analytics={parsed.analytics}
+        pipeline={parsed.pipeline}
+        reportsCount={raw.reportsCount}
         activeStatusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
       />
 
-      <ActivityHeatmapPanel applications={data.applications} />
+      <ActivityHeatmapPanel applications={parsed.applications} />
 
-      <RecentApplications applications={analytics.recentApplications} />
+      <RecentApplications applications={parsed.analytics.recentApplications} />
 
-      {data.pipeline ? <PipelinePanel pipeline={data.pipeline} /> : null}
+      {parsed.pipeline ? <PipelinePanel pipeline={parsed.pipeline} /> : null}
 
       <TrackerPanel
-        repoFullName={data.fullName}
-        applications={data.applications}
+        repoFullName={raw.fullName}
+        applications={parsed.applications}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
       />
 
-      {data.dataFiles.length > 0 ? (
+      {raw.dataFiles.length > 0 ? (
         <details className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <summary className="cursor-pointer text-sm font-medium text-white/80">
             Data files in `data/`
           </summary>
           <ul className="mt-3 flex flex-wrap gap-2">
-            {data.dataFiles.map((file) => (
+            {raw.dataFiles.map((file) => (
               <li
                 key={file.path}
                 className="rounded-full bg-black/30 px-3 py-1 text-xs text-white/80"

@@ -22,15 +22,18 @@ export type RepoDataFile = {
   type: "file" | "dir";
 };
 
-export type CareerOpsRepoData = {
+export type RawCareerOpsRepoData = {
   owner: string;
   name: string;
   fullName: string;
-  applications: ApplicationEntry[];
-  pipeline: PipelineSummary | null;
+  applicationsMarkdown: string | null;
+  pipelineMarkdown: string | null;
   dataFiles: RepoDataFile[];
   reportsCount: number;
 };
+
+/** @deprecated Use RawCareerOpsRepoData on the server and ParsedCareerOpsRepoData in the client worker. */
+export type CareerOpsRepoData = RawCareerOpsRepoData;
 
 export type GitHubRepoSummary = {
   id: number;

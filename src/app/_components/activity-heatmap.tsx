@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
+import { ErrorAlert } from "~/app/_components/error-alert";
 import {
-  buildHeatmapFromApplications,
   formatDisplayDate,
   type ActivityHeatmapPeriod,
   type ActivityLevel,
 } from "~/lib/career-ops/activity-heatmap";
+import { useActivityHeatmap } from "~/lib/career-ops/use-activity-heatmap";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 const PERIOD_OPTIONS: { value: ActivityHeatmapPeriod; label: string }[] = [
@@ -36,18 +37,18 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
     date: string;
     count: number;
   } | null>(null);
-
-  const heatmap = useMemo(
-    () => buildHeatmapFromApplications(applications, periodWeeks),
-    [applications, periodWeeks],
-  );
+  const { heatmap, isLoading, error } = useActivityHeatmap(applications, periodWeeks);
 
   const summaryLabel =
     hoveredDay != null
       ? hoveredDay.count === 0
         ? `No activity on ${formatDisplayDate(hoveredDay.date)}`
         : `${hoveredDay.count} evaluation${hoveredDay.count === 1 ? "" : "s"} on ${formatDisplayDate(hoveredDay.date)}`
-      : `${heatmap.totalActivities} evaluation${heatmap.totalActivities === 1 ? "" : "s"} in the last ${periodLabel(periodWeeks)}`;
+      : heatmap
+        ? `${heatmap.totalActivities} evaluation${heatmap.totalActivities === 1 ? "" : "s"} in the last ${periodLabel(periodWeeks)}`
+        : isLoading
+          ? "Building activity heat map…"
+          : "No activity data available";
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -56,6 +57,7 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
           <h3 className="text-lg font-semibold text-white">Search activity</h3>
           <p className="mt-1 text-sm text-white/60">
             GitHub-style heat map of evaluations added to your tracker over time.
+            Computed locally in a background worker.
           </p>
         </div>
 
@@ -77,94 +79,108 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
         </div>
       </div>
 
+      {error ? (
+        <div className="mt-4">
+          <ErrorAlert title="Could not build activity heat map" message={error} />
+        </div>
+      ) : null}
+
       <p className="mt-4 text-sm text-white/80">{summaryLabel}</p>
 
       <div className="mt-4 overflow-x-auto">
-        <div className="inline-flex min-w-full flex-col gap-2">
-          <div className="relative ml-8 h-4">
-            {heatmap.monthLabels.map((month) => (
-              <span
-                key={`${month.label}-${month.weekIndex}`}
-                className="absolute text-xs text-white/45"
-                style={{ left: `${month.weekIndex * 16}px` }}
-              >
-                {month.label}
-              </span>
-            ))}
-          </div>
-
-          <div className="flex gap-2">
-            <div className="flex flex-col gap-1 pt-0.5 text-[10px] leading-none text-white/40">
-              {DAY_LABELS.map((label, index) => (
+        {heatmap ? (
+          <div className="inline-flex min-w-full flex-col gap-2">
+            <div className="relative ml-8 h-4">
+              {heatmap.monthLabels.map((month) => (
                 <span
-                  key={label}
-                  className="flex h-3 items-center"
-                  aria-hidden={index % 2 === 1}
+                  key={`${month.label}-${month.weekIndex}`}
+                  className="absolute text-xs text-white/45"
+                  style={{ left: `${month.weekIndex * 16}px` }}
                 >
-                  {index % 2 === 0 ? label : ""}
+                  {month.label}
                 </span>
               ))}
             </div>
 
-            <div className="flex gap-1">
-              {heatmap.weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1">
-                  {week.map((day, dayIndex) => {
-                    if (!day) {
+            <div className="flex gap-2">
+              <div className="flex flex-col gap-1 pt-0.5 text-[10px] leading-none text-white/40">
+                {DAY_LABELS.map((label, index) => (
+                  <span
+                    key={label}
+                    className="flex h-3 items-center"
+                    aria-hidden={index % 2 === 1}
+                  >
+                    {index % 2 === 0 ? label : ""}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex gap-1">
+                {heatmap.weeks.map((week, weekIndex) => (
+                  <div key={weekIndex} className="flex flex-col gap-1">
+                    {week.map((day, dayIndex) => {
+                      if (!day) {
+                        return (
+                          <span
+                            key={`empty-${weekIndex}-${dayIndex}`}
+                            className="h-3 w-3 rounded-[3px] bg-transparent"
+                            aria-hidden
+                          />
+                        );
+                      }
+
                       return (
-                        <span
-                          key={`empty-${weekIndex}-${dayIndex}`}
-                          className="h-3 w-3 rounded-[3px] bg-transparent"
-                          aria-hidden
+                        <button
+                          key={day.date}
+                          type="button"
+                          aria-label={`${day.count} evaluation${day.count === 1 ? "" : "s"} on ${formatDisplayDate(day.date)}`}
+                          className={`h-3 w-3 rounded-[3px] transition hover:ring-2 hover:ring-white/40 ${LEVEL_CLASS_NAMES[day.level]}`}
+                          onMouseEnter={() =>
+                            setHoveredDay({ date: day.date, count: day.count })
+                          }
+                          onMouseLeave={() => setHoveredDay(null)}
+                          onFocus={() =>
+                            setHoveredDay({ date: day.date, count: day.count })
+                          }
+                          onBlur={() => setHoveredDay(null)}
                         />
                       );
-                    }
-
-                    return (
-                      <button
-                        key={day.date}
-                        type="button"
-                        aria-label={`${day.count} evaluation${day.count === 1 ? "" : "s"} on ${formatDisplayDate(day.date)}`}
-                        className={`h-3 w-3 rounded-[3px] transition hover:ring-2 hover:ring-white/40 ${LEVEL_CLASS_NAMES[day.level]}`}
-                        onMouseEnter={() =>
-                          setHoveredDay({ date: day.date, count: day.count })
-                        }
-                        onMouseLeave={() => setHoveredDay(null)}
-                        onFocus={() =>
-                          setHoveredDay({ date: day.date, count: day.count })
-                        }
-                        onBlur={() => setHoveredDay(null)}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <p className="text-sm text-white/60">
+            {isLoading ? "Loading heat map…" : "No heat map data to display."}
+          </p>
+        )}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
-        <span>
-          {heatmap.activeDays} active day{heatmap.activeDays === 1 ? "" : "s"} ·{" "}
-          {heatmap.datedApplications} dated row
-          {heatmap.datedApplications === 1 ? "" : "s"}
-          {heatmap.undatedApplications > 0
-            ? ` · ${heatmap.undatedApplications} without a parseable date`
-            : ""}
-        </span>
+      {heatmap ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
+          <span>
+            {heatmap.activeDays} active day{heatmap.activeDays === 1 ? "" : "s"} ·{" "}
+            {heatmap.datedApplications} dated row
+            {heatmap.datedApplications === 1 ? "" : "s"}
+            {heatmap.undatedApplications > 0
+              ? ` · ${heatmap.undatedApplications} without a parseable date`
+              : ""}
+          </span>
 
-        <div className="flex items-center gap-2">
-          <span>Less</span>
-          {([0, 1, 2, 3, 4] as ActivityLevel[]).map((level) => (
-            <span
-              key={level}
-              className={`h-3 w-3 rounded-[3px] ${LEVEL_CLASS_NAMES[level]}`}
-            />
-          ))}
-          <span>More</span>
+          <div className="flex items-center gap-2">
+            <span>Less</span>
+            {([0, 1, 2, 3, 4] as ActivityLevel[]).map((level) => (
+              <span
+                key={level}
+                className={`h-3 w-3 rounded-[3px] ${LEVEL_CLASS_NAMES[level]}`}
+              />
+            ))}
+            <span>More</span>
+          </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }
