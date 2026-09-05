@@ -4,74 +4,145 @@ import { useMemo } from "react";
 
 import { clearCanvas, useCanvasAnimation } from "~/app/_components/landing-background/canvas-utils";
 
-type Star = {
-  x: number;
-  y: number;
-  z: number;
+type SpiralStar = {
   radius: number;
-  twinkle: number;
+  angle: number;
+  height: number;
+  size: number;
   tone: number;
+  twinkle: number;
 };
 
-function createStars(count: number): Star[] {
-  return Array.from({ length: count }, () => ({
-    x: Math.random(),
-    y: Math.random(),
-    z: Math.random(),
-    radius: Math.random() * 1.6 + 0.4,
-    twinkle: Math.random() * Math.PI * 2,
-    tone: Math.random(),
-  }));
+const ARM_COUNT = 4;
+const STAR_COUNT = 2800;
+const TILT_RADIANS = 0.92;
+const PERSPECTIVE = 5.4;
+
+function createSpiralGalaxy(): SpiralStar[] {
+  const stars: SpiralStar[] = [];
+
+  for (let index = 0; index < STAR_COUNT; index += 1) {
+    const radius = Math.pow(Math.random(), 0.55);
+    const arm = index % ARM_COUNT;
+    const armOffset = (arm / ARM_COUNT) * Math.PI * 2;
+    const spiralTightness = 5.4;
+    const spiralAngle = Math.log(radius * 0.92 + 0.12) * spiralTightness + armOffset;
+    const armScatter = (Math.random() - 0.5) * (0.22 - radius * 0.08);
+    const angle = spiralAngle + armScatter;
+
+    stars.push({
+      radius,
+      angle,
+      height: (Math.random() - 0.5) * 0.08 * (1 - radius * 0.35),
+      size: Math.random() * 1.35 + 0.35,
+      tone: Math.random(),
+      twinkle: Math.random() * Math.PI * 2,
+    });
+  }
+
+  return stars;
+}
+
+function projectGalaxyPoint(
+  star: SpiralStar,
+  spin: number,
+  centerX: number,
+  centerY: number,
+  scale: number,
+): {
+  x: number;
+  y: number;
+  depth: number;
+  radius: number;
+} {
+  const differentialSpin = spin / (star.radius * 0.85 + 0.18);
+  const theta = star.angle + differentialSpin;
+  const diskX = Math.cos(theta) * star.radius;
+  const diskY = Math.sin(theta) * star.radius;
+
+  const tiltedY = diskY * Math.cos(TILT_RADIANS) - star.height * Math.sin(TILT_RADIANS);
+  const tiltedZ = diskY * Math.sin(TILT_RADIANS) + star.height * Math.cos(TILT_RADIANS);
+  const perspective = PERSPECTIVE / (PERSPECTIVE + tiltedZ + 0.35);
+  const x = centerX + diskX * perspective * scale;
+  const y = centerY + tiltedY * perspective * scale * 0.88;
+
+  return {
+    x,
+    y,
+    depth: perspective,
+    radius: star.radius,
+  };
 }
 
 export function GalaxyEffect() {
-  const stars = useMemo(() => createStars(220), []);
+  const stars = useMemo(() => createSpiralGalaxy(), []);
   const canvasRef = useCanvasAnimation(
-    (frame, time, delta) => {
+    (frame, time) => {
       clearCanvas(frame);
 
       const { ctx, width, height, pointer, reducedMotion } = frame;
-      const parallaxX = pointer.x * 28;
-      const parallaxY = pointer.y * 18;
-      const drift = reducedMotion ? 0 : delta * 0.015;
+      const centerX = width * 0.52 + pointer.x * 26;
+      const centerY = height * 0.46 + pointer.y * 18;
+      const galaxyScale = Math.min(width, height) * 0.42;
+      const spin = reducedMotion ? 0 : time * 0.00011;
 
-      for (const star of stars) {
-        star.y += drift * (0.35 + star.z);
-        if (star.y > 1.08) {
-          star.y = -0.08;
-          star.x = Math.random();
-        }
+      const projected = stars.map((star) => ({
+        star,
+        ...projectGalaxyPoint(star, spin, centerX, centerY, galaxyScale),
+      }));
 
-        const depth = 0.25 + star.z * 0.75;
-        const x = (star.x + pointer.x * depth * 0.08) * width + parallaxX * depth;
-        const y = star.y * height + parallaxY * depth;
+      projected.sort((left, right) => left.depth - right.depth);
+
+      const coreRadius = galaxyScale * 0.22;
+      const core = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius);
+      core.addColorStop(0, "rgba(255, 244, 230, 0.34)");
+      core.addColorStop(0.18, "rgba(216, 180, 254, 0.22)");
+      core.addColorStop(0.55, "rgba(109, 40, 217, 0.08)");
+      core.addColorStop(1, "rgba(21, 22, 44, 0)");
+      ctx.fillStyle = core;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (const entry of projected) {
+        const { star, x, y, depth, radius } = entry;
         const twinkle = reducedMotion
-          ? 0.75
-          : 0.55 + Math.sin(time * 0.002 + star.twinkle) * 0.25;
-        const alpha = (0.15 + star.z * 0.65) * twinkle;
-        const violet = star.tone > 0.72;
+          ? 0.78
+          : 0.62 + Math.sin(time * 0.0022 + star.twinkle) * 0.22;
+        const coreBoost = Math.max(0, 1 - radius * 1.35);
+        const alpha =
+          (0.08 + depth * 0.55 + coreBoost * 0.35) * twinkle * (0.45 + (1 - radius) * 0.55);
+        const violet = star.tone > 0.68;
+        const warmCore = radius < 0.16 && star.tone > 0.42;
 
         ctx.beginPath();
-        ctx.fillStyle = violet
-          ? `rgba(196, 181, 253, ${alpha})`
-          : `rgba(255, 255, 255, ${alpha})`;
-        ctx.arc(x, y, star.radius * (0.6 + depth), 0, Math.PI * 2);
+        if (warmCore) {
+          ctx.fillStyle = `rgba(255, 236, 210, ${alpha * 1.15})`;
+        } else if (violet) {
+          ctx.fillStyle = `rgba(196, 181, 253, ${alpha})`;
+        } else {
+          ctx.fillStyle = `rgba(240, 245, 255, ${alpha})`;
+        }
+
+        ctx.arc(x, y, star.size * depth * (0.55 + coreBoost * 0.45), 0, Math.PI * 2);
         ctx.fill();
       }
 
-      const nebula = ctx.createRadialGradient(
-        width * 0.55 + parallaxX,
-        height * 0.35 + parallaxY,
-        0,
-        width * 0.55,
-        height * 0.35,
-        width * 0.45,
-      );
-      nebula.addColorStop(0, "rgba(139, 92, 246, 0.12)");
-      nebula.addColorStop(0.5, "rgba(76, 29, 149, 0.06)");
-      nebula.addColorStop(1, "rgba(21, 22, 44, 0)");
-      ctx.fillStyle = nebula;
-      ctx.fillRect(0, 0, width, height);
+      if (!reducedMotion) {
+        const haze = ctx.createRadialGradient(
+          centerX,
+          centerY,
+          galaxyScale * 0.08,
+          centerX,
+          centerY,
+          galaxyScale * 0.72,
+        );
+        haze.addColorStop(0, "rgba(124, 58, 237, 0.05)");
+        haze.addColorStop(0.45, "rgba(76, 29, 149, 0.035)");
+        haze.addColorStop(1, "rgba(21, 22, 44, 0)");
+        ctx.fillStyle = haze;
+        ctx.fillRect(0, 0, width, height);
+      }
     },
     { deps: [stars] },
   );

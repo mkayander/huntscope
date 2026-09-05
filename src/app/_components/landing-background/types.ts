@@ -14,8 +14,8 @@ export type LandingBackgroundOption = {
 export const LANDING_BACKGROUND_OPTIONS: LandingBackgroundOption[] = [
   {
     value: "galaxy",
-    label: "A · Galaxy starfield",
-    description: "Astra-style dense star drift with depth parallax",
+    label: "A · Spiral galaxy",
+    description: "Spinning spiral arms with a tilted 3D disk and bright core",
   },
   {
     value: "scope",
