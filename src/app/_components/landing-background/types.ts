@@ -36,7 +36,7 @@ export const LANDING_BACKGROUND_OPTIONS: LandingBackgroundOption[] = [
   },
   {
     value: "graph-grid",
-    label: "G · 3D graph grid",
-    description: "Plexus mesh with simplified depth-of-field (sharp center, soft edges)",
+    label: "G · 3D data constellation",
+    description: "Sparse linked nodes with flowing pulses and depth-of-field",
   },
 ];
