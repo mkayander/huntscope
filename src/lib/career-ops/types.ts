@@ -32,9 +32,6 @@ export type RawCareerOpsRepoData = {
   reportsCount: number;
 };
 
-/** @deprecated Use RawCareerOpsRepoData on the server and ParsedCareerOpsRepoData in the client worker. */
-export type CareerOpsRepoData = RawCareerOpsRepoData;
-
 export type GitHubRepoSummary = {
   id: number;
   owner: string;

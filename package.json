@@ -17,6 +17,8 @@
     "vercel:env": "node scripts/configure-vercel-env.mjs"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.69.0",
     "@trpc/client": "^11.0.0",
@@ -29,6 +31,7 @@
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
+    "three": "^0.185.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -37,6 +40,7 @@
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.185.4",
     "eslint": "^9.23.0",
     "eslint-config-next": "^15.2.3",
     "postcss": "^8.5.3",
