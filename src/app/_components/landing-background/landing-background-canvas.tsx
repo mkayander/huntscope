@@ -121,7 +121,7 @@ export function LandingBackgroundCanvas() {
         <EffectRenderer effect={effect} />
       </div>
 
-      <GradientOverlay effect={effect} />
+      <GradientOverlay />
 
       {showScopeOverlay && scopeOverlayLayer === "front" ? (
         <ScopeOverlayLayer placement="front" />
