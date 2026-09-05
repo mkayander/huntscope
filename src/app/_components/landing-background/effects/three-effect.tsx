@@ -6,8 +6,9 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import {
-  depthBlurToStarParticleColor,
-  writeParticleDepthColors,
+  starParticleFragmentShader,
+  starParticleVertexShader,
+  writeStarParticleDepthAttributes,
 } from "~/app/_components/landing-background/effects/depth-of-field";
 
 const PARTICLE_COUNT = 1800;
@@ -36,6 +37,8 @@ function ParticleCloud() {
     () => new Float32Array(PARTICLE_COUNT * 3).fill(1),
     [],
   );
+  const pointSizes = useMemo(() => new Float32Array(PARTICLE_COUNT).fill(3), []);
+  const pointBlurs = useMemo(() => new Float32Array(PARTICLE_COUNT).fill(0), []);
   const tempPosition = useMemo(() => new THREE.Vector3(), []);
 
   useFrame(({ camera }, delta) => {
@@ -47,18 +50,21 @@ function ParticleCloud() {
     points.rotation.y += delta * 0.07;
     points.rotation.x += delta * 0.02;
 
-    writeParticleDepthColors({
+    writeStarParticleDepthAttributes({
       positions,
       colors: pointColors,
+      sizes: pointSizes,
+      blurs: pointBlurs,
       count: PARTICLE_COUNT,
       object: points,
       camera,
       temp: tempPosition,
-      colorForBlur: depthBlurToStarParticleColor,
     });
 
-    const colorAttr = points.geometry.getAttribute("color") as THREE.BufferAttribute;
-    colorAttr.needsUpdate = true;
+    const geometry = points.geometry;
+    (geometry.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
+    (geometry.getAttribute("size") as THREE.BufferAttribute).needsUpdate = true;
+    (geometry.getAttribute("blur") as THREE.BufferAttribute).needsUpdate = true;
   });
 
   return (
@@ -67,16 +73,17 @@ function ParticleCloud() {
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[positions, 3]} />
           <bufferAttribute attach="attributes-color" args={[pointColors, 3]} />
+          <bufferAttribute attach="attributes-size" args={[pointSizes, 1]} />
+          <bufferAttribute attach="attributes-blur" args={[pointBlurs, 1]} />
         </bufferGeometry>
-        <pointsMaterial
-          vertexColors
-          size={0.062}
-          sizeAttenuation
+        <shaderMaterial
+          vertexShader={starParticleVertexShader}
+          fragmentShader={starParticleFragmentShader}
           transparent
-          opacity={1}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
           toneMapped={false}
+          vertexColors
         />
       </points>
     </group>

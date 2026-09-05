@@ -12,8 +12,8 @@ export function GradientOverlay({ effect }: GradientOverlayProps) {
   const background = light3d
     ? isStarField
       ? [
-          "radial-gradient(ellipse 75% 48% at 50% 20%, rgba(21, 22, 44, 0.38) 0%, rgba(21, 22, 44, 0.08) 52%, rgba(21, 22, 44, 0.28) 100%)",
-          "linear-gradient(to bottom, rgba(46, 2, 109, 0.22) 0%, rgba(21, 22, 44, 0.02) 42%, rgba(21, 22, 44, 0.38) 100%)",
+          "radial-gradient(ellipse 82% 55% at 50% 24%, rgba(21, 22, 44, 0.58) 0%, rgba(21, 22, 44, 0.24) 50%, rgba(21, 22, 44, 0.46) 100%)",
+          "linear-gradient(to bottom, rgba(46, 2, 109, 0.3) 0%, rgba(21, 22, 44, 0.1) 36%, rgba(21, 22, 44, 0.55) 100%)",
         ].join(", ")
       : [
           "radial-gradient(ellipse 80% 52% at 50% 22%, rgba(21, 22, 44, 0.42) 0%, rgba(21, 22, 44, 0.12) 50%, rgba(21, 22, 44, 0.32) 100%)",
