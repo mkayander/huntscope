@@ -5,7 +5,6 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 import {
   CHART_COLORS,
-  CHART_MARGIN,
   getStatusColor,
 } from "~/app/_components/analytics-charts/chart-theme";
 import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size";

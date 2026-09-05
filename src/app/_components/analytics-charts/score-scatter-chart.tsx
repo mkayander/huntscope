@@ -144,7 +144,7 @@ export function ScoreScatterChart({
       .attr("r", 6);
 
     points
-      .on("mouseenter", function (event, point) {
+      .on("mouseenter", function (event: PointerEvent, point) {
         d3.select(this).attr("r", 8).attr("stroke", "#fff").attr("stroke-width", 2);
         setTooltip({
           x: event.offsetX,
@@ -152,7 +152,7 @@ export function ScoreScatterChart({
           point,
         });
       })
-      .on("mousemove", (event, point) => {
+      .on("mousemove", (event: PointerEvent, point) => {
         setTooltip({
           x: event.offsetX,
           y: event.offsetY,

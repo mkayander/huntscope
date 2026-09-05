@@ -22,9 +22,15 @@ export const queryPersister = createAsyncStoragePersister({
   },
 });
 
+function isGitHubQueryPath(
+  value: unknown,
+): value is readonly ["github", string, ...unknown[]] {
+  return Array.isArray(value) && value[0] === "github" && typeof value[1] === "string";
+}
+
 export function isPersistedGitHubQuery(query: Query): boolean {
   const path = query.queryKey[0];
-  if (!Array.isArray(path) || path[0] !== "github") {
+  if (!isGitHubQueryPath(path)) {
     return false;
   }
 
