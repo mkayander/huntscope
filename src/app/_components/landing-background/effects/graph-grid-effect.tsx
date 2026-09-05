@@ -7,6 +7,7 @@ import * as THREE from "three";
 
 import {
   computeDepthBlur,
+  DEFAULT_DEPTH_OF_FIELD,
   depthBlurToCyanLineColor,
   depthBlurToCyanParticleColor,
 } from "~/app/_components/landing-background/effects/depth-of-field";
@@ -195,7 +196,9 @@ function DataConstellation3D() {
       group.localToWorld(tempPosition);
       tempPosition.applyMatrix4(camera.matrixWorldInverse);
 
-      const color = depthBlurToCyanParticleColor(computeDepthBlur(tempPosition.z));
+      const color = depthBlurToCyanParticleColor(
+        computeDepthBlur(tempPosition.z, DEFAULT_DEPTH_OF_FIELD),
+      );
       const phase = constellation.pointPhases[index] ?? 0;
       const pulse = reducedMotion
         ? 1
@@ -217,7 +220,9 @@ function DataConstellation3D() {
       group.localToWorld(tempPosition);
       tempPosition.applyMatrix4(camera.matrixWorldInverse);
 
-      const color = depthBlurToCyanLineColor(computeDepthBlur(tempPosition.z));
+      const color = depthBlurToCyanLineColor(
+        computeDepthBlur(tempPosition.z, DEFAULT_DEPTH_OF_FIELD),
+      );
 
       lineColors[vertex * 3] = color.r * 0.55;
       lineColors[vertex * 3 + 1] = color.g * 0.55;

@@ -7,26 +7,29 @@ export type DepthOfFieldSettings = {
 };
 
 export const DEFAULT_DEPTH_OF_FIELD: DepthOfFieldSettings = {
-  focalViewZ: -4.5,
-  spread: 3.2,
-  edge: 0.1,
+  focalViewZ: -5.2,
+  spread: 6.2,
+  edge: 2.4,
 };
 
 export const STAR_FIELD_DEPTH_OF_FIELD: DepthOfFieldSettings = {
   focalViewZ: -5.4,
-  spread: 2.1,
-  edge: 0.05,
+  spread: 6.5,
+  edge: 2.6,
 };
 
 export function computeDepthBlur(
   viewZ: number,
   settings: DepthOfFieldSettings = DEFAULT_DEPTH_OF_FIELD,
 ): number {
-  return THREE.MathUtils.smoothstep(
+  const raw = THREE.MathUtils.smoothstep(
     Math.abs(viewZ - settings.focalViewZ),
     settings.edge,
     settings.spread,
   );
+
+  // Keep most of the field readable; only the extremes get heavy blur.
+  return raw * raw * 0.85;
 }
 
 export function depthBlurToStarParticleColor(blur: number): {
@@ -131,7 +134,7 @@ export function writeStarParticleDepthAttributes(input: {
     const color = depthBlurToStarParticleColor(blur);
 
     input.blurs[index] = blur;
-    input.sizes[index] = 2.8 + blur * 12;
+    input.sizes[index] = 3.6 + blur * 4.5;
     input.colors[index * 3] = color.r;
     input.colors[index * 3 + 1] = color.g;
     input.colors[index * 3 + 2] = color.b;
@@ -165,15 +168,15 @@ export const starParticleFragmentShader = /* glsl */ `
       discard;
     }
 
-    float focus = 1.0 - vBlur;
+    float focus = pow(1.0 - vBlur, 0.7);
     float core = 1.0 - smoothstep(0.0, 0.16, dist);
     float halo = 1.0 - smoothstep(0.04, 0.5, dist);
 
     vec3 sharp = vec3(1.0, 0.98, 0.96);
-    vec3 soft = vec3(0.45, 0.58, 0.96);
+    vec3 soft = vec3(0.62, 0.72, 0.98);
     vec3 rgb = mix(soft, vColor * sharp, focus);
 
-    float alpha = mix(0.08, 0.98, focus) * halo + core * focus * 0.45;
+    float alpha = mix(0.5, 0.98, focus) * halo + core * focus * 0.35;
     gl_FragColor = vec4(rgb, alpha);
   }
 `;
