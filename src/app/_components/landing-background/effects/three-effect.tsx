@@ -6,11 +6,11 @@ import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import {
-  depthBlurToVioletParticleColor,
+  depthBlurToStarParticleColor,
   writeParticleDepthColors,
 } from "~/app/_components/landing-background/effects/depth-of-field";
 
-const PARTICLE_COUNT = 1400;
+const PARTICLE_COUNT = 1800;
 
 function ParticleCloud() {
   const pointsRef = useRef<THREE.Points>(null);
@@ -54,7 +54,7 @@ function ParticleCloud() {
       object: points,
       camera,
       temp: tempPosition,
-      colorForBlur: depthBlurToVioletParticleColor,
+      colorForBlur: depthBlurToStarParticleColor,
     });
 
     const colorAttr = points.geometry.getAttribute("color") as THREE.BufferAttribute;
@@ -70,12 +70,13 @@ function ParticleCloud() {
         </bufferGeometry>
         <pointsMaterial
           vertexColors
-          size={0.042}
+          size={0.062}
           sizeAttenuation
           transparent
-          opacity={0.92}
+          opacity={1}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
+          toneMapped={false}
         />
       </points>
     </group>
@@ -87,12 +88,18 @@ export function ThreeEffect() {
     <div className="absolute inset-0 h-full w-full" aria-hidden>
       <Canvas
         camera={{ position: [0, 0.05, 5.6], fov: 58, near: 0.1, far: 100 }}
-        dpr={[1, 1.75]}
-        gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+        dpr={[1, 2]}
+        gl={{
+          alpha: true,
+          antialias: true,
+          powerPreference: "high-performance",
+          toneMapping: THREE.NoToneMapping,
+        }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.4} />
-        <pointLight position={[4, 4, 4]} intensity={1.2} color="#c4b5fd" />
+        <ambientLight intensity={0.55} />
+        <pointLight position={[4, 4, 4]} intensity={1.45} color="#f5f3ff" />
+        <pointLight position={[-3, -2, 2]} intensity={0.65} color="#ddd6fe" />
         <ParticleCloud />
         <OrbitControls
           enablePan={false}

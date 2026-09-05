@@ -23,6 +23,20 @@ export function computeDepthBlur(
   );
 }
 
+export function depthBlurToStarParticleColor(blur: number): {
+  r: number;
+  g: number;
+  b: number;
+} {
+  const focus = 1 - blur;
+
+  return {
+    r: 0.72 + focus * 0.28,
+    g: 0.76 + focus * 0.24,
+    b: 0.92 + focus * 0.08,
+  };
+}
+
 export function depthBlurToVioletParticleColor(blur: number): {
   r: number;
   g: number;

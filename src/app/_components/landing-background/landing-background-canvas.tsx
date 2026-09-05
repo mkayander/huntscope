@@ -98,7 +98,7 @@ export function LandingBackgroundCanvas() {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#2e026d] to-[#15162c]" />
       <EffectRenderer effect={effect} />
-      <GradientOverlay />
+      <GradientOverlay effect={effect} />
     </div>
   );
 }
