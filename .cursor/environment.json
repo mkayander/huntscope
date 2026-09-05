@@ -1,0 +1,17 @@
+{
+  "name": "Huntscope",
+  "user": "ubuntu",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "next-dev",
+      "command": "pnpm dev"
+    }
+  ],
+  "ports": [
+    {
+      "name": "Next.js dev server",
+      "port": 3000
+    }
+  ]
+}
