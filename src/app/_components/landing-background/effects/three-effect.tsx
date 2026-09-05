@@ -3,15 +3,21 @@
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import type { Points } from "three";
+import * as THREE from "three";
+
+import {
+  depthBlurToVioletParticleColor,
+  writeParticleDepthColors,
+} from "~/app/_components/landing-background/effects/depth-of-field";
+
+const PARTICLE_COUNT = 1400;
 
 function ParticleCloud() {
-  const pointsRef = useRef<Points>(null);
+  const pointsRef = useRef<THREE.Points>(null);
   const positions = useMemo(() => {
-    const count = 1400;
-    const values = new Float32Array(count * 3);
+    const values = new Float32Array(PARTICLE_COUNT * 3);
 
-    for (let index = 0; index < count; index += 1) {
+    for (let index = 0; index < PARTICLE_COUNT; index += 1) {
       const radius = 2.2 + Math.random() * 2.6;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
@@ -26,8 +32,13 @@ function ParticleCloud() {
 
     return values;
   }, []);
+  const pointColors = useMemo(
+    () => new Float32Array(PARTICLE_COUNT * 3).fill(1),
+    [],
+  );
+  const tempPosition = useMemo(() => new THREE.Vector3(), []);
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     const points = pointsRef.current;
     if (!points) {
       return;
@@ -35,6 +46,19 @@ function ParticleCloud() {
 
     points.rotation.y += delta * 0.07;
     points.rotation.x += delta * 0.02;
+
+    writeParticleDepthColors({
+      positions,
+      colors: pointColors,
+      count: PARTICLE_COUNT,
+      object: points,
+      camera,
+      temp: tempPosition,
+      colorForBlur: depthBlurToVioletParticleColor,
+    });
+
+    const colorAttr = points.geometry.getAttribute("color") as THREE.BufferAttribute;
+    colorAttr.needsUpdate = true;
   });
 
   return (
@@ -42,14 +66,16 @@ function ParticleCloud() {
       <points ref={pointsRef}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[pointColors, 3]} />
         </bufferGeometry>
         <pointsMaterial
-          color="#ddd6fe"
+          vertexColors
           size={0.042}
           sizeAttenuation
           transparent
-          opacity={0.88}
+          opacity={0.92}
           depthWrite={false}
+          blending={THREE.AdditiveBlending}
         />
       </points>
     </group>

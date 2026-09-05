@@ -12,14 +12,15 @@ type PlexusData = {
   lineVertexCount: number;
 };
 
-const FOCAL_VIEW_Z = -4.5;
-const DOF_SPREAD = 3.2;
+import {
+  computeDepthBlur,
+  depthBlurToCyanLineColor,
+  depthBlurToCyanParticleColor,
+  writeParticleDepthColors,
+} from "~/app/_components/landing-background/effects/depth-of-field";
+
 const CONNECTION_DISTANCE = 0.78;
 const MAX_CONNECTIONS_PER_NODE = 5;
-
-function computeDepthBlur(viewZ: number): number {
-  return THREE.MathUtils.smoothstep(Math.abs(viewZ - FOCAL_VIEW_Z), 0.1, DOF_SPREAD);
-}
 
 function buildPlexusGrid(): PlexusData {
   const cols = 14;
@@ -143,21 +144,15 @@ function PlexusGraphGrid() {
     const lineColorAttr = lines.geometry.getAttribute("color") as THREE.BufferAttribute;
     const lineArray = lines.geometry.getAttribute("position").array as Float32Array;
 
-    for (let index = 0; index < plexus.pointCount; index += 1) {
-      tempPosition.fromArray(plexus.pointPositions, index * 3);
-      group.localToWorld(tempPosition);
-      tempPosition.applyMatrix4(camera.matrixWorldInverse);
-
-      const blur = computeDepthBlur(tempPosition.z);
-      const focus = 1 - blur;
-      const r = 0.35 + focus * 0.6;
-      const g = 0.55 + focus * 0.42;
-      const b = 0.95;
-
-      pointColors[index * 3] = r;
-      pointColors[index * 3 + 1] = g;
-      pointColors[index * 3 + 2] = b;
-    }
+    writeParticleDepthColors({
+      positions: plexus.pointPositions,
+      colors: pointColors,
+      count: plexus.pointCount,
+      object: group,
+      camera,
+      temp: tempPosition,
+      colorForBlur: depthBlurToCyanParticleColor,
+    });
 
     pointColorAttr.needsUpdate = true;
 
@@ -166,12 +161,11 @@ function PlexusGraphGrid() {
       group.localToWorld(tempPosition);
       tempPosition.applyMatrix4(camera.matrixWorldInverse);
 
-      const blur = computeDepthBlur(tempPosition.z);
-      const focus = 1 - blur;
+      const color = depthBlurToCyanLineColor(computeDepthBlur(tempPosition.z));
 
-      lineColors[vertex * 3] = 0.28 + focus * 0.55;
-      lineColors[vertex * 3 + 1] = 0.45 + focus * 0.4;
-      lineColors[vertex * 3 + 2] = 0.95;
+      lineColors[vertex * 3] = color.r;
+      lineColors[vertex * 3 + 1] = color.g;
+      lineColors[vertex * 3 + 2] = color.b;
     }
 
     lineColorAttr.needsUpdate = true;
