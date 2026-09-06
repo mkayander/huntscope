@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { FeedbackRegion } from "~/app/_components/feedback-region";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
@@ -11,13 +12,17 @@ import {
   PanelButtonSkeleton,
 } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
+import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { useHomeShell } from "~/hooks/use-home-shell";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { authClient } from "~/lib/auth-client";
+import { clearGitHubViewState } from "~/lib/auth/sign-out-cleanup";
 import { useGitHubInstallStatus } from "~/hooks/use-github-install-status";
 
 export function AuthButton() {
   const hasMounted = useHasMounted();
+  const queryClient = useQueryClient();
+  const { activeSource } = useCareerOpsDataSource();
   const { isSignedIn: initialIsSignedIn, userLabel: initialUserLabel } =
     useHomeShell();
   const { data: session, isPending } = authClient.useSession();
@@ -88,11 +93,18 @@ export function AuthButton() {
             setIsSigningOut(true);
             void authClient
               .signOut()
-              .then(({ error }) => {
+              .then(async ({ error }) => {
                 if (error) {
                   setSignOutError(
                     error.message ?? "Sign-out failed. Try again.",
                   );
+                  return;
+                }
+
+                clearGitHubInstallStatus();
+
+                if (activeSource?.kind === "github") {
+                  await clearGitHubViewState(queryClient);
                 }
               })
               .catch(() => {

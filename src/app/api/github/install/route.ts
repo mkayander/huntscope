@@ -34,24 +34,25 @@ export async function GET(request: Request) {
 
   const existingConnection = await getInstallationConnection(session.user.id);
 
-  if (existingConnection) {
-    return redirectHome(request, "already-connected");
-  }
+  // Only auto-sync when there is no stored connection (e.g. user installed the
+  // app before signing in). Existing connections use the GitHub install flow to
+  // add/remove repositories or recreate the installation.
+  if (!existingConnection) {
+    const accessToken = await getGitHubUserAccessToken(request.headers);
 
-  const accessToken = await getGitHubUserAccessToken(request.headers);
+    if (accessToken) {
+      try {
+        const syncResult = await syncInstallationFromGitHub(
+          session.user.id,
+          accessToken,
+        );
 
-  if (accessToken) {
-    try {
-      const syncResult = await syncInstallationFromGitHub(
-        session.user.id,
-        accessToken,
-      );
-
-      if (syncResult.ok) {
-        return redirectHome(request, syncResult.action);
+        if (syncResult.ok) {
+          return redirectHome(request, syncResult.action);
+        }
+      } catch (error) {
+        console.error("GitHub installation sync failed:", error);
       }
-    } catch (error) {
-      console.error("GitHub installation sync failed:", error);
     }
   }
 

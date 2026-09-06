@@ -6,7 +6,7 @@ import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { FeedbackRegion } from "~/app/_components/feedback-region";
 import { GitHubInstallLink } from "~/app/_components/github-install-link";
-import { GitHubInstallStatusBanner } from "~/app/_components/github-install-status-banner";
+import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import {
   GitHubInstallationHealthCheckError,
   useGitHubInstallationHealthCheck,
@@ -26,6 +26,7 @@ import {
 import { Skeleton } from "~/components/ui/skeleton";
 import {
   usePersistSelectedRepo,
+  useRepoDataQuery,
   useSelectedRepoQuery,
 } from "~/hooks/use-career-ops-repo";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
@@ -99,7 +100,6 @@ function RepoSelectorNoConnectionContent() {
   return (
     <div className="flex flex-col gap-4">
       <GitHubInstallationHealthCheckError message={errorMessage} />
-      <GitHubInstallStatusBanner />
       <div className="flex flex-col gap-1.5">
         <h2 className="text-xl font-semibold text-white">
           Connect a repository
@@ -135,6 +135,7 @@ export function RepoSelector() {
     ),
   );
   const selectedRepoQuery = useSelectedRepoQuery();
+  const repoDataQuery = useRepoDataQuery(selectedRepoQuery.data);
   const { selectRepo, persistRepo } = usePersistSelectedRepo();
   const { setActiveSource } = useCareerOpsDataSource();
 
@@ -154,13 +155,20 @@ export function RepoSelector() {
   const isRepoListRateLimited =
     reposQuery.error != null && isGitHubRateLimitTrpcError(reposQuery.error);
 
+  const isReloading =
+    repoDataQuery.isFetching &&
+    !repoDataQuery.isLoading &&
+    !selectRepo.isPending;
+
   const feedbackHint = selectRepo.isPending
     ? "Saving repository selection and loading data…"
-    : isRepoListRateLimited
-      ? "Showing cached repositories while GitHub rate limit resets."
-      : !isRepoChosen
-        ? "Choose a career-ops repository to load your dashboard."
-        : null;
+    : isReloading
+      ? "Reloading repository data…"
+      : isRepoListRateLimited
+        ? "Showing cached repositories while GitHub rate limit resets."
+        : !isRepoChosen
+          ? "Choose a career-ops repository to load your dashboard."
+          : null;
 
   const feedbackErrorTitle = selectRepo.error
     ? "Could not save repository selection"
@@ -337,17 +345,18 @@ export function RepoSelector() {
                   </p>
                 ) : (
                   <Select
+                    variant="dashboard"
                     value={activeFullName || EMPTY_REPO_VALUE}
                     onValueChange={handleRepoChange}
                   >
                     <SelectTrigger
                       id="repo-select"
-                      className="w-full border-white/15 bg-[#15162c]"
+                      className="w-full"
                       aria-describedby="repo-filter-results"
                     >
                       <SelectValue placeholder="Select a repository…" />
                     </SelectTrigger>
-                    <SelectContent className="border-white/15 bg-[#15162c] text-white">
+                    <SelectContent>
                       <SelectItem value={EMPTY_REPO_VALUE}>
                         Select a repository…
                       </SelectItem>
@@ -368,13 +377,17 @@ export function RepoSelector() {
                   type="button"
                   variant="brandSecondary"
                   size="pill"
-                  disabled={!selectedRepo || selectRepo.isPending}
+                  disabled={
+                    !selectedRepo || selectRepo.isPending || isReloading
+                  }
                   onClick={handleReload}
                 >
-                  {selectRepo.isPending ? (
-                    <ButtonLoadingIcon isLoading />
-                  ) : null}
-                  Reload data
+                  <ButtonLoadingIcon
+                    isLoading={selectRepo.isPending || isReloading}
+                  />
+                  <StableButtonLabel placeholder="Reload data">
+                    Reload data
+                  </StableButtonLabel>
                 </Button>
 
                 <Button asChild variant="outline" size="pill">

@@ -87,6 +87,7 @@ export function TrackerTableToolbar({
             Status
           </Label>
           <Select
+            variant="dashboard"
             value={query.statusFilter ?? STATUS_ALL_VALUE}
             onValueChange={(value) => {
               onQueryChange({
@@ -95,13 +96,10 @@ export function TrackerTableToolbar({
               });
             }}
           >
-            <SelectTrigger
-              id="tracker-status-filter"
-              className="w-full border-white/15 bg-[#15162c]"
-            >
+            <SelectTrigger id="tracker-status-filter" className="w-full">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
-            <SelectContent className="border-white/15 bg-[#15162c] text-white">
+            <SelectContent>
               <SelectItem value={STATUS_ALL_VALUE}>All statuses</SelectItem>
               {uniqueStatuses.map((status) => (
                 <SelectItem key={status} value={status}>
@@ -117,6 +115,7 @@ export function TrackerTableToolbar({
             Score
           </Label>
           <Select
+            variant="dashboard"
             value={query.scoreFilter}
             onValueChange={(value) => {
               onQueryChange({
@@ -125,13 +124,10 @@ export function TrackerTableToolbar({
               });
             }}
           >
-            <SelectTrigger
-              id="tracker-score-filter"
-              className="w-full border-white/15 bg-[#15162c]"
-            >
+            <SelectTrigger id="tracker-score-filter" className="w-full">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-white/15 bg-[#15162c] text-white">
+            <SelectContent>
               {SCORE_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
@@ -146,6 +142,7 @@ export function TrackerTableToolbar({
             Report
           </Label>
           <Select
+            variant="dashboard"
             value={query.reportFilter}
             onValueChange={(value) => {
               onQueryChange({
@@ -154,13 +151,10 @@ export function TrackerTableToolbar({
               });
             }}
           >
-            <SelectTrigger
-              id="tracker-report-filter"
-              className="w-full border-white/15 bg-[#15162c]"
-            >
+            <SelectTrigger id="tracker-report-filter" className="w-full">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="border-white/15 bg-[#15162c] text-white">
+            <SelectContent>
               {REPORT_FILTER_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}

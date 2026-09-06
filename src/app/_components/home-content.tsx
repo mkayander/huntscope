@@ -10,7 +10,7 @@ import { DashboardAmbientBackground } from "~/app/_components/dashboard-ambient-
 
 import { DataSourcePanel } from "~/app/_components/data-source-panel";
 
-import { GitHubInstallStatusBanner } from "~/app/_components/github-install-status-banner";
+import { GitHubInstallStatusToast } from "~/app/_components/github-install-status-toast";
 
 import {
   LandingBackgroundCanvas,
@@ -43,6 +43,9 @@ export function HomeContent({
   return (
     <HomeShellProvider initialState={initialState}>
       <CareerOpsDataSourceProvider>
+        <Suspense fallback={null}>
+          <GitHubInstallStatusToast />
+        </Suspense>
         <Suspense
           fallback={
             <HomeContentFallback
@@ -162,8 +165,6 @@ function HomeContentBody({
       <DashboardAmbientBackground />
 
       <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
-        <GitHubInstallStatusBanner className="w-full" />
-
         <div className="flex flex-col items-center gap-4 text-center">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>

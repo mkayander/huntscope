@@ -7,6 +7,14 @@ import {
   type LandingBackgroundEffect,
   type ScopeOverlayLayer,
 } from "~/app/_components/landing-background/types";
+import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 type LandingBackgroundContextValue = {
   effect: LandingBackgroundEffect;
@@ -17,14 +25,18 @@ type LandingBackgroundContextValue = {
   setScopeOverlayLayer: (layer: ScopeOverlayLayer) => void;
 };
 
-const LandingBackgroundContext = createContext<LandingBackgroundContextValue | null>(
-  null,
-);
+const LandingBackgroundContext =
+  createContext<LandingBackgroundContextValue | null>(null);
 
-export function LandingBackgroundProvider({ children }: { children: ReactNode }) {
+export function LandingBackgroundProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [effect, setEffect] = useState<LandingBackgroundEffect>("three");
   const [scopeOverlayEnabled, setScopeOverlayEnabled] = useState(true);
-  const [scopeOverlayLayer, setScopeOverlayLayer] = useState<ScopeOverlayLayer>("back");
+  const [scopeOverlayLayer, setScopeOverlayLayer] =
+    useState<ScopeOverlayLayer>("back");
 
   return (
     <LandingBackgroundContext.Provider
@@ -45,7 +57,9 @@ export function LandingBackgroundProvider({ children }: { children: ReactNode })
 export function useLandingBackground(): LandingBackgroundContextValue {
   const context = useContext(LandingBackgroundContext);
   if (!context) {
-    throw new Error("useLandingBackground must be used within LandingBackgroundProvider");
+    throw new Error(
+      "useLandingBackground must be used within LandingBackgroundProvider",
+    );
   }
 
   return context;
@@ -60,32 +74,41 @@ export function LandingBackgroundPicker() {
     scopeOverlayLayer,
     setScopeOverlayLayer,
   } = useLandingBackground();
-  const selectedOption = LANDING_BACKGROUND_OPTIONS.find((option) => option.value === effect);
+  const selectedOption = LANDING_BACKGROUND_OPTIONS.find(
+    (option) => option.value === effect,
+  );
   const scopeIsPrimary = effect === "scope";
 
   return (
     <div className="flex w-full max-w-md flex-col gap-3 rounded-2xl border border-white/15 bg-black/35 px-4 py-3 backdrop-blur-md">
-      <label className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+      <div className="flex flex-col gap-2">
+        <Label className="text-xs font-semibold tracking-[0.18em] text-white/50 uppercase">
           Compare background styles
-        </span>
-        <select
+        </Label>
+        <Select
+          variant="dashboard"
           value={effect}
-          onChange={(event) => {
-            setEffect(event.target.value as LandingBackgroundEffect);
+          onValueChange={(value) => {
+            setEffect(value as LandingBackgroundEffect);
           }}
-          className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white outline-none ring-violet-400/40 focus:ring-2"
         >
-          {LANDING_BACKGROUND_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value} className="bg-[#15162c]">
-              {option.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="landing-background-effect" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LANDING_BACKGROUND_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {selectedOption ? (
-          <span className="text-xs text-white/55">{selectedOption.description}</span>
+          <span className="text-xs text-white/55">
+            {selectedOption.description}
+          </span>
         ) : null}
-      </label>
+      </div>
 
       <div className="border-t border-white/10 pt-3">
         <label className="flex cursor-pointer items-start gap-3">
@@ -98,7 +121,9 @@ export function LandingBackgroundPicker() {
             className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/10 accent-violet-500"
           />
           <span className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-white/90">Scope radar overlay</span>
+            <span className="text-sm font-medium text-white/90">
+              Scope radar overlay
+            </span>
             <span className="text-xs text-white/55">
               Keep the Huntscope reticle visible over other background modes.
             </span>
@@ -107,7 +132,7 @@ export function LandingBackgroundPicker() {
 
         {scopeOverlayEnabled && !scopeIsPrimary ? (
           <div className="mt-3 flex flex-col gap-2 pl-7">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+            <span className="text-xs font-semibold tracking-[0.14em] text-white/45 uppercase">
               Overlay layer
             </span>
             <div className="flex flex-wrap gap-2">
