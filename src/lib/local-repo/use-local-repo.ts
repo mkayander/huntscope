@@ -3,20 +3,29 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
+  DIRECTORY_PICKER_ID,
+} from "~/lib/local-repo/constants";
+import {
   supportsDirectoryPicker,
   supportsFileSystemObserver,
 } from "~/lib/local-repo/file-system-types";
+import { registerLaunchConsumer } from "~/lib/local-repo/launch-handler";
 import { watchDirectory } from "~/lib/local-repo/observer";
 import {
   ensureReadPermission,
+  readLaunchedFilePreview,
   readLocalRepoPreview,
   type LocalRepoPreview,
 } from "~/lib/local-repo/reader";
 import {
-  clearDirectoryHandle,
+  clearAllLocalRepoHandles,
+  clearLaunchedFileHandle,
   loadDirectoryHandle,
+  loadLaunchedFileHandle,
   saveDirectoryHandle,
+  saveLaunchedFileHandle,
 } from "~/lib/local-repo/storage";
+import { isInstalledPwa } from "~/lib/pwa/environment";
 
 type LocalRepoState =
   | { status: "loading" }
@@ -30,10 +39,13 @@ export function useLocalRepo() {
   const [state, setState] = useState<LocalRepoState>({ status: "loading" });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [watchingDisk, setWatchingDisk] = useState(false);
+  const [installedPwa, setInstalledPwa] = useState(false);
   const [directoryHandle, setDirectoryHandle] =
     useState<FileSystemDirectoryHandle | null>(null);
+  const [launchedFileHandle, setLaunchedFileHandle] =
+    useState<FileSystemFileHandle | null>(null);
 
-  const refresh = useCallback(async (handle: FileSystemDirectoryHandle) => {
+  const refreshDirectory = useCallback(async (handle: FileSystemDirectoryHandle) => {
     setIsRefreshing(true);
 
     try {
@@ -49,6 +61,7 @@ export function useLocalRepo() {
 
       const preview = await readLocalRepoPreview(handle);
       setDirectoryHandle(handle);
+      setLaunchedFileHandle(null);
       setState({ status: "connected", preview });
     } catch (error) {
       setState({
@@ -63,39 +76,89 @@ export function useLocalRepo() {
     }
   }, []);
 
+  const refreshLaunchedFile = useCallback(async (handle: FileSystemFileHandle) => {
+    setIsRefreshing(true);
+
+    try {
+      const preview = await readLaunchedFilePreview(handle);
+      setLaunchedFileHandle(handle);
+      setDirectoryHandle(null);
+      setState({ status: "connected", preview });
+    } catch (error) {
+      setState({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not read the launched file.",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
   const restore = useCallback(async () => {
+    setInstalledPwa(isInstalledPwa());
+
     if (!supportsDirectoryPicker()) {
       setState({ status: "unsupported" });
       return;
     }
 
-    const handle = await loadDirectoryHandle();
+    const directory = await loadDirectoryHandle();
 
-    if (!handle) {
-      setState({ status: "idle" });
+    if (directory) {
+      await refreshDirectory(directory);
       return;
     }
 
-    await refresh(handle);
-  }, [refresh]);
+    const launchedFile = await loadLaunchedFileHandle();
+
+    if (launchedFile) {
+      await refreshLaunchedFile(launchedFile);
+      return;
+    }
+
+    setState({ status: "idle" });
+  }, [refreshDirectory, refreshLaunchedFile]);
 
   useEffect(() => {
     void restore();
   }, [restore]);
 
   useEffect(() => {
-    if (!directoryHandle || state.status !== "connected") {
+    registerLaunchConsumer((files) => {
+      const fileHandle = files[0];
+
+      if (!fileHandle) {
+        return;
+      }
+
+      void (async () => {
+        await clearAllLocalRepoHandles();
+        await saveLaunchedFileHandle(fileHandle);
+        await refreshLaunchedFile(fileHandle);
+      })();
+    });
+  }, [refreshLaunchedFile]);
+
+  useEffect(() => {
+    if (
+      !directoryHandle ||
+      state.status !== "connected" ||
+      state.preview.source !== "directory"
+    ) {
       setWatchingDisk(false);
       return;
     }
 
     const stopWatching = watchDirectory(directoryHandle, () => {
-      void refresh(directoryHandle);
+      void refreshDirectory(directoryHandle);
     });
 
     setWatchingDisk(supportsFileSystemObserver());
     return stopWatching;
-  }, [directoryHandle, refresh, state.status]);
+  }, [directoryHandle, refreshDirectory, state]);
 
   const pickDirectory = useCallback(async () => {
     if (!supportsDirectoryPicker()) {
@@ -112,12 +175,13 @@ export function useLocalRepo() {
       }
 
       const handle = await picker({
-        id: "huntscope-local-repo",
+        id: DIRECTORY_PICKER_ID,
         mode: "read",
       });
 
+      await clearLaunchedFileHandle();
       await saveDirectoryHandle(handle);
-      await refresh(handle);
+      await refreshDirectory(handle);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
@@ -129,9 +193,14 @@ export function useLocalRepo() {
           error instanceof Error ? error.message : "Could not open the folder.",
       });
     }
-  }, [refresh]);
+  }, [refreshDirectory]);
 
   const reconnect = useCallback(async () => {
+    if (launchedFileHandle) {
+      await refreshLaunchedFile(launchedFileHandle);
+      return;
+    }
+
     const handle = directoryHandle ?? (await loadDirectoryHandle());
 
     if (!handle) {
@@ -139,12 +208,13 @@ export function useLocalRepo() {
       return;
     }
 
-    await refresh(handle);
-  }, [directoryHandle, refresh]);
+    await refreshDirectory(handle);
+  }, [directoryHandle, launchedFileHandle, refreshDirectory, refreshLaunchedFile]);
 
   const disconnect = useCallback(async () => {
-    await clearDirectoryHandle();
+    await clearAllLocalRepoHandles();
     setDirectoryHandle(null);
+    setLaunchedFileHandle(null);
     setState({ status: "idle" });
   }, []);
 
@@ -152,6 +222,7 @@ export function useLocalRepo() {
     state,
     isRefreshing,
     watchingDisk,
+    installedPwa,
     pickDirectory,
     refresh: reconnect,
     disconnect,

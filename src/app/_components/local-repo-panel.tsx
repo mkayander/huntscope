@@ -1,5 +1,6 @@
 "use client";
 
+import { InstallPwaButton } from "~/app/_components/install-pwa-button";
 import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
 import { DataPreview } from "~/app/_components/data-preview";
 
@@ -8,6 +9,7 @@ export function LocalRepoPanel() {
     state,
     isRefreshing,
     watchingDisk,
+    installedPwa,
     pickDirectory,
     refresh,
     disconnect,
@@ -43,9 +45,17 @@ export function LocalRepoPanel() {
           </p>
           <p className="text-xs text-white/50">
             Last refreshed {new Date(state.preview.lastRefreshedAt).toLocaleString()}
-            {watchingDisk ? " · watching for disk changes" : ""}
+            {state.preview.source === "directory" && watchingDisk
+              ? " · watching for disk changes"
+              : ""}
+            {state.preview.source === "launched-file"
+              ? " · opened from the OS"
+              : ""}
+            {installedPwa ? " · installed app mode" : ""}
           </p>
         </div>
+
+        <InstallPwaButton />
 
         <DataPreview
           filePath={state.preview.filePath}
@@ -86,8 +96,11 @@ export function LocalRepoPanel() {
       <h2 className="text-lg font-semibold text-white">Local repository</h2>
       <p className="text-center text-sm text-white/70">
         Open a job-search data folder from your computer. Huntscope reads files
-        directly from disk and can refresh when the folder changes.
+        directly from disk and can refresh when the folder changes. Install the
+        app for stronger folder permission persistence.
       </p>
+
+      <InstallPwaButton />
 
       {state.status === "permission-required" ? (
         <p className="text-center text-sm text-amber-200">

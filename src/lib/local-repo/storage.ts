@@ -1,5 +1,6 @@
 import {
   LOCAL_REPO_DB_NAME,
+  LOCAL_REPO_FILE_HANDLE_KEY,
   LOCAL_REPO_HANDLE_KEY,
   LOCAL_REPO_STORE_NAME,
 } from "~/lib/local-repo/constants";
@@ -107,4 +108,96 @@ export async function clearDirectoryHandle() {
   });
 
   database.close();
+}
+
+export async function saveLaunchedFileHandle(handle: FileSystemFileHandle) {
+  const database = await openDatabase();
+
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(LOCAL_REPO_STORE_NAME, "readwrite");
+    const store = transaction.objectStore(LOCAL_REPO_STORE_NAME);
+    const request = store.put(handle, LOCAL_REPO_FILE_HANDLE_KEY);
+
+    request.onerror = () => {
+      reject(request.error ?? new Error("Failed to save launched file handle"));
+    };
+
+    transaction.oncomplete = () => {
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      reject(
+        transaction.error ?? new Error("Failed to save launched file handle"),
+      );
+    };
+  });
+
+  database.close();
+}
+
+export async function loadLaunchedFileHandle(): Promise<FileSystemFileHandle | null> {
+  const database = await openDatabase();
+
+  const handle = await new Promise<FileSystemFileHandle | null>(
+    (resolve, reject) => {
+      const transaction = database.transaction(LOCAL_REPO_STORE_NAME, "readonly");
+      const store = transaction.objectStore(LOCAL_REPO_STORE_NAME);
+      const request = store.get(LOCAL_REPO_FILE_HANDLE_KEY);
+
+      request.onerror = () => {
+        reject(request.error ?? new Error("Failed to load launched file handle"));
+      };
+
+      request.onsuccess = () => {
+        const value: unknown = request.result;
+
+        if (
+          value &&
+          typeof value === "object" &&
+          "kind" in value &&
+          (value as FileSystemHandle).kind === "file"
+        ) {
+          resolve(value as FileSystemFileHandle);
+          return;
+        }
+
+        resolve(null);
+      };
+    },
+  );
+
+  database.close();
+  return handle;
+}
+
+export async function clearLaunchedFileHandle() {
+  const database = await openDatabase();
+
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(LOCAL_REPO_STORE_NAME, "readwrite");
+    const store = transaction.objectStore(LOCAL_REPO_STORE_NAME);
+    const request = store.delete(LOCAL_REPO_FILE_HANDLE_KEY);
+
+    request.onerror = () => {
+      reject(request.error ?? new Error("Failed to clear launched file handle"));
+    };
+
+    transaction.oncomplete = () => {
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      reject(
+        transaction.error ?? new Error("Failed to clear launched file handle"),
+      );
+    };
+  });
+
+  database.close();
+}
+
+export async function clearAllLocalRepoHandles() {
+  await clearDirectoryHandle();
+  await clearLaunchedFileHandle();
 }

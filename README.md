@@ -23,6 +23,9 @@ Open a folder from disk using the browser's directory picker. Files are read dir
 - Folder access is remembered in IndexedDB between visits
 - **Refresh** button re-reads files on demand
 - **Disk watching** uses `FileSystemObserver` when the browser supports it
+- **Installed PWA mode** keeps folder permissions longer than a regular browser tab (Chrome)
+
+You can also install Huntscope as a desktop app. Installed PWAs get stronger local file access in Chrome, including optional `.md` file-handler launches from the OS.
 
 ### 2. GitHub repository (optional)
 
@@ -32,6 +35,17 @@ Sign in with GitHub only if you want cloud-hosted data.
 2. **Connect repository (GitHub App)** — install on **selected repositories only** with read-only contents access
 
 Sessions and GitHub installation metadata are stored in **encrypted cookies (JWE)** — no Postgres or KV required for MVP.
+
+## PWA support
+
+Huntscope ships with a basic Progressive Web App setup:
+
+- `src/app/manifest.ts` — installable app manifest with standalone display mode
+- `public/sw.js` — lightweight service worker that caches the app shell
+- `file_handlers` for `.md` files — open markdown files directly into Huntscope from the OS (Chromium)
+- **Install app** button appears when the browser supports installation
+
+Installing the app is recommended for local-folder workflows because Chrome persists File System Access permissions longer for installed PWAs than for regular tabs.
 
 ## GitHub setup (optional)
 

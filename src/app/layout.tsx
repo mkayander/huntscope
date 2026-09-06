@@ -1,15 +1,30 @@
 import "~/styles/globals.css";
 
-import { type Metadata } from "next";
+import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 
+import { PwaRegister } from "~/app/_components/pwa-register";
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "Huntscope",
   description:
-    "Analytics dashboard for your private job-search repository on GitHub",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+    "Analytics dashboard for your job-search data repository on disk or GitHub",
+  applicationName: "Huntscope",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Huntscope",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: [{ rel: "icon", url: "/icon" }],
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2e026d",
+  colorScheme: "dark",
 };
 
 const geist = Geist({
@@ -23,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body>
+        <PwaRegister />
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>

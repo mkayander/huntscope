@@ -6,6 +6,7 @@ export type LocalRepoPreview = {
   filePath: string;
   preview: string | null;
   lastRefreshedAt: string;
+  source: "directory" | "launched-file";
 };
 
 async function readTextFile(
@@ -51,6 +52,22 @@ export async function readLocalRepoPreview(
     filePath,
     preview: content ? content.split("\n").slice(0, 5).join("\n") : null,
     lastRefreshedAt: new Date().toISOString(),
+    source: "directory",
+  };
+}
+
+export async function readLaunchedFilePreview(
+  fileHandle: FileSystemFileHandle,
+): Promise<LocalRepoPreview> {
+  const file = await fileHandle.getFile();
+  const content = await file.text();
+
+  return {
+    directoryName: fileHandle.name,
+    filePath: fileHandle.name,
+    preview: content.split("\n").slice(0, 5).join("\n"),
+    lastRefreshedAt: new Date().toISOString(),
+    source: "launched-file",
   };
 }
 
