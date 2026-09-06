@@ -1,15 +1,28 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
+
+import { PAGE_SHELL_LANDING_BACKGROUND } from "~/lib/page-shell-background";
 
 export type PageShellTheme = "landing" | "dashboard";
 
 export function usePageShellTheme(theme: PageShellTheme) {
-  useEffect(() => {
-    document.documentElement.dataset.pageShell = theme;
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.dataset.pageShell = theme;
+
+    if (theme === "landing") {
+      root.style.setProperty(
+        "--page-shell-background",
+        PAGE_SHELL_LANDING_BACKGROUND,
+      );
+    } else {
+      root.style.removeProperty("--page-shell-background");
+    }
 
     return () => {
-      delete document.documentElement.dataset.pageShell;
+      delete root.dataset.pageShell;
+      root.style.removeProperty("--page-shell-background");
     };
   }, [theme]);
 }

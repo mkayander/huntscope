@@ -115,8 +115,8 @@ export function LandingBackgroundCanvas() {
     <div
       className={
         isInteractive3d
-          ? "fixed-viewport-bleed pointer-events-auto z-0 h-[100dvh] overflow-hidden"
-          : "fixed-viewport-bleed pointer-events-none z-0 h-[100dvh] overflow-hidden"
+          ? "fixed-viewport-bleed pointer-events-auto z-0 overflow-hidden"
+          : "fixed-viewport-bleed pointer-events-none z-0 overflow-hidden"
       }
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#2e026d] to-[#15162c]" />
