@@ -8,7 +8,9 @@ import {
   getStatusColor,
 } from "~/app/_components/analytics-charts/chart-theme";
 import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import type { StatusChartDatum } from "~/lib/career-ops/chart-data";
+import { cn } from "~/lib/utils";
 
 type StatusRadialChartProps = {
   data: StatusChartDatum[];
@@ -29,7 +31,11 @@ export function StatusRadialChart({
   onStatusFilterChange,
 }: StatusRadialChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { containerRef, width, height } = useChartSize({ aspectRatio: 1, minHeight: 260, maxHeight: 320 });
+  const { containerRef, width, height } = useChartSize({
+    aspectRatio: 1,
+    minHeight: 260,
+    maxHeight: 320,
+  });
 
   useEffect(() => {
     const svgElement = svgRef.current;
@@ -104,7 +110,10 @@ export function StatusRadialChart({
       .duration(700)
       .delay((_, index) => index * 60)
       .attrTween("d", function (datum) {
-        const interpolate = d3.interpolate(datum.innerRadius, radiusScale(datum.count));
+        const interpolate = d3.interpolate(
+          datum.innerRadius,
+          radiusScale(datum.count),
+        );
         return (time) =>
           arc({
             ...datum,
@@ -113,7 +122,9 @@ export function StatusRadialChart({
       });
 
     arcs.on("click", (_, datum) => {
-      onStatusFilterChange(activeStatusFilter === datum.status ? null : datum.status);
+      onStatusFilterChange(
+        activeStatusFilter === datum.status ? null : datum.status,
+      );
     });
 
     root
@@ -140,7 +151,8 @@ export function StatusRadialChart({
       .data(data)
       .join("text")
       .attr("transform", (datum) => {
-        const angle = (angleScale(datum.status) ?? 0) + angleScale.bandwidth() / 2;
+        const angle =
+          (angleScale(datum.status) ?? 0) + angleScale.bandwidth() / 2;
         const x = Math.sin(angle) * labelRadius;
         const y = -Math.cos(angle) * labelRadius;
         const rotate = (angle * 180) / Math.PI;
@@ -148,7 +160,8 @@ export function StatusRadialChart({
         return `translate(${x},${y}) rotate(${flip})`;
       })
       .attr("text-anchor", (datum) => {
-        const angle = (angleScale(datum.status) ?? 0) + angleScale.bandwidth() / 2;
+        const angle =
+          (angleScale(datum.status) ?? 0) + angleScale.bandwidth() / 2;
         return angle > Math.PI ? "end" : "start";
       })
       .attr("fill", CHART_COLORS.label)
@@ -193,12 +206,19 @@ function ChartFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-black/20 p-4">
+    <div
+      className={cn(
+        glassCardSurfaceClassName,
+        "flex h-full flex-col rounded-xl p-4",
+      )}
+    >
       <div>
         <h4 className="text-sm font-semibold text-white">{title}</h4>
         <p className="mt-1 text-xs text-white/50">{description}</p>
       </div>
-      <div className="mt-4 flex flex-1 items-center justify-center">{children}</div>
+      <div className="mt-4 flex flex-1 items-center justify-center">
+        {children}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import { glassInsetSurfaceClassName } from "~/components/ui/glass-surface";
+import { cn } from "~/lib/utils";
+
 type DataPreviewProps = {
   filePath: string;
   preview: string | null;
@@ -15,11 +18,18 @@ export function DataPreview({
 }: DataPreviewProps) {
   if (preview) {
     return (
-      <div className="w-full rounded-xl bg-black/30 p-4 text-left">
-        <p className="mb-2 text-xs uppercase tracking-wide text-white/50">
+      <div
+        className={cn(
+          glassInsetSurfaceClassName,
+          "w-full rounded-xl p-4 text-left",
+        )}
+      >
+        <p className="mb-2 text-xs tracking-wide text-white/50 uppercase">
           Preview: {filePath} · {sourceLabel}
         </p>
-        <pre className="overflow-x-auto text-sm text-emerald-100">{preview}</pre>
+        <pre className="overflow-x-auto text-sm text-emerald-100">
+          {preview}
+        </pre>
       </div>
     );
   }

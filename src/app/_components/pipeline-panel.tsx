@@ -1,6 +1,8 @@
 import type { PipelineSummary } from "~/lib/career-ops/types";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import { cn } from "~/lib/utils";
 
 type PipelinePanelProps = {
   pipeline: PipelineSummary;
@@ -26,7 +28,10 @@ export function PipelinePanel({ pipeline }: PipelinePanelProps) {
           {pipeline.pendingPreview.map((entry) => (
             <li
               key={entry}
-              className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white/85"
+              className={cn(
+                glassCardSurfaceClassName,
+                "rounded-lg px-3 py-2 text-sm text-white/85",
+              )}
             >
               <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
                 {entry}
@@ -35,7 +40,9 @@ export function PipelinePanel({ pipeline }: PipelinePanelProps) {
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-sm text-white/50">No pending URLs in the pipeline inbox.</p>
+        <p className="mt-4 text-sm text-white/50">
+          No pending URLs in the pipeline inbox.
+        </p>
       )}
     </GlowPanel>
   );

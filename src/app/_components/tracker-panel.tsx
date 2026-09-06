@@ -10,9 +10,11 @@ import {
 import { TrackerVirtualTable } from "~/app/_components/tracker-virtual-table";
 import { ApplicationDate } from "~/components/application-date";
 import { Button } from "~/components/ui/button";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
+import { cn } from "~/lib/utils";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
 import { resolveArtifactLink } from "~/lib/career-ops/links";
 import { sortStatuses } from "~/lib/career-ops/status-meta";
@@ -193,7 +195,7 @@ function TrackerBoard({
           return (
             <div
               key={status}
-              className="rounded-xl border border-white/10 bg-black/20 p-3"
+              className={cn(glassCardSurfaceClassName, "rounded-xl p-3")}
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold text-white">{status}</h4>
