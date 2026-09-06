@@ -1,25 +1,39 @@
 # Huntscope
 
-Analytics dashboard for your private job-search repository on GitHub.
+Analytics dashboard for your job-search data repository.
 
 Huntscope connects to a companion data repo (for example a career-ops-style layout with `data/applications.md`, `data/pipeline.md`, and `reports/`) and turns it into charts, tables, and funnel views — without replacing the repo as the source of truth.
 
 ## Stack
 
 - [Next.js](https://nextjs.org) 15 (App Router)
-- [Better Auth](https://www.better-auth.com) — stateless GitHub OAuth (encrypted cookies, no database)
+- [Better Auth](https://www.better-auth.com) — optional stateless GitHub OAuth (encrypted cookies, no database)
 - [tRPC](https://trpc.io) + [Tailwind CSS](https://tailwindcss.com)
+- [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API) — local folder access in supported desktop browsers
 
-## Auth model
+## Data sources
 
-Huntscope uses a two-step GitHub integration:
+Huntscope supports two ways to load your job-search data:
 
-1. **Sign in (OAuth App)** — requests only `read:user` and `user:email`. Users are not asked to grant access to every private repository.
-2. **Connect repository (GitHub App)** — users install the Huntscope GitHub App on **selected repositories only**. Huntscope receives read-only access to the repo they pick.
+### 1. Local repository (default, no sign-in)
 
-Sessions and installation metadata are stored in **encrypted cookies (JWE)** — no Postgres or KV required for MVP.
+Open a folder from disk using the browser's directory picker. Files are read directly on your machine and never uploaded.
 
-## GitHub setup
+- Works in Chrome and Edge on desktop
+- Folder access is remembered in IndexedDB between visits
+- **Refresh** button re-reads files on demand
+- **Disk watching** uses `FileSystemObserver` when the browser supports it
+
+### 2. GitHub repository (optional)
+
+Sign in with GitHub only if you want cloud-hosted data.
+
+1. **Sign in (OAuth App)** — requests only `read:user` and `user:email`
+2. **Connect repository (GitHub App)** — install on **selected repositories only** with read-only contents access
+
+Sessions and GitHub installation metadata are stored in **encrypted cookies (JWE)** — no Postgres or KV required for MVP.
+
+## GitHub setup (optional)
 
 ### 1. OAuth App (sign-in)
 
@@ -47,18 +61,17 @@ After creating the app:
 2. Note the **App ID**.
 3. Note the app **slug** from the public install URL (`https://github.com/apps/<slug>`).
 
-Users connect a repo from the Huntscope UI. GitHub shows **Only select repositories**, so they grant access to exactly one companion repo.
-
 ## Getting started
 
 ```bash
 pnpm install
 cp .env.example .env
-# Fill BETTER_AUTH_SECRET (openssl rand -base64 32), OAuth credentials, and GitHub App values
+# Fill BETTER_AUTH_SECRET (openssl rand -base64 32)
+# GitHub values are only required if you want the optional cloud repo flow
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) and click **Open local folder**.
 
 ## Scripts
 
@@ -76,7 +89,7 @@ Set these in **Project → Settings → Environment Variables** (Production, Pre
 |----------|-------|
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | `https://<your-vercel-domain>` |
-| `GITHUB_CLIENT_ID` | OAuth app client ID |
+| `GITHUB_CLIENT_ID` | OAuth app client ID (optional cloud flow) |
 | `GITHUB_CLIENT_SECRET` | OAuth app client secret |
 | `GITHUB_APP_ID` | GitHub App ID |
 | `GITHUB_APP_PRIVATE_KEY` | PEM private key; use `\n` for newlines in Vercel |
