@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Huntscope">
   <defs>
-    <linearGradient id="hs-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="hs-bg-mask" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#2e026d" />
       <stop offset="100%" stop-color="#15162c" />
     </linearGradient>
-    <radialGradient id="hs-glow" cx="50%" cy="42%" r="58%">
-      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35" />
+    <radialGradient id="hs-glow-mask" cx="50%" cy="42%" r="58%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28" />
       <stop offset="100%" stop-color="#15162c" stop-opacity="0" />
     </radialGradient>
-    <filter id="hs-soft-glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="6" result="blur" />
+    <filter id="hs-soft-glow-mask" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
       <feMerge>
         <feMergeNode in="blur" />
         <feMergeNode in="SourceGraphic" />
@@ -17,10 +17,10 @@
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="112" fill="url(#hs-bg)" />
-  <rect width="512" height="512" rx="112" fill="url(#hs-glow)" />
+  <rect width="512" height="512" fill="url(#hs-bg-mask)" />
+  <rect width="512" height="512" fill="url(#hs-glow-mask)" />
 
-  <g transform="translate(256 256)" filter="url(#hs-soft-glow)">
+  <g transform="translate(256 256) scale(0.82)" filter="url(#hs-soft-glow-mask)">
     <circle
       r="198"
       fill="none"

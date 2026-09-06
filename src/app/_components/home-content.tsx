@@ -3,19 +3,15 @@
 import { Suspense } from "react";
 
 import { AuthButton } from "~/app/_components/auth-button";
-
 import { Dashboard } from "~/app/_components/dashboard";
-
 import { DashboardAmbientBackground } from "~/app/_components/dashboard-ambient-background";
-
 import { DataSourcePanel } from "~/app/_components/data-source-panel";
-
 import { GitHubInstallStatusToast } from "~/app/_components/github-install-status-toast";
-
 import {
   LandingBackgroundCanvas,
   LandingBackgroundProvider,
 } from "~/app/_components/landing-background/landing-background-shell";
+import { HuntscopeWordmark } from "~/components/brand/huntscope-wordmark";
 
 import {
   CareerOpsDataSourceProvider,
@@ -74,9 +70,7 @@ function HomeContentFallback({
 
         <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-4 text-center">
-            <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-              Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>
-            </h1>
+            <HuntscopeWordmark />
 
             <p className="max-w-xl text-lg text-white/80">
               Analytics for your career-ops project or companion repository.
@@ -135,9 +129,7 @@ function HomeContentBody({
         <main className="relative isolate flex min-h-screen flex-col items-center text-white">
           <div className="container flex flex-col items-center gap-10 px-4 py-16 pb-28">
             <div className="flex flex-col items-center gap-4 text-center">
-              <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-                Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>
-              </h1>
+              <HuntscopeWordmark />
 
               <p className="max-w-2xl text-lg text-white/80">
                 Analytics for your job-search data repository. Open a local
@@ -166,9 +158,7 @@ function HomeContentBody({
 
       <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-4 text-center">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>
-          </h1>
+          <HuntscopeWordmark />
 
           <p className="max-w-xl text-lg text-white/80">
             {hasLocalSource

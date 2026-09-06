@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Huntscope">
+  <defs>
+    <linearGradient id="hs-bg-sm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2e026d" />
+      <stop offset="100%" stop-color="#15162c" />
+    </linearGradient>
+  </defs>
+
+  <rect width="32" height="32" rx="7" fill="url(#hs-bg-sm)" />
+
+  <g transform="translate(16 16)">
+    <circle r="12.5" fill="none" stroke="#c4b5fd" stroke-width="1.6" />
+    <rect x="-1.2" y="-14.8" width="2.4" height="3.2" rx="1.2" fill="#ddd6fe" />
+    <rect x="-1.2" y="11.6" width="2.4" height="3.2" rx="1.2" fill="#ddd6fe" />
+    <rect x="-14.8" y="-1.2" width="3.2" height="2.4" rx="1.2" fill="#ddd6fe" />
+    <rect x="11.6" y="-1.2" width="3.2" height="2.4" rx="1.2" fill="#ddd6fe" />
+
+    <g transform="translate(-4.5 -4.5)">
+      <rect width="2.8" height="2.8" rx="0.8" fill="#8b5cf6" opacity="0.75" />
+      <rect x="3.2" width="2.8" height="2.8" rx="0.8" fill="#a78bfa" opacity="0.9" />
+      <rect x="6.4" width="2.8" height="2.8" rx="0.8" fill="#7c3aed" opacity="0.7" />
+      <rect y="3.2" width="2.8" height="2.8" rx="0.8" fill="#a78bfa" opacity="0.92" />
+      <rect x="3.2" y="3.2" width="2.8" height="2.8" rx="0.8" fill="#f5f3ff" />
+      <rect x="6.4" y="3.2" width="2.8" height="2.8" rx="0.8" fill="#a78bfa" opacity="0.88" />
+      <rect y="6.4" width="2.8" height="2.8" rx="0.8" fill="#7c3aed" opacity="0.65" />
+      <rect x="3.2" y="6.4" width="2.8" height="2.8" rx="0.8" fill="#8b5cf6" opacity="0.8" />
+      <rect x="6.4" y="6.4" width="2.8" height="2.8" rx="0.8" fill="#8b5cf6" opacity="0.72" />
+    </g>
+  </g>
+</svg>
