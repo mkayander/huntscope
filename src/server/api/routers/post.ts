@@ -16,6 +16,6 @@ export const postRouter = createTRPCRouter({
     }),
 
   getSecretMessage: protectedProcedure.query(() => {
-    return "Signed in via Better Auth — ready to read your GitHub repos.";
+    return "Signed in with GitHub. Connect a repository to start reading your job-search data.";
   }),
 });

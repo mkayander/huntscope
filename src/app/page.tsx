@@ -5,12 +5,19 @@ import { SignedInPanel } from "~/app/_components/signed-in-panel";
 import { getSession } from "~/server/auth/session";
 import { api, HydrateClient } from "~/trpc/server";
 
-export default async function Home() {
+type HomeProps = {
+  searchParams: Promise<{ github?: string }>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
   const hello = await api.post.hello({ text: "from tRPC" });
   const session = await getSession(await headers());
+  const { github: githubStatus } = await searchParams;
 
   if (session?.user) {
     void api.post.getSecretMessage.prefetch();
+    void api.github.getConnection.prefetch();
+    void api.github.previewDataFile.prefetch();
   }
 
   return (
@@ -34,7 +41,9 @@ export default async function Home() {
               {hello ? hello.greeting : "Loading tRPC query..."}
             </p>
             <AuthButton />
-            {session?.user ? <SignedInPanel /> : null}
+            {session?.user ? (
+              <SignedInPanel githubStatus={githubStatus} />
+            ) : null}
           </div>
         </div>
       </main>
