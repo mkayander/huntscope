@@ -116,3 +116,33 @@ export async function readRepositoryFile(
     throw error;
   }
 }
+
+type GitHubContentItem = {
+  name: string;
+  path: string;
+  type: "file" | "dir" | "submodule" | "symlink";
+};
+
+export async function listRepositoryContents(
+  installationId: number,
+  repositoryFullName: string,
+  directoryPath: string,
+): Promise<GitHubContentItem[]> {
+  requireGitHubAppConfig();
+  const { token } = await createInstallationAccessToken(installationId);
+
+  try {
+    const data = await githubFetch<GitHubContentItem | GitHubContentItem[]>({
+      token,
+      path: `/repos/${repositoryFullName}/contents/${directoryPath}`,
+    });
+
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) {
+      return [];
+    }
+
+    throw error;
+  }
+}

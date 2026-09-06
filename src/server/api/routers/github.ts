@@ -1,12 +1,25 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { fetchCareerOpsRepoData, listUserRepos } from "~/server/github/client";
+import { throwIfGitHubRateLimited } from "~/server/github/errors";
 import { readRepositoryFile } from "~/server/github/api";
-import { isGitHubAppConfigured } from "~/server/github/config";
 import {
   clearInstallationConnection,
   getInstallationConnection,
 } from "~/server/github/installation-store";
+import { isGitHubAppConfigured } from "~/server/github/config";
+import {
+  getSelectedRepoFromCookies,
+  setSelectedRepoCookie,
+} from "~/server/github/selected-repo";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+
+const selectedRepoSchema = z.object({
+  owner: z.string().min(1),
+  name: z.string().min(1),
+  fullName: z.string().min(1),
+});
 
 function assertGitHubConfigured() {
   if (!isGitHubAppConfigured()) {
@@ -80,4 +93,44 @@ export const githubRouter = createTRPCRouter({
       preview: lines,
     };
   }),
+
+  listRepos: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      return await listUserRepos(ctx.session.user.id);
+    } catch (error) {
+      throwIfGitHubRateLimited(error);
+      throw error;
+    }
+  }),
+
+  getSelectedRepo: protectedProcedure.query(async () => {
+    return getSelectedRepoFromCookies();
+  }),
+
+  selectRepo: protectedProcedure
+    .input(selectedRepoSchema)
+    .mutation(async ({ input }) => {
+      await setSelectedRepoCookie(input);
+      return input;
+    }),
+
+  getRepoData: protectedProcedure
+    .input(selectedRepoSchema.optional())
+    .query(async ({ ctx, input }) => {
+      const repo = input ?? (await getSelectedRepoFromCookies());
+
+      if (!repo) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Select a career-ops data repository first.",
+        });
+      }
+
+      try {
+        return await fetchCareerOpsRepoData(repo, ctx.session.user.id);
+      } catch (error) {
+        throwIfGitHubRateLimited(error);
+        throw error;
+      }
+    }),
 });

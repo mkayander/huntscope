@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 
 import { env } from "~/env";
+import { getBetterAuthBaseUrl } from "~/server/auth/base-url";
 import {
   isGitHubOAuthConfigured,
   requireGitHubOAuthConfig,
@@ -12,7 +13,7 @@ const githubOAuth = isGitHubOAuthConfigured()
   : null;
 
 export const auth = betterAuth({
-  baseURL: env.BETTER_AUTH_URL,
+  baseURL: getBetterAuthBaseUrl(),
   secret: env.BETTER_AUTH_SECRET,
   socialProviders: githubOAuth
     ? {
