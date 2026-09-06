@@ -11,6 +11,7 @@ import {
   getInstallationConnection,
   setInstallState,
 } from "~/server/github/installation-store";
+import { shouldAttemptInstallationSync } from "~/server/github/install-flow";
 import { getGitHubUserAccessToken } from "~/server/github/user-access-token";
 
 function redirectHome(request: Request, githubStatus?: string) {
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
   // Only auto-sync when there is no stored connection (e.g. user installed the
   // app before signing in). Existing connections use the GitHub install flow to
   // add/remove repositories or recreate the installation.
-  if (!existingConnection) {
+  if (shouldAttemptInstallationSync(existingConnection)) {
     const accessToken = await getGitHubUserAccessToken(request.headers);
 
     if (accessToken) {

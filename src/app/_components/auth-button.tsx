@@ -49,7 +49,9 @@ export function AuthButton() {
           ? "Redirecting to GitHub"
           : "Sign in with GitHub";
 
-  const isBusy = isPending || isSigningIn || isSigningOut;
+  const isAuthActionBusy = isSigningIn || isSigningOut;
+  const isBusy =
+    isAuthActionBusy || (isPending && !isAuthenticated && !initialIsSignedIn);
 
   const feedbackErrorTitle = signOutError
     ? "Could not sign out"
