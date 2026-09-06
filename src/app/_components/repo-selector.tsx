@@ -1,10 +1,11 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
+import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { FeedbackRegion } from "~/app/_components/feedback-region";
+import { PanelButtonSkeleton } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { Input } from "~/components/ui/input";
@@ -45,6 +46,37 @@ function RepoSelectorCard({ children }: { children: ReactNode }) {
     >
       {children}
     </GlowPanel>
+  );
+}
+
+function RepoSelectorLoadingContent() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-7 w-56 bg-white/10" />
+        <Skeleton className="h-4 w-full max-w-xl bg-white/10" />
+        <Skeleton className="h-4 w-full max-w-lg bg-white/10" />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-4 w-36 bg-white/10" />
+          <Skeleton className="h-10 w-full bg-white/10" />
+          <Skeleton className="h-3 w-40 bg-white/10" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-24 bg-white/10" />
+          <Skeleton className="h-10 w-full bg-white/10" />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <PanelButtonSkeleton variant="dashboard" />
+        <Skeleton className="h-9 w-36 rounded-full bg-white/10" />
+      </div>
+
+      <div aria-hidden className="min-h-[4.75rem]" />
+    </div>
   );
 }
 
@@ -133,11 +165,7 @@ export function RepoSelector() {
   if (!hasMounted || connectionQuery.isLoading) {
     return (
       <RepoSelectorCard>
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-6 w-56 bg-white/10" />
-          <Skeleton className="h-4 w-full max-w-xl bg-white/10" />
-          <Skeleton className="mt-2 h-10 w-full bg-white/10" />
-        </div>
+        <RepoSelectorLoadingContent />
       </RepoSelectorCard>
     );
   }
@@ -183,11 +211,7 @@ export function RepoSelector() {
   if (reposQuery.isLoading || selectedRepoQuery.isLoading) {
     return (
       <RepoSelectorCard>
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-6 w-56 bg-white/10" />
-          <Skeleton className="h-4 w-full max-w-xl bg-white/10" />
-          <Skeleton className="mt-2 h-10 w-full bg-white/10" />
-        </div>
+        <RepoSelectorLoadingContent />
       </RepoSelectorCard>
     );
   }
@@ -327,12 +351,7 @@ export function RepoSelector() {
                   disabled={!selectedRepo || selectRepo.isPending}
                   onClick={handleReload}
                 >
-                  {selectRepo.isPending ? (
-                    <Loader2
-                      className="size-4 animate-spin"
-                      aria-hidden="true"
-                    />
-                  ) : null}
+                  <ButtonLoadingIcon isLoading={selectRepo.isPending} />
                   Reload data
                 </Button>
 

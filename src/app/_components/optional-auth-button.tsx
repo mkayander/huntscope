@@ -1,7 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
+import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
+import { LANDING_CTA_BUTTON_CLASS } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
 
@@ -15,9 +15,9 @@ export function OptionalAuthButton() {
         variant="brandSecondary"
         size="pill"
         disabled
-        className="pointer-events-none"
+        className={LANDING_CTA_BUTTON_CLASS}
       >
-        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+        <ButtonLoadingIcon isLoading />
         <span>Checking session…</span>
       </Button>
     );

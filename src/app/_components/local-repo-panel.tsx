@@ -1,10 +1,13 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
 import { ActionButtonRow } from "~/app/_components/action-button-row";
+import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { InstallPwaButton } from "~/app/_components/install-pwa-button";
 import { DataPreview } from "~/app/_components/data-preview";
+import {
+  PanelIdleLoadingSkeleton,
+  LANDING_CTA_BUTTON_CLASS,
+} from "~/app/_components/panel-loading-skeleton";
 import {
   PanelSection,
   panelTitleClassName,
@@ -35,7 +38,12 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
   if (state.status === "loading") {
     return (
       <PanelSection variant={variant}>
-        <p className="text-sm text-white/70">Loading local repository…</p>
+        <h2 className={titleClassName}>Local career-ops project</h2>
+        <PanelIdleLoadingSkeleton
+          variant={variant}
+          descriptionLines={isLanding ? 3 : 2}
+          showInstallHint={isLanding}
+        />
       </PanelSection>
     );
   }
@@ -97,9 +105,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
             disabled={isRefreshing}
             onClick={() => void refresh()}
           >
-            {isRefreshing ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : null}
+            <ButtonLoadingIcon isLoading={isRefreshing} />
             <span>{isRefreshing ? "Refreshing…" : "Refresh"}</span>
           </Button>
           <Button
@@ -150,7 +156,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
         type="button"
         variant="brand"
         size={primaryButtonSize}
-        className={isLanding ? "min-w-[15.5rem]" : undefined}
+        className={isLanding ? LANDING_CTA_BUTTON_CLASS : undefined}
         onClick={() => void pickDirectory()}
       >
         Open local folder

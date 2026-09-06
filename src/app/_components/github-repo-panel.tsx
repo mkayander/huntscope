@@ -1,11 +1,16 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
 import { ActionButtonRow } from "~/app/_components/action-button-row";
+import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { DataPreview } from "~/app/_components/data-preview";
 import { GitHubStatusMessage } from "~/app/_components/github-status-message";
+import {
+  PanelIdleLoadingSkeleton,
+  LANDING_CTA_BUTTON_CLASS,
+  PanelDescriptionSkeleton,
+} from "~/app/_components/panel-loading-skeleton";
 import {
   PanelSection,
   panelTitleClassName,
@@ -72,9 +77,7 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
           disabled={disconnect.isPending}
           onClick={() => disconnect.mutate()}
         >
-          {disconnect.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : null}
+          <ButtonLoadingIcon isLoading={disconnect.isPending} />
           <span>{disconnect.isPending ? "Disconnecting…" : "Disconnect"}</span>
         </Button>
       </ActionButtonRow>
@@ -115,7 +118,7 @@ function GitHubRepoSignedInIdle() {
         asChild
         variant="brand"
         size="cta"
-        className="min-w-[15.5rem] justify-center"
+        className={LANDING_CTA_BUTTON_CLASS}
       >
         <Link href="/api/github/install">Connect GitHub repository</Link>
       </Button>
@@ -131,7 +134,7 @@ function GitHubRepoSignedIn({ githubStatus }: { githubStatus?: string }) {
   } = api.github.getConnection.useQuery();
 
   if (isLoading) {
-    return <p className="text-sm text-white/70">Loading GitHub connection…</p>;
+    return <PanelIdleLoadingSkeleton variant="landing" descriptionLines={2} />;
   }
 
   if (error?.data?.code === "PRECONDITION_FAILED") {
@@ -163,7 +166,7 @@ export function GitHubRepoPanel({
       <h2 className={panelTitleClassName("landing")}>GitHub repository</h2>
 
       {isPending ? (
-        <p className="text-sm text-white/70">Checking session…</p>
+        <PanelDescriptionSkeleton centered lines={2} />
       ) : session?.user ? (
         <GitHubRepoSignedIn githubStatus={githubStatus} />
       ) : (
