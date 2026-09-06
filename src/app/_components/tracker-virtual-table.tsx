@@ -19,8 +19,9 @@ import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 const ROW_HEIGHT = 52;
 
+/** Column widths: fixed/narrow cols for metadata; Role + Notes share remaining space (Notes weighted higher). */
 const TRACKER_GRID_COLUMNS =
-  "grid-cols-[2.5rem_6rem_minmax(0,1.1fr)_minmax(0,1.1fr)_4rem_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)]";
+  "grid-cols-[2.5rem_6rem_minmax(4rem,7.5rem)_minmax(0,1fr)_4.5rem_5.75rem_3.75rem_minmax(0,1.75fr)]";
 
 type TrackerVirtualTableProps = {
   applications: ApplicationEntry[];
