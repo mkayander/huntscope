@@ -1,15 +1,16 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { FeedbackRegion } from "~/app/_components/feedback-region";
+import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
+import { StableButtonLabel } from "~/app/_components/panel-content-slots";
+import {
+  AUTH_BUTTON_LABEL_PLACEHOLDER,
+  LANDING_CTA_BUTTON_CLASS,
+} from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
-import { cn } from "~/lib/utils";
-
-const SESSION_BUTTON_CLASS =
-  "min-h-12 w-full min-w-[15.5rem] max-w-sm justify-center px-8";
 
 export function AuthButton() {
   const { data: session, isPending } = authClient.useSession();
@@ -20,11 +21,6 @@ export function AuthButton() {
 
   const isAuthenticated = Boolean(session?.user);
   const isBusy = isPending || isSigningIn || isSigningOut;
-  const sessionLabel = isPending
-    ? "Checking session…"
-    : isAuthenticated
-      ? `Logged in as ${session?.user?.name ?? session?.user?.email}`
-      : null;
 
   const buttonLabel = isPending
     ? "Loading session"
@@ -45,15 +41,12 @@ export function AuthButton() {
 
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-4">
-      {isPending || isAuthenticated ? (
+      {isAuthenticated ? (
         <div
-          className={cn(
-            "flex min-h-10 w-full items-center justify-center text-center",
-            isAuthenticated ? "text-2xl text-white" : "text-sm text-white/60",
-          )}
+          className="flex min-h-10 w-full items-center justify-center text-center text-2xl text-white"
           aria-live="polite"
         >
-          <p>{sessionLabel}</p>
+          <p>Logged in as {session?.user?.name ?? session?.user?.email}</p>
         </div>
       ) : null}
 
@@ -61,7 +54,7 @@ export function AuthButton() {
         type="button"
         variant={isAuthenticated ? "brandSecondary" : "brand"}
         size="cta"
-        className={SESSION_BUTTON_CLASS}
+        className={`w-full max-w-sm ${LANDING_CTA_BUTTON_CLASS}`}
         disabled={isBusy}
         onClick={() => {
           if (isAuthenticated) {
@@ -71,7 +64,9 @@ export function AuthButton() {
               .signOut()
               .then(({ error }) => {
                 if (error) {
-                  setSignOutError(error.message ?? "Sign-out failed. Try again.");
+                  setSignOutError(
+                    error.message ?? "Sign-out failed. Try again.",
+                  );
                 }
               })
               .catch(() => {
@@ -85,8 +80,8 @@ export function AuthButton() {
 
           setSignInError(null);
           setIsSigningIn(true);
-          void authClient
-            .signIn.social({
+          void authClient.signIn
+            .social({
               provider: "github",
               callbackURL: "/",
             })
@@ -108,8 +103,10 @@ export function AuthButton() {
             });
         }}
       >
-        {isBusy ? <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden="true" /> : null}
-        <span>{buttonLabel}</span>
+        <ButtonLoadingIcon isLoading={isBusy} />
+        <StableButtonLabel placeholder={AUTH_BUTTON_LABEL_PLACEHOLDER}>
+          {buttonLabel}
+        </StableButtonLabel>
       </Button>
 
       <FeedbackRegion

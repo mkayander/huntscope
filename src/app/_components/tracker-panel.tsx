@@ -10,10 +10,13 @@ import {
 import { TrackerVirtualTable } from "~/app/_components/tracker-virtual-table";
 import { ApplicationDate } from "~/components/application-date";
 import { Button } from "~/components/ui/button";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
+import { cn } from "~/lib/utils";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
-import { extractMarkdownLink, resolveRepoFileUrl } from "~/lib/career-ops/links";
+import { resolveArtifactLink } from "~/lib/career-ops/links";
 import { sortStatuses } from "~/lib/career-ops/status-meta";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
@@ -26,14 +29,16 @@ import type { ApplicationEntry } from "~/lib/career-ops/types";
 type TrackerView = "table" | "board";
 
 type TrackerPanelProps = {
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
   applications: ApplicationEntry[];
   statusFilter: string | null;
   onStatusFilterChange: (status: string | null) => void;
 };
 
 export function TrackerPanel({
-  repoFullName,
+  dataSource,
+  defaultBranch,
   applications,
   statusFilter,
   onStatusFilterChange,
@@ -112,10 +117,12 @@ export function TrackerPanel({
       <div className="shrink-0">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">Application tracker</h3>
+            <h3 className="text-lg font-semibold text-white">
+              Application tracker
+            </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Overview status chips stay in sync
-              with the status filter here.
+              Search, filter, and sort applications. Overview status chips stay
+              in sync with the status filter here.
             </p>
           </div>
 
@@ -150,7 +157,8 @@ export function TrackerPanel({
         ) : view === "table" ? (
           <TrackerVirtualTable
             applications={filteredApplications}
-            repoFullName={repoFullName}
+            dataSource={dataSource}
+            defaultBranch={defaultBranch}
             tableQuery={tableQuery}
             onSort={handleSort}
           />
@@ -158,7 +166,8 @@ export function TrackerPanel({
           <TrackerBoard
             statuses={boardStatuses}
             groupedApplications={groupedApplications}
-            repoFullName={repoFullName}
+            dataSource={dataSource}
+            defaultBranch={defaultBranch}
           />
         )}
       </div>
@@ -169,11 +178,13 @@ export function TrackerPanel({
 function TrackerBoard({
   statuses,
   groupedApplications,
-  repoFullName,
+  dataSource,
+  defaultBranch,
 }: {
   statuses: string[];
   groupedApplications: Map<string, ApplicationEntry[]>;
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
 }) {
   return (
     <div className="mt-4 min-h-0 flex-1 overflow-auto">
@@ -184,7 +195,7 @@ function TrackerBoard({
           return (
             <div
               key={status}
-              className="rounded-xl border border-white/10 bg-black/20 p-3"
+              className={cn(glassCardSurfaceClassName, "rounded-xl p-3")}
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold text-white">{status}</h4>
@@ -201,14 +212,22 @@ function TrackerBoard({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium text-white">{entry.company}</p>
-                        <p className="mt-1 text-sm text-white/70">{entry.role}</p>
+                        <p className="font-medium text-white">
+                          {entry.company}
+                        </p>
+                        <p className="mt-1 text-sm text-white/70">
+                          {entry.role}
+                        </p>
                       </div>
                       <ScoreBadge score={entry.score} />
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
                       <ApplicationDate value={entry.date} />
-                      <ArtifactLink repoFullName={repoFullName} value={entry.report} />
+                      <ArtifactLink
+                        dataSource={dataSource}
+                        defaultBranch={defaultBranch}
+                        value={entry.report}
+                      />
                     </div>
                   </li>
                 ))}
@@ -222,45 +241,36 @@ function TrackerBoard({
 }
 
 function ArtifactLink({
-  repoFullName,
+  dataSource,
+  defaultBranch,
   value,
 }: {
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
   value: string;
 }) {
-  const markdownLink = extractMarkdownLink(value);
-  if (markdownLink) {
-    const href = markdownLink.href.startsWith("http")
-      ? markdownLink.href
-      : resolveRepoFileUrl(repoFullName, markdownLink.href);
+  const artifact = resolveArtifactLink(dataSource, value, defaultBranch);
 
+  if (!artifact) {
+    return <span className="text-white/40">—</span>;
+  }
+
+  if (!artifact.href) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-      >
-        {markdownLink.label}
-      </a>
+      <span className="block truncate text-white/60">{artifact.label}</span>
     );
   }
 
-  const trimmed = value.trim();
-  if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
-    return (
-      <a
-        href={resolveRepoFileUrl(repoFullName, trimmed)}
-        target="_blank"
-        rel="noreferrer"
-        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-      >
-        Report
-      </a>
-    );
-  }
-
-  return <span className="text-white/40">—</span>;
+  return (
+    <a
+      href={artifact.href}
+      target="_blank"
+      rel="noreferrer"
+      className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+    >
+      {artifact.label}
+    </a>
+  );
 }
 
 function ViewToggle({

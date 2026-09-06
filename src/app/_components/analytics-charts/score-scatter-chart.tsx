@@ -9,8 +9,10 @@ import {
   getStatusColor,
 } from "~/app/_components/analytics-charts/chart-theme";
 import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import type { ScoreScatterDatum } from "~/lib/career-ops/chart-data";
 import { formatApplicationDate } from "~/lib/i18n/date-format";
+import { cn } from "~/lib/utils";
 
 type ScoreScatterChartProps = {
   data: ScoreScatterDatum[];
@@ -30,7 +32,10 @@ export function ScoreScatterChart({
   onStatusFilterChange,
 }: ScoreScatterChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { containerRef, width, height } = useChartSize({ aspectRatio: 0.48, maxHeight: 340 });
+  const { containerRef, width, height } = useChartSize({
+    aspectRatio: 0.48,
+    maxHeight: 340,
+  });
   const [tooltip, setTooltip] = useState<TooltipState>(null);
 
   useEffect(() => {
@@ -55,7 +60,8 @@ export function ScoreScatterChart({
       .attr("transform", `translate(${CHART_MARGIN.left},${CHART_MARGIN.top})`);
 
     const xExtent = d3.extent(data, (point) => point.date) as [Date, Date];
-    const xPadding = (xExtent[1].getTime() - xExtent[0].getTime()) * 0.05 || 86_400_000;
+    const xPadding =
+      (xExtent[1].getTime() - xExtent[0].getTime()) * 0.05 || 86_400_000;
 
     const xScale = d3
       .scaleTime()
@@ -65,7 +71,11 @@ export function ScoreScatterChart({
       ])
       .range([0, innerWidth]);
 
-    const yScale = d3.scaleLinear().domain([0, 5]).range([innerHeight, 0]).nice();
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, 5])
+      .range([innerHeight, 0])
+      .nice();
 
     const xAxis = d3
       .axisBottom(xScale)
@@ -89,16 +99,24 @@ export function ScoreScatterChart({
         group.selectAll(".tick line").attr("stroke", CHART_COLORS.grid),
       )
       .call((group) =>
-        group.selectAll(".tick text").attr("fill", CHART_COLORS.label).attr("font-size", 11),
+        group
+          .selectAll(".tick text")
+          .attr("fill", CHART_COLORS.label)
+          .attr("font-size", 11),
       );
 
     root
       .append("g")
       .attr("transform", `translate(0,${innerHeight})`)
       .call(xAxis)
-      .call((group) => group.select(".domain").attr("stroke", CHART_COLORS.axis))
       .call((group) =>
-        group.selectAll(".tick text").attr("fill", CHART_COLORS.label).attr("font-size", 11),
+        group.select(".domain").attr("stroke", CHART_COLORS.axis),
+      )
+      .call((group) =>
+        group
+          .selectAll(".tick text")
+          .attr("fill", CHART_COLORS.label)
+          .attr("font-size", 11),
       );
 
     const fitLineY = yScale(4);
@@ -145,7 +163,10 @@ export function ScoreScatterChart({
 
     points
       .on("mouseenter", function (event: PointerEvent, point) {
-        d3.select(this).attr("r", 8).attr("stroke", "#fff").attr("stroke-width", 2);
+        d3.select(this)
+          .attr("r", 8)
+          .attr("stroke", "#fff")
+          .attr("stroke-width", 2);
         setTooltip({
           x: event.offsetX,
           y: event.offsetY,
@@ -160,11 +181,16 @@ export function ScoreScatterChart({
         });
       })
       .on("mouseleave", function () {
-        d3.select(this).attr("r", 6).attr("stroke", "#0f1023").attr("stroke-width", 1.5);
+        d3.select(this)
+          .attr("r", 6)
+          .attr("stroke", "#0f1023")
+          .attr("stroke-width", 1.5);
         setTooltip(null);
       })
       .on("click", (_, point) => {
-        onStatusFilterChange(activeStatusFilter === point.status ? null : point.status);
+        onStatusFilterChange(
+          activeStatusFilter === point.status ? null : point.status,
+        );
       });
 
     return () => {
@@ -178,7 +204,9 @@ export function ScoreScatterChart({
         title="Score landscape"
         description="Each dot is an evaluated role. Y-axis is fit score, X-axis is evaluation date."
       >
-        <p className="text-sm text-white/50">No scored applications with dates to chart yet.</p>
+        <p className="text-sm text-white/50">
+          No scored applications with dates to chart yet.
+        </p>
       </ChartFrame>
     );
   }
@@ -203,7 +231,10 @@ export function ScoreScatterChart({
             <p className="font-semibold text-white">{tooltip.point.company}</p>
             <p className="mt-0.5 text-white/70">{tooltip.point.role}</p>
             <p className="mt-2 text-white/80">
-              Score <span className="font-medium text-violet-200">{tooltip.point.score}</span>
+              Score{" "}
+              <span className="font-medium text-violet-200">
+                {tooltip.point.score}
+              </span>
               {" · "}
               {tooltip.point.status}
             </p>
@@ -227,7 +258,12 @@ function ChartFrame({
   children: ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-black/20 p-4">
+    <div
+      className={cn(
+        glassCardSurfaceClassName,
+        "flex h-full flex-col rounded-xl p-4",
+      )}
+    >
       <div>
         <h4 className="text-sm font-semibold text-white">{title}</h4>
         <p className="mt-1 text-xs text-white/50">{description}</p>

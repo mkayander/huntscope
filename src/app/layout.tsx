@@ -1,9 +1,10 @@
 import "~/styles/globals.css";
 
 import { Analytics } from "@vercel/analytics/next";
-import { type Metadata } from "next";
+import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 
+import { PwaRegister } from "~/app/_components/pwa-register";
 import { LocaleProvider } from "~/lib/i18n/locale-context";
 import { APP_LOCALE } from "~/lib/i18n/locale";
 import { TRPCReactProvider } from "~/trpc/react";
@@ -11,8 +12,22 @@ import { TRPCReactProvider } from "~/trpc/react";
 export const metadata: Metadata = {
   title: "Huntscope",
   description:
-    "Analytics dashboard for your private job-search repository on GitHub",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+    "Analytics dashboard for your job-search data repository on disk or GitHub",
+  applicationName: "Huntscope",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Huntscope",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: [{ rel: "icon", url: "/icon" }],
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2e026d",
+  colorScheme: "dark",
 };
 
 const geist = Geist({
@@ -30,6 +45,7 @@ export default function RootLayout({
         <meta name="darkreader-lock" />
       </head>
       <body className={`${geist.className} antialiased`}>
+        <PwaRegister />
         <LocaleProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
         </LocaleProvider>

@@ -3,9 +3,14 @@
 import * as d3 from "d3";
 import { useEffect, useRef } from "react";
 
-import { CHART_COLORS, CHART_MARGIN } from "~/app/_components/analytics-charts/chart-theme";
+import {
+  CHART_COLORS,
+  CHART_MARGIN,
+} from "~/app/_components/analytics-charts/chart-theme";
 import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import type { TimelineDatum } from "~/lib/career-ops/chart-data";
+import { cn } from "~/lib/utils";
 
 type ApplicationPaceChartProps = {
   data: TimelineDatum[];
@@ -13,7 +18,10 @@ type ApplicationPaceChartProps = {
 
 export function ApplicationPaceChart({ data }: ApplicationPaceChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { containerRef, width, height } = useChartSize({ aspectRatio: 0.5, maxHeight: 300 });
+  const { containerRef, width, height } = useChartSize({
+    aspectRatio: 0.5,
+    maxHeight: 300,
+  });
 
   useEffect(() => {
     const svgElement = svgRef.current;
@@ -43,7 +51,11 @@ export function ApplicationPaceChart({ data }: ApplicationPaceChartProps) {
       .padding(0.5);
 
     const maxCount = d3.max(data, (datum) => datum.count) ?? 1;
-    const yScale = d3.scaleLinear().domain([0, maxCount]).range([innerHeight, 0]).nice();
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, maxCount])
+      .range([innerHeight, 0])
+      .nice();
 
     const area = d3
       .area<TimelineDatum>()
@@ -67,8 +79,16 @@ export function ApplicationPaceChart({ data }: ApplicationPaceChartProps) {
       .attr("x2", "0%")
       .attr("y2", "100%");
 
-    gradient.append("stop").attr("offset", "0%").attr("stop-color", CHART_COLORS.violet).attr("stop-opacity", 0.45);
-    gradient.append("stop").attr("offset", "100%").attr("stop-color", CHART_COLORS.violet).attr("stop-opacity", 0);
+    gradient
+      .append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", CHART_COLORS.violet)
+      .attr("stop-opacity", 0.45);
+    gradient
+      .append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", CHART_COLORS.violet)
+      .attr("stop-opacity", 0);
 
     root
       .append("path")
@@ -124,9 +144,14 @@ export function ApplicationPaceChart({ data }: ApplicationPaceChartProps) {
       .append("g")
       .attr("transform", `translate(0,${innerHeight})`)
       .call(xAxis)
-      .call((group) => group.select(".domain").attr("stroke", CHART_COLORS.axis))
       .call((group) =>
-        group.selectAll(".tick text").attr("fill", CHART_COLORS.label).attr("font-size", 10),
+        group.select(".domain").attr("stroke", CHART_COLORS.axis),
+      )
+      .call((group) =>
+        group
+          .selectAll(".tick text")
+          .attr("fill", CHART_COLORS.label)
+          .attr("font-size", 10),
       );
 
     root
@@ -137,7 +162,10 @@ export function ApplicationPaceChart({ data }: ApplicationPaceChartProps) {
         group.selectAll(".tick line").attr("stroke", CHART_COLORS.grid),
       )
       .call((group) =>
-        group.selectAll(".tick text").attr("fill", CHART_COLORS.label).attr("font-size", 10),
+        group
+          .selectAll(".tick text")
+          .attr("fill", CHART_COLORS.label)
+          .attr("font-size", 10),
       );
 
     return () => {
@@ -151,7 +179,9 @@ export function ApplicationPaceChart({ data }: ApplicationPaceChartProps) {
         title="Search pace"
         description="Monthly volume of evaluations added to your tracker."
       >
-        <p className="text-sm text-white/50">No dated applications to chart yet.</p>
+        <p className="text-sm text-white/50">
+          No dated applications to chart yet.
+        </p>
       </ChartFrame>
     );
   }
@@ -178,7 +208,12 @@ function ChartFrame({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-black/20 p-4">
+    <div
+      className={cn(
+        glassCardSurfaceClassName,
+        "flex h-full flex-col rounded-xl p-4",
+      )}
+    >
       <div>
         <h4 className="text-sm font-semibold text-white">{title}</h4>
         <p className="mt-1 text-xs text-white/50">{description}</p>

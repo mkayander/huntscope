@@ -3,14 +3,18 @@
 import { skipToken } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import { isSameSelectedRepo, toSelectedRepo } from "~/lib/career-ops/selected-repo";
+import {
+  isSameSelectedRepo,
+  toSelectedRepo,
+} from "~/lib/career-ops/selected-repo";
 import type { GitHubRepoSummary, SelectedRepo } from "~/lib/career-ops/types";
 import { githubRepoDataQueryOptions } from "~/lib/cache/github-query-options";
 import { api } from "~/trpc/react";
 
-export function useSelectedRepoQuery() {
+export function useSelectedRepoQuery(enabled = true) {
   return api.github.getSelectedRepo.useQuery(undefined, {
     refetchOnWindowFocus: false,
+    enabled,
   });
 }
 
@@ -28,7 +32,9 @@ export function usePersistSelectedRepo() {
     (repo: GitHubRepoSummary | SelectedRepo) => {
       const selectedRepo = "id" in repo ? toSelectedRepo(repo) : repo;
 
-      if (isSameSelectedRepo(utils.github.getSelectedRepo.getData(), selectedRepo)) {
+      if (
+        isSameSelectedRepo(utils.github.getSelectedRepo.getData(), selectedRepo)
+      ) {
         void utils.github.getRepoData.prefetch(selectedRepo);
         return;
       }
@@ -44,6 +50,11 @@ export function usePersistSelectedRepo() {
   };
 }
 
-export function useRepoDataQuery(selectedRepo: SelectedRepo | null | undefined) {
-  return api.github.getRepoData.useQuery(selectedRepo ?? skipToken, githubRepoDataQueryOptions);
+export function useRepoDataQuery(
+  selectedRepo: SelectedRepo | null | undefined,
+) {
+  return api.github.getRepoData.useQuery(
+    selectedRepo ?? skipToken,
+    githubRepoDataQueryOptions,
+  );
 }

@@ -3,17 +3,26 @@ import { nextCookies } from "better-auth/next-js";
 
 import { env } from "~/env";
 import { getBetterAuthBaseUrl } from "~/server/auth/base-url";
+import {
+  isGitHubOAuthConfigured,
+  requireGitHubOAuthConfig,
+} from "~/server/github/config";
+
+const githubOAuth = isGitHubOAuthConfigured()
+  ? requireGitHubOAuthConfig()
+  : null;
 
 export const auth = betterAuth({
   baseURL: getBetterAuthBaseUrl(),
   secret: env.BETTER_AUTH_SECRET,
-  socialProviders: {
-    github: {
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-      scope: ["read:user", "user:email", "repo"],
-    },
-  },
+  socialProviders: githubOAuth
+    ? {
+        github: {
+          clientId: githubOAuth.clientId,
+          clientSecret: githubOAuth.clientSecret,
+        },
+      }
+    : {},
   session: {
     cookieCache: {
       enabled: true,

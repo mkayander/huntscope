@@ -8,6 +8,7 @@ import {
   type PointerEvent,
 } from "react";
 
+import { glassPanelSurfaceClassName } from "~/components/ui/glass-surface";
 import type { DashboardSectionId } from "~/lib/dashboard/sections";
 import { getSectionPanelAccent } from "~/lib/dashboard/section-backgrounds";
 import { cn } from "~/lib/utils";
@@ -72,8 +73,9 @@ export function GlowPanel({
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
       className={cn(
-        "group/glow-panel relative overflow-hidden rounded-2xl border bg-white/5 p-6",
-        variant === "dashed" ? "border-dashed border-white/15" : "border-white/10",
+        "group/glow-panel relative overflow-hidden rounded-2xl p-6",
+        glassPanelSurfaceClassName,
+        variant === "dashed" ? "border-dashed border-white/15" : undefined,
         interactive &&
           "motion-safe:transition-[border-color,box-shadow] motion-safe:duration-300 motion-safe:hover:border-white/16 motion-safe:hover:shadow-[0_0_0_1px_rgba(167,139,250,0.08)_inset]",
         className,
@@ -87,7 +89,10 @@ export function GlowPanel({
           className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]"
         >
           {accentConfig.wash ? (
-            <div className="absolute inset-0" style={{ background: accentConfig.wash }} />
+            <div
+              className="absolute inset-0"
+              style={{ background: accentConfig.wash }}
+            />
           ) : null}
           {accentConfig.orbs.map((orb) => (
             <div key={orb.className} className={orb.className} />
@@ -98,7 +103,7 @@ export function GlowPanel({
       {interactive ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] opacity-0 transition-opacity duration-500 motion-reduce:opacity-0 motion-safe:group-hover/glow-panel:opacity-70"
+          className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] opacity-0 transition-opacity duration-500 motion-safe:group-hover/glow-panel:opacity-70 motion-reduce:opacity-0"
           style={{
             background:
               "radial-gradient(380px circle at var(--glow-x) var(--glow-y), rgba(139, 92, 246, 0.07) 0%, rgba(124, 58, 237, 0.03) 40%, transparent 62%)",
@@ -106,12 +111,14 @@ export function GlowPanel({
         />
       ) : null}
 
-      <div className={cn("relative z-[1] min-w-0", contentClassName)}>{children}</div>
+      <div className={cn("relative z-[1] min-w-0", contentClassName)}>
+        {children}
+      </div>
 
       {interactive ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-[2] rounded-[inherit] p-px opacity-0 transition-opacity duration-500 motion-reduce:opacity-0 motion-safe:group-hover/glow-panel:opacity-55"
+          className="pointer-events-none absolute inset-0 z-[2] rounded-[inherit] p-px opacity-0 transition-opacity duration-500 motion-safe:group-hover/glow-panel:opacity-55 motion-reduce:opacity-0"
           style={{
             background:
               "radial-gradient(320px circle at var(--glow-x) var(--glow-y), rgba(167, 139, 250, 0.28) 0%, rgba(139, 92, 246, 0.1) 36%, transparent 66%)",

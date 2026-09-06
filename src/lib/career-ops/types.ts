@@ -26,6 +26,7 @@ export type RawCareerOpsRepoData = {
   owner: string;
   name: string;
   fullName: string;
+  defaultBranch: string | null;
   applicationsMarkdown: string | null;
   pipelineMarkdown: string | null;
   dataFiles: RepoDataFile[];
@@ -40,6 +41,7 @@ export type GitHubRepoSummary = {
   private: boolean;
   updatedAt: string;
   description: string | null;
+  hasCareerOpsLayout: boolean;
 };
 
 export type SelectedRepo = {

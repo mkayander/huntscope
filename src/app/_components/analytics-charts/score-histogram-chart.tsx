@@ -3,9 +3,14 @@
 import * as d3 from "d3";
 import { useEffect, useRef } from "react";
 
-import { CHART_COLORS, CHART_MARGIN } from "~/app/_components/analytics-charts/chart-theme";
+import {
+  CHART_COLORS,
+  CHART_MARGIN,
+} from "~/app/_components/analytics-charts/chart-theme";
 import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import type { ScoreHistogramDatum } from "~/lib/career-ops/chart-data";
+import { cn } from "~/lib/utils";
 
 type ScoreHistogramChartProps = {
   data: ScoreHistogramDatum[];
@@ -13,7 +18,10 @@ type ScoreHistogramChartProps = {
 
 export function ScoreHistogramChart({ data }: ScoreHistogramChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { containerRef, width, height } = useChartSize({ aspectRatio: 0.5, maxHeight: 300 });
+  const { containerRef, width, height } = useChartSize({
+    aspectRatio: 0.5,
+    maxHeight: 300,
+  });
 
   const total = data.reduce((sum, bin) => sum + bin.count, 0);
 
@@ -45,7 +53,11 @@ export function ScoreHistogramChart({ data }: ScoreHistogramChartProps) {
       .padding(0.28);
 
     const maxCount = d3.max(data, (datum) => datum.count) ?? 1;
-    const yScale = d3.scaleLinear().domain([0, maxCount]).range([innerHeight, 0]).nice();
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, maxCount])
+      .range([innerHeight, 0])
+      .nice();
 
     const barColors = ["#f87171", "#fbbf24", "#a78bfa", "#34d399"];
 
@@ -97,9 +109,14 @@ export function ScoreHistogramChart({ data }: ScoreHistogramChartProps) {
       .append("g")
       .attr("transform", `translate(0,${innerHeight})`)
       .call(xAxis)
-      .call((group) => group.select(".domain").attr("stroke", CHART_COLORS.axis))
       .call((group) =>
-        group.selectAll(".tick text").attr("fill", CHART_COLORS.label).attr("font-size", 11),
+        group.select(".domain").attr("stroke", CHART_COLORS.axis),
+      )
+      .call((group) =>
+        group
+          .selectAll(".tick text")
+          .attr("fill", CHART_COLORS.label)
+          .attr("font-size", 11),
       );
 
     root
@@ -110,7 +127,10 @@ export function ScoreHistogramChart({ data }: ScoreHistogramChartProps) {
         group.selectAll(".tick line").attr("stroke", CHART_COLORS.grid),
       )
       .call((group) =>
-        group.selectAll(".tick text").attr("fill", CHART_COLORS.label).attr("font-size", 10),
+        group
+          .selectAll(".tick text")
+          .attr("fill", CHART_COLORS.label)
+          .attr("font-size", 10),
       );
 
     return () => {
@@ -124,7 +144,9 @@ export function ScoreHistogramChart({ data }: ScoreHistogramChartProps) {
         title="Fit score distribution"
         description="How your evaluations cluster across score bands."
       >
-        <p className="text-sm text-white/50">No scored applications to chart yet.</p>
+        <p className="text-sm text-white/50">
+          No scored applications to chart yet.
+        </p>
       </ChartFrame>
     );
   }
@@ -151,7 +173,12 @@ function ChartFrame({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col rounded-xl border border-white/10 bg-black/20 p-4">
+    <div
+      className={cn(
+        glassCardSurfaceClassName,
+        "flex h-full flex-col rounded-xl p-4",
+      )}
+    >
       <div>
         <h4 className="text-sm font-semibold text-white">{title}</h4>
         <p className="mt-1 text-xs text-white/50">{description}</p>

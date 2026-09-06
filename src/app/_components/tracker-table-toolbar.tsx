@@ -220,14 +220,21 @@ export function TrackerSortableHeader({
   const HeaderTag = as;
 
   return (
-    <HeaderTag className={className} role={as === "div" ? "columnheader" : undefined}>
+    <HeaderTag
+      className={className}
+      role={as === "div" ? "columnheader" : undefined}
+      aria-sort={
+        isActive
+          ? sortDirection === "asc"
+            ? "ascending"
+            : "descending"
+          : "none"
+      }
+    >
       <button
         type="button"
         onClick={() => onSort(column)}
         className="inline-flex w-full cursor-pointer items-center gap-1 rounded-md px-0 py-1 text-left font-medium text-white/60 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
-        aria-sort={
-          isActive ? (sortDirection === "asc" ? "ascending" : "descending") : "none"
-        }
       >
         <span>{label}</span>
         {isActive ? (
