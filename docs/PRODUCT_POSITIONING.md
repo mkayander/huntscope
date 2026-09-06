@@ -228,4 +228,5 @@ Interactive D3 charts, heatmaps, cross-filtering between charts and tracker — 
 ## Related documents
 
 - [Feature comparison vs career-ops-ui](./COMPARISON_CAREER_OPS_UI.md)
+- [Comparison vs job trackers on the market](./COMPARISON_JOB_TRACKERS.md)
 - [Gap analysis for v1.1](./GAP_ANALYSIS_V1.1.md)
