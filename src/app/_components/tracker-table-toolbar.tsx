@@ -2,22 +2,17 @@
 
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 
+import { FilterMultiSelect } from "~/app/_components/filter-multi-select";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import {
   DEFAULT_TRACKER_TABLE_QUERY,
+  formatTrackerFilterSummary,
   getTrackerSortLabel,
   hasActiveTrackerFilters,
-  type TrackerReportFilter,
-  type TrackerScoreFilter,
+  type TrackerReportFilterValue,
+  type TrackerScoreFilterValue,
   type TrackerSortColumn,
   type TrackerSortDirection,
   type TrackerTableQuery,
@@ -25,18 +20,20 @@ import {
 import { sortStatuses } from "~/lib/career-ops/status-meta";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
-const STATUS_ALL_VALUE = "__all_statuses__";
-
-const SCORE_FILTER_OPTIONS: { value: TrackerScoreFilter; label: string }[] = [
-  { value: "all", label: "All scores" },
+const SCORE_FILTER_OPTIONS: {
+  value: TrackerScoreFilterValue;
+  label: string;
+}[] = [
   { value: "high", label: "High (4+)" },
   { value: "medium", label: "Medium (3–3.9)" },
   { value: "low", label: "Low (<3)" },
   { value: "unknown", label: "Unscored" },
 ];
 
-const REPORT_FILTER_OPTIONS: { value: TrackerReportFilter; label: string }[] = [
-  { value: "all", label: "All reports" },
+const REPORT_FILTER_OPTIONS: {
+  value: TrackerReportFilterValue;
+  label: string;
+}[] = [
   { value: "with", label: "With report" },
   { value: "without", label: "Without report" },
 ];
@@ -64,6 +61,24 @@ export function TrackerTableToolbar({
     }, {}),
   );
 
+  const statusOptions = uniqueStatuses.map((status) => ({
+    value: status,
+    label: status,
+  }));
+
+  const statusSummary = formatTrackerFilterSummary(
+    query.statusFilters,
+    statusOptions,
+  );
+  const scoreSummary = formatTrackerFilterSummary(
+    query.scoreFilters,
+    SCORE_FILTER_OPTIONS,
+  );
+  const reportSummary = formatTrackerFilterSummary(
+    query.reportFilters,
+    REPORT_FILTER_OPTIONS,
+  );
+
   return (
     <div className="mt-4 flex flex-col gap-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(9rem,1fr))_auto] lg:items-end">
@@ -82,93 +97,38 @@ export function TrackerTableToolbar({
           />
         </div>
 
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <Label htmlFor="tracker-status-filter" className="text-white/80">
-            Status
-          </Label>
-          <Select
-            value={query.statusFilter ?? STATUS_ALL_VALUE}
-            onValueChange={(value) => {
-              onQueryChange({
-                ...query,
-                statusFilter: value === STATUS_ALL_VALUE ? null : value,
-              });
-            }}
-          >
-            <SelectTrigger
-              id="tracker-status-filter"
-              className="w-full border-white/15 bg-[#15162c]"
-            >
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent className="border-white/15 bg-[#15162c] text-white">
-              <SelectItem value={STATUS_ALL_VALUE}>All statuses</SelectItem>
-              {uniqueStatuses.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FilterMultiSelect
+          id="tracker-status-filter"
+          label="Status"
+          options={statusOptions}
+          selected={query.statusFilters}
+          placeholder="All statuses"
+          onChange={(statusFilters) => {
+            onQueryChange({ ...query, statusFilters });
+          }}
+        />
 
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <Label htmlFor="tracker-score-filter" className="text-white/80">
-            Score
-          </Label>
-          <Select
-            value={query.scoreFilter}
-            onValueChange={(value) => {
-              onQueryChange({
-                ...query,
-                scoreFilter: value as TrackerScoreFilter,
-              });
-            }}
-          >
-            <SelectTrigger
-              id="tracker-score-filter"
-              className="w-full border-white/15 bg-[#15162c]"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="border-white/15 bg-[#15162c] text-white">
-              {SCORE_FILTER_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FilterMultiSelect
+          id="tracker-score-filter"
+          label="Score"
+          options={SCORE_FILTER_OPTIONS}
+          selected={query.scoreFilters}
+          placeholder="All scores"
+          onChange={(scoreFilters) => {
+            onQueryChange({ ...query, scoreFilters });
+          }}
+        />
 
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <Label htmlFor="tracker-report-filter" className="text-white/80">
-            Report
-          </Label>
-          <Select
-            value={query.reportFilter}
-            onValueChange={(value) => {
-              onQueryChange({
-                ...query,
-                reportFilter: value as TrackerReportFilter,
-              });
-            }}
-          >
-            <SelectTrigger
-              id="tracker-report-filter"
-              className="w-full border-white/15 bg-[#15162c]"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="border-white/15 bg-[#15162c] text-white">
-              {REPORT_FILTER_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FilterMultiSelect
+          id="tracker-report-filter"
+          label="Report"
+          options={REPORT_FILTER_OPTIONS}
+          selected={query.reportFilters}
+          placeholder="All reports"
+          onChange={(reportFilters) => {
+            onQueryChange({ ...query, reportFilters });
+          }}
+        />
 
         <Button
           type="button"
@@ -184,13 +144,9 @@ export function TrackerTableToolbar({
 
       <p className="text-sm text-white/50">
         Showing {resultCount} of {applications.length} applications
-        {query.statusFilter ? ` · status: ${query.statusFilter}` : ""}
-        {query.scoreFilter !== "all"
-          ? ` · score: ${SCORE_FILTER_OPTIONS.find((option) => option.value === query.scoreFilter)?.label ?? query.scoreFilter}`
-          : ""}
-        {query.reportFilter !== "all"
-          ? ` · report: ${REPORT_FILTER_OPTIONS.find((option) => option.value === query.reportFilter)?.label ?? query.reportFilter}`
-          : ""}
+        {statusSummary ? ` · status: ${statusSummary}` : ""}
+        {scoreSummary ? ` · score: ${scoreSummary}` : ""}
+        {reportSummary ? ` · report: ${reportSummary}` : ""}
         {` · sorted by ${getTrackerSortLabel(query.sortColumn, query.sortDirection)}`}
       </p>
     </div>
@@ -252,10 +208,10 @@ export function TrackerSortableHeader({
 }
 
 export function createDefaultTrackerQuery(
-  statusFilter: string | null,
+  statusFilters: string[],
 ): TrackerTableQuery {
   return {
     ...DEFAULT_TRACKER_TABLE_QUERY,
-    statusFilter,
+    statusFilters,
   };
 }

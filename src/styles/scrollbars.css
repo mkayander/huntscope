@@ -1,6 +1,6 @@
 :root {
   --scrollbar-size: 10px;
-  --scrollbar-track: oklch(1 0 0 / 6%);
+  --scrollbar-track: transparent;
   --scrollbar-thumb: oklch(0.62 0.24 295 / 42%);
   --scrollbar-thumb-hover: oklch(0.68 0.22 295 / 68%);
   --scrollbar-thumb-active: oklch(0.72 0.2 295 / 82%);
@@ -9,6 +9,7 @@
 }
 
 @layer utilities {
+  /* Span the visual viewport so backgrounds reach under a classic scrollbar. */
   .fixed-viewport-bleed {
     position: fixed;
     top: 0;
@@ -16,27 +17,12 @@
     left: 0;
     width: 100vw;
   }
-
-  .scrollbar-gutter-fill {
-    right: calc(100% - 100vw);
-    background-image: var(--page-shell-background);
-    background-size: 100vw 100%;
-    background-position: right top;
-    background-repeat: no-repeat;
-  }
-
-  html[data-page-shell="dashboard"] .scrollbar-gutter-fill {
-    background-image: none;
-    background-color: var(--background);
-  }
 }
 
 @layer base {
   html {
     color-scheme: dark;
     min-height: 100%;
-    overflow-y: auto;
-    scrollbar-gutter: stable;
     background-color: var(--background);
     background-image: var(--page-shell-background);
     background-attachment: fixed;
@@ -50,12 +36,7 @@
   html,
   body {
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) #15162c;
-  }
-
-  html[data-page-shell="dashboard"],
-  html[data-page-shell="dashboard"] body {
-    scrollbar-color: var(--scrollbar-thumb) var(--background);
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   html::-webkit-scrollbar {
@@ -64,11 +45,7 @@
   }
 
   html::-webkit-scrollbar-track {
-    background: #15162c;
-  }
-
-  html[data-page-shell="dashboard"]::-webkit-scrollbar-track {
-    background: var(--background);
+    background: transparent;
   }
 
   html::-webkit-scrollbar-thumb {

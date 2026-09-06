@@ -17,6 +17,7 @@ import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { cn } from "~/lib/utils";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
 import { resolveArtifactLink } from "~/lib/career-ops/links";
+import { arraysEqual } from "~/lib/career-ops/status-filters";
 import { sortStatuses } from "~/lib/career-ops/status-meta";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
@@ -32,29 +33,29 @@ type TrackerPanelProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   applications: ApplicationEntry[];
-  statusFilter: string | null;
-  onStatusFilterChange: (status: string | null) => void;
+  statusFilters: string[];
+  onStatusFiltersChange: (statuses: string[]) => void;
 };
 
 export function TrackerPanel({
   dataSource,
   defaultBranch,
   applications,
-  statusFilter,
-  onStatusFilterChange,
+  statusFilters,
+  onStatusFiltersChange,
 }: TrackerPanelProps) {
   const [view, setView] = useState<TrackerView>("table");
   const [tableQuery, setTableQuery] = useState<TrackerTableQuery>(() =>
-    createDefaultTrackerQuery(statusFilter),
+    createDefaultTrackerQuery(statusFilters),
   );
 
   useEffect(() => {
     setTableQuery((current) =>
-      current.statusFilter === statusFilter
+      arraysEqual(current.statusFilters, statusFilters)
         ? current
-        : { ...current, statusFilter },
+        : { ...current, statusFilters },
     );
-  }, [statusFilter]);
+  }, [statusFilters]);
 
   const filteredApplications = useMemo(
     () => queryTrackerApplications(applications, tableQuery),
@@ -81,14 +82,14 @@ export function TrackerPanel({
 
   const handleQueryChange = (nextQuery: TrackerTableQuery) => {
     setTableQuery(nextQuery);
-    if (nextQuery.statusFilter !== statusFilter) {
-      onStatusFilterChange(nextQuery.statusFilter);
+    if (!arraysEqual(nextQuery.statusFilters, statusFilters)) {
+      onStatusFiltersChange(nextQuery.statusFilters);
     }
   };
 
   const handleClearFilters = () => {
     setTableQuery(DEFAULT_TRACKER_TABLE_QUERY);
-    onStatusFilterChange(null);
+    onStatusFiltersChange([]);
   };
 
   const handleSort = (column: TrackerSortColumn) => {

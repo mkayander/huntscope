@@ -12,12 +12,16 @@ import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size"
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import type { ScoreScatterDatum } from "~/lib/career-ops/chart-data";
 import { formatApplicationDate } from "~/lib/i18n/date-format";
+import {
+  isStatusHighlighted,
+  toggleStatusFilter,
+} from "~/lib/career-ops/status-filters";
 import { cn } from "~/lib/utils";
 
 type ScoreScatterChartProps = {
   data: ScoreScatterDatum[];
-  activeStatusFilter: string | null;
-  onStatusFilterChange: (status: string | null) => void;
+  activeStatusFilters: string[];
+  onStatusFiltersChange: (statuses: string[]) => void;
 };
 
 type TooltipState = {
@@ -28,8 +32,8 @@ type TooltipState = {
 
 export function ScoreScatterChart({
   data,
-  activeStatusFilter,
-  onStatusFilterChange,
+  activeStatusFilters,
+  onStatusFiltersChange,
 }: ScoreScatterChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const { containerRef, width, height } = useChartSize({
@@ -151,7 +155,7 @@ export function ScoreScatterChart({
       .attr("stroke", "#0f1023")
       .attr("stroke-width", 1.5)
       .attr("opacity", (point) =>
-        activeStatusFilter && point.status !== activeStatusFilter ? 0.2 : 0.92,
+        isStatusHighlighted(activeStatusFilters, point.status) ? 0.92 : 0.2,
       )
       .attr("cursor", "pointer");
 
@@ -188,15 +192,15 @@ export function ScoreScatterChart({
         setTooltip(null);
       })
       .on("click", (_, point) => {
-        onStatusFilterChange(
-          activeStatusFilter === point.status ? null : point.status,
+        onStatusFiltersChange(
+          toggleStatusFilter(activeStatusFilters, point.status),
         );
       });
 
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [activeStatusFilter, data, height, onStatusFilterChange, width]);
+  }, [activeStatusFilters, data, height, onStatusFiltersChange, width]);
 
   if (data.length === 0) {
     return (

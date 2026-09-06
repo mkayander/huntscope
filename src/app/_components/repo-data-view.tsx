@@ -60,7 +60,7 @@ function RepoDataContent({
 }: {
   activeSource: CareerOpsDataSource;
 }) {
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const { raw, error, isLoading } = useCareerOpsRawData(activeSource);
   const { parsed, isParsing, parseError } = useParsedRepoData(raw);
 
@@ -120,8 +120,8 @@ function RepoDataContent({
           analytics={parsed.analytics}
           pipeline={parsed.pipeline}
           reportsCount={raw.reportsCount}
-          activeStatusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
+          activeStatusFilters={statusFilters}
+          onStatusFiltersChange={setStatusFilters}
         />
       </DashboardSection>
 
@@ -137,8 +137,8 @@ function RepoDataContent({
           <AnalyticsChartsPanel
             applications={parsed.applications}
             statusCounts={parsed.analytics.statusCounts}
-            activeStatusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
+            activeStatusFilters={statusFilters}
+            onStatusFiltersChange={setStatusFilters}
           />
         </DashboardSection>
       ) : null}
@@ -182,8 +182,8 @@ function RepoDataContent({
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
           applications={parsed.applications}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
+          statusFilters={statusFilters}
+          onStatusFiltersChange={setStatusFilters}
         />
       </DashboardSection>
 

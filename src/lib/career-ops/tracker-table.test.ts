@@ -49,19 +49,67 @@ describe("sortApplications", () => {
 
     expect(sorted.map((entry) => entry.num)).toEqual([3, 2, 1]);
   });
+
+  it("sorts scored entries high to low with unscored last", () => {
+    const entries: ApplicationEntry[] = [
+      { ...applications[0]!, score: "N/A" },
+      { ...applications[1]!, score: "4.5" },
+      { ...applications[2]!, score: "2.0" },
+    ];
+
+    expect(
+      sortApplications(entries, "score", "desc").map((entry) => entry.score),
+    ).toEqual(["4.5", "2.0", "N/A"]);
+  });
+
+  it("sorts scored entries low to high with unscored last", () => {
+    const entries: ApplicationEntry[] = [
+      { ...applications[0]!, score: "—" },
+      { ...applications[1]!, score: "4.5" },
+      { ...applications[2]!, score: "2.0" },
+    ];
+
+    expect(
+      sortApplications(entries, "score", "asc").map((entry) => entry.score),
+    ).toEqual(["2.0", "4.5", "—"]);
+  });
 });
 
 describe("queryTrackerApplications", () => {
   it("filters by status, score band, and report presence", () => {
     const results = queryTrackerApplications(applications, {
       ...DEFAULT_TRACKER_TABLE_QUERY,
-      statusFilter: "Applied",
-      scoreFilter: "high",
-      reportFilter: "with",
+      statusFilters: ["Applied"],
+      scoreFilters: ["high"],
+      reportFilters: ["with"],
     });
 
     expect(results).toHaveLength(1);
     expect(results[0]?.company).toBe("Acme");
+  });
+
+  it("matches any selected status when multiple are chosen", () => {
+    const results = queryTrackerApplications(applications, {
+      ...DEFAULT_TRACKER_TABLE_QUERY,
+      statusFilters: ["Applied", "Rejected"],
+    });
+
+    expect(results.map((entry) => entry.company).sort()).toEqual([
+      "Acme",
+      "Beta",
+    ]);
+  });
+
+  it("matches any selected score band when multiple are chosen", () => {
+    const results = queryTrackerApplications(applications, {
+      ...DEFAULT_TRACKER_TABLE_QUERY,
+      scoreFilters: ["high", "low"],
+    });
+
+    expect(results.map((entry) => entry.company).sort()).toEqual([
+      "Acme",
+      "Beta",
+    ]);
   });
 
   it("searches across company and role fields", () => {
