@@ -3,7 +3,15 @@
 import { useLayoutEffect, useState } from "react";
 
 function measureScrollbarGutter() {
-  return Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+  const doc = document.documentElement;
+  const body = document.body;
+
+  // Stable gutter shrinks the body/content box while the visual viewport stays wide.
+  return Math.max(
+    0,
+    window.innerWidth - doc.clientWidth,
+    doc.clientWidth - body.clientWidth,
+  );
 }
 
 function applyScrollbarGutter(gutter: number) {
