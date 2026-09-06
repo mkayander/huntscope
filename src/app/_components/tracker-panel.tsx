@@ -17,7 +17,7 @@ import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { cn } from "~/lib/utils";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
 import { resolveArtifactLink } from "~/lib/career-ops/links";
-import { sortStatuses } from "~/lib/career-ops/status-meta";
+import { getBoardColumnOrder } from "~/lib/career-ops/status-meta";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
   queryTrackerApplications,
@@ -67,16 +67,14 @@ export function TrackerPanel({
   );
 
   const boardStatuses = useMemo(() => {
-    const statuses = sortStatuses(
-      Object.fromEntries(
-        [...groupedApplications.entries()].map(([status, entries]) => [
-          status,
-          entries.length,
-        ]),
-      ),
+    const statusCounts = Object.fromEntries(
+      [...groupedApplications.entries()].map(([status, entries]) => [
+        status,
+        entries.length,
+      ]),
     );
 
-    return statuses.length > 0 ? statuses : [...groupedApplications.keys()];
+    return getBoardColumnOrder(statusCounts);
   }, [groupedApplications]);
 
   const handleQueryChange = (nextQuery: TrackerTableQuery) => {
@@ -187,15 +185,18 @@ function TrackerBoard({
   defaultBranch: string | null;
 }) {
   return (
-    <div className="mt-4 min-h-0 flex-1 overflow-auto">
-      <div className="grid gap-4 xl:grid-cols-4">
+    <div className="mt-4 min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+      <div className="flex h-full min-w-min gap-4 pb-2">
         {statuses.map((status) => {
           const entries = groupedApplications.get(status) ?? [];
 
           return (
             <div
               key={status}
-              className={cn(glassCardSurfaceClassName, "rounded-xl p-3")}
+              className={cn(
+                glassCardSurfaceClassName,
+                "flex w-72 shrink-0 flex-col rounded-xl p-3",
+              )}
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h4 className="text-sm font-semibold text-white">{status}</h4>
@@ -204,7 +205,7 @@ function TrackerBoard({
                 </span>
               </div>
 
-              <ul className="space-y-3">
+              <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto">
                 {entries.map((entry) => (
                   <li
                     key={entry.num}

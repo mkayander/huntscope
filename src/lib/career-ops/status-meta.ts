@@ -21,7 +21,9 @@ export function normalizeStatus(status: string): string {
 }
 
 export function sortStatuses(statusCounts: Record<string, number>): string[] {
-  const known = STATUS_ORDER.filter((status) => (statusCounts[status] ?? 0) > 0);
+  const known = STATUS_ORDER.filter(
+    (status) => (statusCounts[status] ?? 0) > 0,
+  );
   const unknown = Object.keys(statusCounts).filter(
     (status) => !STATUS_ORDER.includes(status as (typeof STATUS_ORDER)[number]),
   );
@@ -30,7 +32,17 @@ export function sortStatuses(statusCounts: Record<string, number>): string[] {
   return [...known, ...unknown];
 }
 
-export function getStatusChipClassName(status: string, isActive: boolean): string {
+/** Pipeline order for tracker board columns (early funnel → terminal outcomes). */
+export function getBoardColumnOrder(
+  statusCounts: Record<string, number>,
+): string[] {
+  return sortStatuses(statusCounts);
+}
+
+export function getStatusChipClassName(
+  status: string,
+  isActive: boolean,
+): string {
   const base =
     "cursor-pointer rounded-full px-3 py-1 text-xs font-medium ring-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300";
 
