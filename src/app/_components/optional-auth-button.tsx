@@ -1,12 +1,18 @@
 "use client";
 
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { LANDING_CTA_BUTTON_CLASS } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
+import { performSignOut } from "~/lib/auth/sign-out";
 
 export function OptionalAuthButton() {
+  const queryClient = useQueryClient();
   const { data: session, isPending } = authClient.useSession();
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   if (isPending) {
     return (
@@ -33,9 +39,19 @@ export function OptionalAuthButton() {
           type="button"
           variant="brandSecondary"
           size="pill"
-          onClick={() => void authClient.signOut()}
+          disabled={isSigningOut}
+          onClick={() => {
+            setIsSigningOut(true);
+            void performSignOut({
+              queryClient,
+              clearGitHubCache: true,
+            }).finally(() => {
+              setIsSigningOut(false);
+            });
+          }}
         >
-          Sign out
+          <ButtonLoadingIcon isLoading={isSigningOut} />
+          <span>{isSigningOut ? "Signing out" : "Sign out"}</span>
         </Button>
       </div>
     );

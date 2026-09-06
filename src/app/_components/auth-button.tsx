@@ -16,7 +16,7 @@ import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { useHomeShell } from "~/hooks/use-home-shell";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { authClient } from "~/lib/auth-client";
-import { clearGitHubViewState } from "~/lib/auth/sign-out-cleanup";
+import { performSignOut } from "~/lib/auth/sign-out";
 import { useGitHubInstallStatus } from "~/hooks/use-github-install-status";
 
 export function AuthButton() {
@@ -91,24 +91,15 @@ export function AuthButton() {
           if (isAuthenticated) {
             setSignOutError(null);
             setIsSigningOut(true);
-            void authClient
-              .signOut()
-              .then(async ({ error }) => {
-                if (error) {
-                  setSignOutError(
-                    error.message ?? "Sign-out failed. Try again.",
-                  );
-                  return;
-                }
-
-                clearGitHubInstallStatus();
-
-                if (activeSource?.kind === "github" || hasGitHubSource) {
-                  try {
-                    await clearGitHubViewState(queryClient);
-                  } catch {
-                    // Sign-out already succeeded; avoid surfacing cleanup failures.
-                  }
+            void performSignOut({
+              queryClient,
+              clearGitHubInstallStatus,
+              clearGitHubCache:
+                activeSource?.kind === "github" || hasGitHubSource,
+            })
+              .then((result) => {
+                if (!result.ok) {
+                  setSignOutError(result.errorMessage);
                 }
               })
               .catch(() => {

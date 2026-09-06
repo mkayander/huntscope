@@ -1,6 +1,3 @@
-import { ErrorAlert } from "~/app/_components/error-alert";
-import { cn } from "~/lib/utils";
-
 const githubSuccessStatuses = new Set(["connected", "updated"]);
 
 const githubStatusMessages: Record<string, string> = {
@@ -56,52 +53,4 @@ export function getGitHubStatusMessage(status?: string) {
 
 export function getGitHubStatusTitle(status: string) {
   return githubStatusTitles[status] ?? "GitHub connection issue";
-}
-
-type GitHubStatusMessageProps = {
-  status?: string;
-  className?: string;
-  onDismiss?: () => void;
-};
-
-export function GitHubStatusMessage({
-  status,
-  className,
-  onDismiss,
-}: GitHubStatusMessageProps) {
-  if (!status) {
-    return null;
-  }
-
-  const message = getGitHubStatusMessage(status);
-
-  if (!message) {
-    return null;
-  }
-
-  const dismissButton = onDismiss ? (
-    <button
-      type="button"
-      onClick={onDismiss}
-      className="text-sm text-white/60 underline-offset-4 transition-colors hover:text-white/85 hover:underline"
-    >
-      Dismiss
-    </button>
-  ) : null;
-
-  if (isGitHubStatusError(status)) {
-    return (
-      <div className={cn("flex flex-col gap-2", className)}>
-        <ErrorAlert title={getGitHubStatusTitle(status)} message={message} />
-        {dismissButton}
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("flex flex-col items-center gap-2", className)}>
-      <p className="text-center text-sm text-emerald-200">{message}</p>
-      {dismissButton}
-    </div>
-  );
 }

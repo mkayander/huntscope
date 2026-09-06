@@ -155,10 +155,7 @@ export function RepoSelector() {
   const isRepoListRateLimited =
     reposQuery.error != null && isGitHubRateLimitTrpcError(reposQuery.error);
 
-  const isReloading =
-    repoDataQuery.isFetching &&
-    !repoDataQuery.isLoading &&
-    !selectRepo.isPending;
+  const isReloading = repoDataQuery.isRefetching && !selectRepo.isPending;
 
   const feedbackHint = selectRepo.isPending
     ? "Saving repository selection and loading data…"
