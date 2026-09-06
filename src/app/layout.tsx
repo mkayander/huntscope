@@ -22,7 +22,14 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  icons: [{ rel: "icon", url: "/icon" }],
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/huntscope-mark.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
