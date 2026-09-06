@@ -13,6 +13,7 @@ import {
   getRepositoryDefaultBranch,
   listRepositoryContents,
   readRepositoryFile,
+  readRepositoryFilePayload,
 } from "~/server/github/api";
 import { isGitHubAppConfigured } from "~/server/github/config";
 import { getInstallationConnection } from "~/server/github/installation-store";
@@ -132,6 +133,7 @@ export async function fetchCareerOpsRepoData(
     pipelineContent,
     dataDirectory,
     reportsDirectory,
+    outputDirectory,
     defaultBranch,
   ] = await Promise.all([
     readRepositoryFile(
@@ -154,6 +156,11 @@ export async function fetchCareerOpsRepoData(
       repo.fullName,
       CAREER_OPS_PATHS.reportsDir,
     ),
+    listRepositoryContents(
+      connection.installationId,
+      repo.fullName,
+      CAREER_OPS_PATHS.outputDir,
+    ),
     getRepositoryDefaultBranch(connection.installationId, repo.fullName),
   ]);
 
@@ -167,6 +174,7 @@ export async function fetchCareerOpsRepoData(
       pipelineMarkdown: pipelineContent,
       dataDirectory,
       reportsDirectory,
+      outputDirectory,
     });
   } catch (error) {
     throw new TRPCError({
@@ -184,4 +192,26 @@ export async function assertRepoInInstallation(
   repo: SelectedRepo,
 ): Promise<void> {
   await getAuthorizedInstallation(userId, repo);
+}
+
+export async function fetchRepoFile(
+  repo: SelectedRepo,
+  userId: string,
+  filePath: string,
+) {
+  const connection = await getAuthorizedInstallation(userId, repo);
+  const payload = await readRepositoryFilePayload(
+    connection.installationId,
+    repo.fullName,
+    filePath,
+  );
+
+  if (!payload) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Could not read ${filePath} from ${repo.fullName}.`,
+    });
+  }
+
+  return payload;
 }

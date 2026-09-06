@@ -28,6 +28,7 @@ describe("buildCareerOpsRepoData", () => {
       pipelineMarkdown: null,
       dataDirectory: [],
       reportsDirectory: [{ path: "reports/a.md", name: "a.md", type: "file" }],
+      outputDirectory: [],
     });
 
     expect(data.defaultBranch).toBe("develop");
@@ -44,6 +45,7 @@ describe("buildCareerOpsRepoData", () => {
         pipelineMarkdown: null,
         dataDirectory: [],
         reportsDirectory: [],
+        outputDirectory: [],
       }),
     ).toThrow(/does not look like a career-ops/);
   });

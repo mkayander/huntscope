@@ -30,6 +30,8 @@ export type RawCareerOpsRepoData = {
   applicationsMarkdown: string | null;
   pipelineMarkdown: string | null;
   dataFiles: RepoDataFile[];
+  reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
   reportsCount: number;
 };
 

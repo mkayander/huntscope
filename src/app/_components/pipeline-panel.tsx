@@ -1,14 +1,50 @@
-import type { PipelineSummary } from "~/lib/career-ops/types";
-import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
+"use client";
+
+import { useState } from "react";
+
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
+import type { PipelineSummary } from "~/lib/career-ops/types";
+import { appendPendingPipelineUrl } from "~/lib/career-ops/serialize-pipeline";
 import { cn } from "~/lib/utils";
+import { useLocalRepoMutations } from "~/hooks/use-local-repo-mutations";
 
 type PipelinePanelProps = {
   pipeline: PipelineSummary;
+  pipelineMarkdown: string | null;
 };
 
-export function PipelinePanel({ pipeline }: PipelinePanelProps) {
+export function PipelinePanel({
+  pipeline,
+  pipelineMarkdown,
+}: PipelinePanelProps) {
+  const { canWrite, isSaving, writePipelineMarkdown } = useLocalRepoMutations();
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAddUrl = async () => {
+    const trimmed = url.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      const nextContent = appendPendingPipelineUrl(pipelineMarkdown, trimmed);
+      await writePipelineMarkdown(nextContent);
+      setUrl("");
+    } catch (addError) {
+      setError(
+        addError instanceof Error ? addError.message : "Could not add URL.",
+      );
+    }
+  };
+
   return (
     <GlowPanel accent={DASHBOARD_SECTION_IDS.pipeline}>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -22,6 +58,28 @@ export function PipelinePanel({ pipeline }: PipelinePanelProps) {
           </span>
         </div>
       </div>
+
+      {canWrite ? (
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            placeholder="Paste a job URL to add to Pending"
+            className="border-white/15 bg-[#15162c] text-white placeholder:text-white/40"
+          />
+          <Button
+            type="button"
+            variant="brand"
+            size="pill"
+            disabled={isSaving || url.trim().length === 0}
+            onClick={() => void handleAddUrl()}
+          >
+            Add URL
+          </Button>
+        </div>
+      ) : null}
+
+      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
 
       {pipeline.pendingPreview.length > 0 ? (
         <ul className="mt-4 space-y-2">
