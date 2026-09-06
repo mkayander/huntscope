@@ -109,8 +109,8 @@ export function TrackerPanel({
   return (
     <GlowPanel
       accent={DASHBOARD_SECTION_IDS.tracker}
-      className="flex max-h-[100dvh] flex-col overflow-hidden"
-      contentClassName="flex min-h-0 flex-1 flex-col"
+      className="flex max-h-[100dvh] w-full min-w-0 flex-col overflow-hidden"
+      contentClassName="flex min-h-0 min-w-0 flex-1 flex-col"
     >
       <div className="shrink-0">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -185,9 +185,9 @@ function TrackerBoard({
   defaultBranch: string | null;
 }) {
   return (
-    <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-        <div className="flex h-full min-h-0 min-w-min items-stretch gap-4 pb-2">
+    <div className="mt-4 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
+        <div className="flex flex-col gap-4 pb-2 md:h-full md:min-w-min md:flex-row md:items-stretch">
           {statuses.map((status) => {
             const entries = groupedApplications.get(status) ?? [];
 
@@ -196,7 +196,7 @@ function TrackerBoard({
                 key={status}
                 className={cn(
                   glassCardSurfaceClassName,
-                  "flex h-full min-h-0 w-72 shrink-0 flex-col rounded-xl p-3",
+                  "flex min-h-0 w-full flex-col rounded-xl p-3 md:h-full md:w-72 md:shrink-0",
                 )}
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
@@ -206,18 +206,18 @@ function TrackerBoard({
                   </span>
                 </div>
 
-                <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+                <ul className="min-h-0 space-y-3 md:flex-1 md:overflow-y-auto">
                   {entries.map((entry) => (
                     <li
                       key={entry.num}
                       className="rounded-lg border border-white/10 bg-[#15162c] p-3"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-medium text-white">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-white">
                             {entry.company}
                           </p>
-                          <p className="mt-1 text-sm text-white/70">
+                          <p className="mt-1 truncate text-sm text-white/70">
                             {entry.role}
                           </p>
                         </div>
