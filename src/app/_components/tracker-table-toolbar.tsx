@@ -201,6 +201,33 @@ type SortableHeaderProps = {
   as?: "th" | "div";
 };
 
+export function TrackerStaticHeader({
+  label,
+  className,
+  as = "th",
+}: {
+  label: string;
+  className?: string;
+  as?: "th" | "div";
+}) {
+  const HeaderTag = as;
+
+  return (
+    <HeaderTag
+      className={className}
+      role={as === "div" ? "columnheader" : undefined}
+    >
+      <span className="inline-flex w-full items-center gap-1 px-0 py-1 text-left font-medium text-white/60">
+        <span>{label}</span>
+        <ArrowUpDownIcon
+          className="size-3.5 shrink-0 opacity-0"
+          aria-hidden="true"
+        />
+      </span>
+    </HeaderTag>
+  );
+}
+
 export function TrackerSortableHeader({
   label,
   column,

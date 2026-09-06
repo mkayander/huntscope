@@ -4,7 +4,10 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef } from "react";
 
 import { ScoreBadge } from "~/app/_components/score-badge";
-import { TrackerSortableHeader } from "~/app/_components/tracker-table-toolbar";
+import {
+  TrackerSortableHeader,
+  TrackerStaticHeader,
+} from "~/app/_components/tracker-table-toolbar";
 import { ApplicationDate } from "~/components/application-date";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { resolveArtifactLink } from "~/lib/career-ops/links";
@@ -110,18 +113,8 @@ export function TrackerVirtualTable({
           onSort={onSort}
           className="px-2 py-2"
         />
-        <div
-          className="px-2 py-2 font-medium text-white/60"
-          role="columnheader"
-        >
-          Report
-        </div>
-        <div
-          className="px-2 py-2 font-medium text-white/60"
-          role="columnheader"
-        >
-          Notes
-        </div>
+        <TrackerStaticHeader as="div" label="Report" className="px-2 py-2" />
+        <TrackerStaticHeader as="div" label="Notes" className="px-2 py-2" />
       </div>
 
       <div
