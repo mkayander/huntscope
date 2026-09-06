@@ -1,12 +1,25 @@
+import { TRPCError } from "@trpc/server";
+
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { readRepositoryFile } from "~/server/github/api";
+import { isGitHubAppConfigured } from "~/server/github/config";
 import {
   clearInstallationConnection,
   getInstallationConnection,
 } from "~/server/github/installation-store";
 
+function assertGitHubConfigured() {
+  if (!isGitHubAppConfigured()) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "GitHub App is not configured on this deployment.",
+    });
+  }
+}
+
 export const githubRouter = createTRPCRouter({
   getConnection: protectedProcedure.query(async ({ ctx }) => {
+    assertGitHubConfigured();
     const connection = await getInstallationConnection(ctx.session.user.id);
 
     if (!connection) {
@@ -20,6 +33,7 @@ export const githubRouter = createTRPCRouter({
   }),
 
   disconnect: protectedProcedure.mutation(async ({ ctx }) => {
+    assertGitHubConfigured();
     const connection = await getInstallationConnection(ctx.session.user.id);
 
     if (!connection) {
@@ -31,6 +45,7 @@ export const githubRouter = createTRPCRouter({
   }),
 
   previewDataFile: protectedProcedure.query(async ({ ctx }) => {
+    assertGitHubConfigured();
     const connection = await getInstallationConnection(ctx.session.user.id);
 
     if (!connection || connection.repositories.length === 0) {

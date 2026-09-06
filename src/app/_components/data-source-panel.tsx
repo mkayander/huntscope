@@ -5,8 +5,10 @@ import { LocalRepoPanel } from "~/app/_components/local-repo-panel";
 
 export function DataSourcePanel({
   githubStatus,
+  githubConfigured,
 }: {
   githubStatus?: string;
+  githubConfigured: boolean;
 }) {
   return (
     <div className="flex w-full max-w-3xl flex-col gap-6">
@@ -19,7 +21,10 @@ export function DataSourcePanel({
       </div>
 
       <LocalRepoPanel />
-      <GitHubRepoPanel githubStatus={githubStatus} />
+      <GitHubRepoPanel
+        githubStatus={githubStatus}
+        githubConfigured={githubConfigured}
+      />
     </div>
   );
 }

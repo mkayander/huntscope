@@ -11,10 +11,13 @@ const statusMessages: Record<string, string> = {
   updated: "Repository access updated.",
   "sign-in-required": "Sign in before connecting a repository.",
   "missing-installation": "GitHub did not return an installation ID.",
-  "state-mismatch": "GitHub install state did not match your session.",
+  "missing-state": "GitHub did not return install state.",
   "expired-state": "The install link expired. Try connecting again.",
+  "installation-forbidden":
+    "That GitHub App installation is not accessible with your signed-in account.",
   "no-repositories": "No repositories were selected. Pick one repo during install.",
   "callback-failed": "Could not verify the GitHub App installation.",
+  "not-configured": "GitHub cloud sync is not configured on this deployment.",
 };
 
 function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
@@ -32,10 +35,19 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
     return null;
   }
 
+  const primaryRepository = connection.repositories[0];
+
   return (
     <>
       {statusMessage ? (
         <p className="text-center text-sm text-emerald-200">{statusMessage}</p>
+      ) : null}
+
+      {connection.repositories.length > 1 ? (
+        <p className="text-center text-sm text-amber-200">
+          Multiple repositories were selected during install. Huntscope currently
+          reads from {primaryRepository?.fullName ?? "the first repository"}.
+        </p>
       ) : null}
 
       <p className="text-center text-sm text-white/80">
@@ -78,7 +90,20 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
   );
 }
 
-function GitHubRepoSignedOut() {
+function GitHubRepoSignedOut({
+  githubConfigured,
+}: {
+  githubConfigured: boolean;
+}) {
+  if (!githubConfigured) {
+    return (
+      <p className="text-center text-sm text-white/70">
+        GitHub cloud sync is not configured for this deployment. Use a local
+        folder instead.
+      </p>
+    );
+  }
+
   return (
     <>
       <p className="text-center text-sm text-white/70">
@@ -119,10 +144,18 @@ function GitHubRepoSignedInIdle() {
 }
 
 function GitHubRepoSignedIn({ githubStatus }: { githubStatus?: string }) {
-  const { data: connection, isLoading } = api.github.getConnection.useQuery();
+  const { data: connection, isLoading, error } = api.github.getConnection.useQuery();
 
   if (isLoading) {
     return <p className="text-sm text-white/70">Loading GitHub connection…</p>;
+  }
+
+  if (error?.data?.code === "PRECONDITION_FAILED") {
+    return (
+      <p className="text-center text-sm text-white/70">
+        GitHub cloud sync is not configured for this deployment.
+      </p>
+    );
   }
 
   if (connection) {
@@ -134,8 +167,10 @@ function GitHubRepoSignedIn({ githubStatus }: { githubStatus?: string }) {
 
 export function GitHubRepoPanel({
   githubStatus,
+  githubConfigured,
 }: {
   githubStatus?: string;
+  githubConfigured: boolean;
 }) {
   const { data: session, isPending } = authClient.useSession();
 
@@ -148,7 +183,7 @@ export function GitHubRepoPanel({
       ) : session?.user ? (
         <GitHubRepoSignedIn githubStatus={githubStatus} />
       ) : (
-        <GitHubRepoSignedOut />
+        <GitHubRepoSignedOut githubConfigured={githubConfigured} />
       )}
     </section>
   );

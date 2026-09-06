@@ -81,7 +81,7 @@ After creating the app:
 pnpm install
 cp .env.example .env
 # Fill BETTER_AUTH_SECRET (openssl rand -base64 32)
-# GitHub values are only required if you want the optional cloud repo flow
+# GitHub values are optional and only needed for the cloud repository flow
 pnpm dev
 ```
 
@@ -118,10 +118,10 @@ Set these in **Project → Settings → Environment Variables** (Production, Pre
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | `https://<your-vercel-domain>` |
 | `GITHUB_CLIENT_ID` | OAuth app client ID (optional cloud flow) |
-| `GITHUB_CLIENT_SECRET` | OAuth app client secret |
-| `GITHUB_APP_ID` | GitHub App ID |
-| `GITHUB_APP_PRIVATE_KEY` | PEM private key; use `\n` for newlines in Vercel |
-| `GITHUB_APP_SLUG` | App slug from `https://github.com/apps/<slug>` |
+| `GITHUB_CLIENT_SECRET` | OAuth app client secret (optional) |
+| `GITHUB_APP_ID` | GitHub App ID (optional) |
+| `GITHUB_APP_PRIVATE_KEY` | PEM private key; use `\n` for newlines in Vercel (optional) |
+| `GITHUB_APP_SLUG` | App slug from `https://github.com/apps/<slug>` (optional) |
 
 GitHub callbacks:
 

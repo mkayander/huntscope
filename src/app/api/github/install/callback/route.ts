@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "~/server/auth";
-import { listInstallationRepositories } from "~/server/github/api";
+import {
+  listInstallationRepositories,
+  verifyUserInstallationAccess,
+} from "~/server/github/api";
+import {
+  isGitHubAppConfigured,
+} from "~/server/github/config";
 import {
   consumeInstallState,
   setInstallationConnection,
@@ -14,6 +20,10 @@ function redirectWithMessage(request: Request, message: string) {
 }
 
 export async function GET(request: Request) {
+  if (!isGitHubAppConfigured()) {
+    return redirectWithMessage(request, "not-configured");
+  }
+
   const session = await auth.api.getSession({ headers: request.headers });
 
   if (!session?.user) {
@@ -23,23 +33,39 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const installationId = Number(url.searchParams.get("installation_id"));
   const setupAction = url.searchParams.get("setup_action");
-  const stateUserId = url.searchParams.get("state");
+  const stateNonce = url.searchParams.get("state");
 
   if (!installationId || Number.isNaN(installationId)) {
     return redirectWithMessage(request, "missing-installation");
   }
 
-  if (stateUserId && stateUserId !== session.user.id) {
-    return redirectWithMessage(request, "state-mismatch");
+  if (!stateNonce) {
+    return redirectWithMessage(request, "missing-state");
   }
 
   const installState = await consumeInstallState(session.user.id);
 
-  if (!installState) {
+  if (installState?.nonce !== stateNonce) {
     return redirectWithMessage(request, "expired-state");
   }
 
   try {
+    const accessToken = await auth.api.getAccessToken({
+      headers: request.headers,
+      body: {
+        useAccountCookie: true,
+      },
+    });
+
+    const userCanAccessInstallation = await verifyUserInstallationAccess(
+      installationId,
+      accessToken.accessToken,
+    );
+
+    if (!userCanAccessInstallation) {
+      return redirectWithMessage(request, "installation-forbidden");
+    }
+
     const repositories = await listInstallationRepositories(installationId);
 
     if (repositories.length === 0) {

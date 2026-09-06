@@ -1,14 +1,14 @@
 import { cookies } from "next/headers";
 import { EncryptJWT, jwtDecrypt } from "jose";
 
-import { env } from "~/env";
+import { getCookieEncryptionKey } from "~/server/github/config";
 import type { InstallState, InstallationConnection } from "~/server/github/types";
 
 const INSTALLATION_COOKIE = "huntscope.github.installation";
 const INSTALL_STATE_COOKIE = "huntscope.github.install.state";
 
 function getEncryptionKey() {
-  return new TextEncoder().encode(env.BETTER_AUTH_SECRET);
+  return getCookieEncryptionKey();
 }
 
 async function encryptPayload<T extends Record<string, unknown>>(

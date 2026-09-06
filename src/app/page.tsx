@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { DataSourcePanel } from "~/app/_components/data-source-panel";
 import { OptionalAuthButton } from "~/app/_components/optional-auth-button";
 import { getSession } from "~/server/auth/session";
+import { isGitHubConfigured } from "~/server/github/config";
 import { api, HydrateClient } from "~/trpc/server";
 
 type HomeProps = {
@@ -13,8 +14,9 @@ export default async function Home({ searchParams }: HomeProps) {
   const hello = await api.post.hello({ text: "from tRPC" });
   const session = await getSession(await headers());
   const { github: githubStatus } = await searchParams;
+  const githubConfigured = isGitHubConfigured();
 
-  if (session?.user) {
+  if (session?.user && githubConfigured) {
     void api.github.getConnection.prefetch();
     void api.github.previewDataFile.prefetch();
   }
@@ -40,7 +42,10 @@ export default async function Home({ searchParams }: HomeProps) {
               {hello ? hello.greeting : "Loading tRPC query..."}
             </p>
             <OptionalAuthButton />
-            <DataSourcePanel githubStatus={githubStatus} />
+            <DataSourcePanel
+              githubStatus={githubStatus}
+              githubConfigured={githubConfigured}
+            />
           </div>
         </div>
       </main>

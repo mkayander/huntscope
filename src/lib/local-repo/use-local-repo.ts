@@ -100,6 +100,13 @@ export function useLocalRepo() {
   const restore = useCallback(async () => {
     setInstalledPwa(isInstalledPwa());
 
+    const launchedFile = await loadLaunchedFileHandle();
+
+    if (launchedFile) {
+      await refreshLaunchedFile(launchedFile);
+      return;
+    }
+
     if (!supportsDirectoryPicker()) {
       setState({ status: "unsupported" });
       return;
@@ -109,13 +116,6 @@ export function useLocalRepo() {
 
     if (directory) {
       await refreshDirectory(directory);
-      return;
-    }
-
-    const launchedFile = await loadLaunchedFileHandle();
-
-    if (launchedFile) {
-      await refreshLaunchedFile(launchedFile);
       return;
     }
 
@@ -152,12 +152,27 @@ export function useLocalRepo() {
       return;
     }
 
+    let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+
     const stopWatching = watchDirectory(directoryHandle, () => {
-      void refreshDirectory(directoryHandle);
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+
+      refreshTimeout = setTimeout(() => {
+        void refreshDirectory(directoryHandle);
+      }, 500);
     });
 
     setWatchingDisk(supportsFileSystemObserver());
-    return stopWatching;
+
+    return () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+
+      stopWatching();
+    };
   }, [directoryHandle, refreshDirectory, state]);
 
   const pickDirectory = useCallback(async () => {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "huntscope-shell-v1";
+const CACHE_NAME = "huntscope-shell-v2";
 const SHELL_URLS = ["/", "/icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -36,10 +36,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(async () => {
+        const cached = await caches.match(event.request);
+        return cached ?? caches.match("/");
+      }),
+    );
+    return;
+  }
+
   event.respondWith(
     fetch(event.request).catch(async () => {
       const cached = await caches.match(event.request);
-      return cached ?? caches.match("/");
+      return cached ?? Response.error();
     }),
   );
 });

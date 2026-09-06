@@ -1,4 +1,5 @@
 import { createGitHubAppJwt } from "~/server/github/app-auth";
+import { requireGitHubAppConfig } from "~/server/github/config";
 import type { ConnectedRepository } from "~/server/github/types";
 
 type GitHubFetchOptions = {
@@ -36,6 +37,25 @@ async function githubFetch<T>({
   return (await response.json()) as T;
 }
 
+export async function verifyUserInstallationAccess(
+  installationId: number,
+  userAccessToken: string,
+): Promise<boolean> {
+  const response = await fetch(
+    `https://api.github.com/user/installations/${installationId}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${userAccessToken}`,
+        "User-Agent": "huntscope",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
+
+  return response.ok;
+}
+
 export async function createInstallationAccessToken(installationId: number) {
   const appJwt = await createGitHubAppJwt();
 
@@ -50,6 +70,7 @@ export async function createInstallationAccessToken(installationId: number) {
 export async function listInstallationRepositories(
   installationId: number,
 ): Promise<ConnectedRepository[]> {
+  requireGitHubAppConfig();
   const { token } = await createInstallationAccessToken(installationId);
 
   const data = await githubFetch<{
@@ -70,6 +91,7 @@ export async function readRepositoryFile(
   repositoryFullName: string,
   filePath: string,
 ): Promise<string | null> {
+  requireGitHubAppConfig();
   const { token } = await createInstallationAccessToken(installationId);
 
   try {
@@ -86,7 +108,11 @@ export async function readRepositoryFile(
     }
 
     return Buffer.from(data.content, "base64").toString("utf8");
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) {
+      return null;
+    }
+
+    throw error;
   }
 }
