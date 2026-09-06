@@ -4,19 +4,39 @@
   --scrollbar-thumb: oklch(0.62 0.24 295 / 42%);
   --scrollbar-thumb-hover: oklch(0.68 0.22 295 / 68%);
   --scrollbar-thumb-active: oklch(0.72 0.2 295 / 82%);
+  --page-shell-background: linear-gradient(180deg, #2e026d 0%, #15162c 100%);
+}
+
+@layer utilities {
+  /* Layout viewport is narrower than visual viewport when gutter is stable. */
+  .fixed-viewport-bleed {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+  }
 }
 
 @layer base {
   html {
     color-scheme: dark;
-    width: 100%;
+    min-height: 100%;
     scrollbar-gutter: stable;
+    background-color: var(--background);
+    background-image: var(--page-shell-background);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  html[data-page-shell="dashboard"] {
+    background-image: none;
   }
 
   html,
   body {
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   html::-webkit-scrollbar {
@@ -25,8 +45,7 @@
   }
 
   html::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
-    border-radius: 999px;
+    background: transparent;
   }
 
   html::-webkit-scrollbar-thumb {

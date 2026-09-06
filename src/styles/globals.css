@@ -127,9 +127,9 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply min-h-full w-full bg-background font-sans text-foreground antialiased;
+    @apply min-h-full w-full bg-transparent font-sans text-foreground antialiased;
   }
   html {
-    @apply min-h-full w-full bg-background;
+    @apply min-h-full;
   }
 }

@@ -4,7 +4,7 @@ import { cn } from "cn";
 import { Slot } from "radix-ui";
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border-0 bg-clip-padding text-sm font-medium leading-none whitespace-nowrap shadow-none transition-[color,background-color,box-shadow,transform,filter] duration-200 outline-none select-none cursor-pointer focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:ring-offset-0 active:not-aria-[haspopup]:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none aria-invalid:ring-[3px] aria-invalid:ring-destructive/25 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border-0 text-center text-sm font-medium whitespace-nowrap shadow-none transition-[color,background-color,box-shadow,transform,filter] duration-200 outline-none select-none cursor-pointer focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:ring-offset-0 active:not-aria-[haspopup]:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none aria-invalid:ring-[3px] aria-invalid:ring-destructive/25 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -20,20 +20,20 @@ const buttonVariants = cva(
           "bg-destructive/12 text-destructive shadow-sm hover:bg-destructive/20 focus-visible:ring-destructive/25 dark:bg-destructive/18 dark:hover:bg-destructive/28",
         link: "h-auto p-0 text-primary underline-offset-4 shadow-none hover:underline active:scale-100",
         brand:
-          "rounded-full bg-gradient-to-b from-violet-400 to-violet-600 font-semibold text-white shadow-lg shadow-violet-950/40 hover:from-violet-300 hover:to-violet-500 hover:shadow-violet-900/50 active:from-violet-500 active:to-violet-700 focus-visible:ring-violet-300/50",
+          "rounded-full bg-gradient-to-b from-violet-400 to-violet-600 font-semibold leading-none text-white shadow-lg shadow-violet-950/40 hover:from-violet-300 hover:to-violet-500 hover:shadow-violet-900/50 active:from-violet-500 active:to-violet-700 focus-visible:ring-violet-300/50",
         brandSecondary:
-          "rounded-full bg-white/10 font-medium text-white backdrop-blur-sm hover:bg-white/16 active:bg-white/22 focus-visible:ring-white/35",
-        chip: "h-auto rounded-full bg-transparent px-3 py-1 text-xs font-medium hover:brightness-110 active:scale-[0.98]",
+          "rounded-full bg-white/10 font-medium leading-none text-white ring-1 ring-inset ring-white/10 hover:bg-white/16 active:bg-white/22 focus-visible:ring-white/35",
+        chip: "h-auto rounded-full bg-transparent px-3 py-1 text-xs font-medium leading-none hover:brightness-110 active:scale-[0.98]",
       },
       size: {
         default:
-          "h-9 gap-1.5 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        xs: "h-7 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 gap-1 rounded-[min(var(--radius-md),12px)] px-3 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-10 gap-2 px-5 text-[0.925rem] has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
-        cta: "h-12 gap-2 rounded-full px-10 text-base",
-        pill: "h-9 rounded-full px-4",
-        pillSm: "h-8 rounded-full px-3.5 text-xs",
+          "h-9 gap-1.5 px-4 leading-none has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        xs: "h-7 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 text-xs leading-none in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-8 gap-1 rounded-[min(var(--radius-md),12px)] px-3 text-[0.8rem] leading-none in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-10 gap-2 px-5 text-[0.925rem] leading-none has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
+        cta: "min-h-12 rounded-full px-10 py-3 text-base leading-tight",
+        pill: "min-h-9 rounded-full px-4 py-2 leading-tight",
+        pillSm: "min-h-8 rounded-full px-3.5 py-1.5 text-xs leading-tight",
         icon: "size-9",
         "icon-xs":
           "size-7 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",

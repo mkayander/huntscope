@@ -99,7 +99,7 @@ export function StableButtonLabel({
   return (
     <span
       className={cn(
-        "grid text-center [&>*]:col-start-1 [&>*]:row-start-1",
+        "inline-grid place-items-center text-center [&>*]:col-start-1 [&>*]:row-start-1 [&>*]:leading-none",
         className,
       )}
     >

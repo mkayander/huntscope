@@ -85,8 +85,14 @@ function GitHubRepoConnected() {
           disabled={disconnect.isPending}
           onClick={() => disconnect.mutate()}
         >
-          <ButtonLoadingIcon isLoading={disconnect.isPending} />
-          <span>{disconnect.isPending ? "Disconnecting…" : "Disconnect"}</span>
+          {disconnect.isPending ? (
+            <>
+              <ButtonLoadingIcon isLoading />
+              Disconnecting…
+            </>
+          ) : (
+            "Disconnect"
+          )}
         </Button>
       </ActionButtonRow>
     </>
