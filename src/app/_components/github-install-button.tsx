@@ -7,6 +7,7 @@ import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import { AUTH_BUTTON_LABEL_PLACEHOLDER } from "~/app/_components/panel-loading-skeleton";
 import { GitHubInstallLink } from "~/app/_components/github-install-link";
 import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 
 type GitHubInstallButtonProps = Omit<
   ComponentProps<typeof Button>,
@@ -24,20 +25,31 @@ export function GitHubInstallButton({
   loadingLabel = "Redirecting to GitHub",
   labelPlaceholder = AUTH_BUTTON_LABEL_PLACEHOLDER,
   disabled,
+  className,
   ...buttonProps
 }: GitHubInstallButtonProps) {
   const [isNavigating, setIsNavigating] = useState(false);
+  const isInactive = Boolean(disabled) || isNavigating;
 
   return (
     <Button
       {...buttonProps}
       asChild
-      disabled={Boolean(disabled) || isNavigating}
+      className={cn(
+        className,
+        isInactive && "pointer-events-none cursor-not-allowed opacity-45",
+      )}
       aria-busy={isNavigating}
     >
       <GitHubInstallLink
         href={href}
+        tabIndex={isInactive ? -1 : undefined}
         onClick={(event) => {
+          if (isInactive) {
+            event.preventDefault();
+            return;
+          }
+
           if (
             event.metaKey ||
             event.ctrlKey ||
@@ -49,7 +61,7 @@ export function GitHubInstallButton({
 
           setIsNavigating(true);
         }}
-        aria-disabled={Boolean(disabled) || isNavigating ? true : undefined}
+        aria-disabled={isInactive || undefined}
       >
         <ButtonLoadingIcon isLoading={isNavigating} />
         <StableButtonLabel placeholder={labelPlaceholder}>

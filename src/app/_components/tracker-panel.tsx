@@ -15,8 +15,8 @@ import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { cn } from "~/lib/utils";
+import { TrackerArtifactLink } from "~/app/_components/tracker-artifact-link";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
-import { resolveArtifactLink } from "~/lib/career-ops/links";
 import { getBoardColumnOrder } from "~/lib/career-ops/status-meta";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
@@ -225,7 +225,7 @@ function TrackerBoard({
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
                         <ApplicationDate value={entry.date} />
-                        <ArtifactLink
+                        <TrackerArtifactLink
                           dataSource={dataSource}
                           defaultBranch={defaultBranch}
                           value={entry.report}
@@ -240,39 +240,6 @@ function TrackerBoard({
         </div>
       </div>
     </div>
-  );
-}
-
-function ArtifactLink({
-  dataSource,
-  defaultBranch,
-  value,
-}: {
-  dataSource: CareerOpsDataSource;
-  defaultBranch: string | null;
-  value: string;
-}) {
-  const artifact = resolveArtifactLink(dataSource, value, defaultBranch);
-
-  if (!artifact) {
-    return <span className="text-white/40">—</span>;
-  }
-
-  if (!artifact.href) {
-    return (
-      <span className="block truncate text-white/60">{artifact.label}</span>
-    );
-  }
-
-  return (
-    <a
-      href={artifact.href}
-      target="_blank"
-      rel="noreferrer"
-      className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-    >
-      {artifact.label}
-    </a>
   );
 }
 
