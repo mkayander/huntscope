@@ -48,20 +48,20 @@ export async function GET(request: Request) {
   }
 
   try {
-    const accessToken = await auth.api.getAccessToken({
+    const { accessToken } = await auth.api.getAccessToken({
       headers: request.headers,
       body: {
         useAccountCookie: true,
       },
     });
 
-    if (!accessToken.accessToken) {
+    if (!accessToken) {
       return redirectWithMessage(request, "github-account-required");
     }
 
     const userCanAccessInstallation = await verifyUserInstallationAccess(
       installationId,
-      accessToken.accessToken,
+      accessToken,
     );
 
     if (!userCanAccessInstallation) {

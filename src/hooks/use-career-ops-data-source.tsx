@@ -17,6 +17,7 @@ import {
 import {
   type CareerOpsDataSource,
   type CareerOpsDataSourcePreference,
+  readDataSourcePreference,
   toGitHubDataSource,
   toLocalDataSource,
   writeDataSourcePreference,
@@ -28,22 +29,6 @@ import {
 import { authClient } from "~/lib/auth-client";
 import { loadCareerOpsFromLocalSource } from "~/lib/local-repo/load-career-ops-data";
 import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
-
-function readDataSourcePreference(): CareerOpsDataSourcePreference | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const value = window.sessionStorage.getItem(
-    "huntscope.data-source-preference",
-  );
-
-  if (value === "local" || value === "github") {
-    return value;
-  }
-
-  return null;
-}
 
 export function useLocalCareerOpsData(source: CareerOpsDataSource | null) {
   const localSource = source?.kind === "local" ? source : null;
