@@ -14,7 +14,6 @@ import {
 import { PanelButtonSkeleton } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { GlowPanel } from "~/components/ui/glow-panel";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
   Select,
@@ -35,7 +34,6 @@ import { useHasMounted } from "~/hooks/use-has-mounted";
 import { toGitHubDataSource } from "~/lib/career-ops/data-source";
 import { toSelectedRepo } from "~/lib/career-ops/selected-repo";
 import type { GitHubRepoSummary } from "~/lib/career-ops/types";
-import { filterRepos, hasActiveRepoFilter } from "~/lib/career-ops/repo-list";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import {
   githubListReposQueryOptions,
@@ -67,11 +65,6 @@ function RepoSelectorLoadingContent() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Skeleton className="h-4 w-36 bg-white/10" />
-          <Skeleton className="h-10 w-full bg-white/10" />
-          <Skeleton className="h-3 w-40 bg-white/10" />
-        </div>
         <div className="flex flex-col gap-2">
           <Skeleton className="h-4 w-24 bg-white/10" />
           <Skeleton className="h-10 w-full bg-white/10" />
@@ -124,7 +117,6 @@ export function RepoSelector() {
   const hasMounted = useHasMounted();
   const { isSignedIn: initialIsSignedIn } = useHomeShell();
   const [selectionError, setSelectionError] = useState<string | null>(null);
-  const [repoFilterQuery, setRepoFilterQuery] = useState("");
   const utils = api.useUtils();
 
   const connectionQuery = api.github.getConnection.useQuery(undefined, {
@@ -148,14 +140,6 @@ export function RepoSelector() {
 
   const activeFullName = selectedRepo?.fullName ?? "";
   const isRepoChosen = activeFullName.length > 0;
-  const filteredRepos = useMemo(
-    () =>
-      filterRepos(repos, repoFilterQuery, {
-        alwaysIncludeFullName: activeFullName,
-      }),
-    [activeFullName, repoFilterQuery, repos],
-  );
-  const isRepoFilterActive = hasActiveRepoFilter(repoFilterQuery);
   const isRepoListRateLimited =
     reposQuery.error != null && isGitHubRateLimitTrpcError(reposQuery.error);
 
@@ -315,60 +299,29 @@ export function RepoSelector() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5 text-left">
-                <Label htmlFor="repo-filter" className="text-white/80">
-                  Filter repositories
-                </Label>
-                <Input
-                  id="repo-filter"
-                  value={repoFilterQuery}
-                  onChange={(event) => {
-                    setRepoFilterQuery(event.target.value);
-                  }}
-                  placeholder="Search by owner, name, or description…"
-                  className="border-white/15 bg-[#15162c] text-white placeholder:text-white/40"
-                />
-                <p className="text-xs text-white/50" id="repo-filter-results">
-                  {isRepoFilterActive
-                    ? `Showing ${filteredRepos.length} of ${repos.length} repositories`
-                    : `${repos.length} repositories`}
-                </p>
-              </div>
-
               <div className="flex flex-col gap-2 text-left">
                 <Label htmlFor="repo-select" className="text-white/80">
                   Repository
                 </Label>
-                {filteredRepos.length === 0 ? (
-                  <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-sm text-amber-100">
-                    No repositories match &ldquo;{repoFilterQuery.trim()}
-                    &rdquo;. Try a different search.
-                  </p>
-                ) : (
-                  <Select
-                    variant="dashboard"
-                    value={activeFullName || EMPTY_REPO_VALUE}
-                    onValueChange={handleRepoChange}
-                  >
-                    <SelectTrigger
-                      id="repo-select"
-                      className="w-full"
-                      aria-describedby="repo-filter-results"
-                    >
-                      <SelectValue placeholder="Select a repository…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={EMPTY_REPO_VALUE}>
-                        Select a repository…
+                <Select
+                  variant="dashboard"
+                  value={activeFullName || EMPTY_REPO_VALUE}
+                  onValueChange={handleRepoChange}
+                >
+                  <SelectTrigger id="repo-select" className="w-full">
+                    <SelectValue placeholder="Select a repository…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={EMPTY_REPO_VALUE}>
+                      Select a repository…
+                    </SelectItem>
+                    {repos.map((repo) => (
+                      <SelectItem key={repo.id} value={repo.fullName}>
+                        {formatRepoOption(repo)}
                       </SelectItem>
-                      {filteredRepos.map((repo) => (
-                        <SelectItem key={repo.id} value={repo.fullName}>
-                          {formatRepoOption(repo)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
