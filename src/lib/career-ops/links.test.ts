@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 
 import { toGitHubDataSource } from "~/lib/career-ops/data-source";
 import {
@@ -10,23 +9,22 @@ import {
 
 describe("extractMarkdownLink", () => {
   it("parses markdown links", () => {
-    assert.deepEqual(extractMarkdownLink("[Report](reports/foo.md)"), {
+    expect(extractMarkdownLink("[Report](reports/foo.md)")).toEqual({
       label: "Report",
       href: "reports/foo.md",
     });
   });
 
   it("returns null for empty values", () => {
-    assert.equal(extractMarkdownLink("—"), null);
+    expect(extractMarkdownLink("—")).toBeNull();
   });
 });
 
 describe("resolveRepoFileUrl", () => {
   it("uses the provided default branch", () => {
-    assert.equal(
+    expect(
       resolveRepoFileUrl("acme/career-ops", "reports/foo.md", "develop"),
-      "https://github.com/acme/career-ops/blob/develop/reports/foo.md",
-    );
+    ).toBe("https://github.com/acme/career-ops/blob/develop/reports/foo.md");
   });
 });
 
@@ -38,26 +36,22 @@ describe("resolveArtifactLink", () => {
   });
 
   it("builds GitHub blob links with a non-main default branch", () => {
-    const artifact = resolveArtifactLink(
-      githubSource,
-      "reports/foo.md",
-      "develop",
-    );
-
-    assert.deepEqual(artifact, {
+    expect(
+      resolveArtifactLink(githubSource, "reports/foo.md", "develop"),
+    ).toEqual({
       label: "Report",
       href: "https://github.com/acme/career-ops/blob/develop/reports/foo.md",
     });
   });
 
   it("keeps absolute markdown hrefs unchanged", () => {
-    const artifact = resolveArtifactLink(
-      githubSource,
-      "[Notes](https://example.com/report)",
-      "main",
-    );
-
-    assert.deepEqual(artifact, {
+    expect(
+      resolveArtifactLink(
+        githubSource,
+        "[Notes](https://example.com/report)",
+        "main",
+      ),
+    ).toEqual({
       label: "Notes",
       href: "https://example.com/report",
     });

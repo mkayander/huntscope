@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 
 import {
   isSameDataSource,
@@ -24,8 +23,8 @@ describe("career-ops data source helpers", () => {
       fileHandle: null,
     });
 
-    assert.equal(isSameDataSource(left, left), true);
-    assert.equal(isSameDataSource(left, right), false);
+    expect(isSameDataSource(left, left)).toBe(true);
+    expect(isSameDataSource(left, right)).toBe(false);
   });
 
   it("compares GitHub sources by full name", () => {
@@ -40,7 +39,7 @@ describe("career-ops data source helpers", () => {
       fullName: "acme/other",
     });
 
-    assert.equal(isSameDataSource(left, left), true);
-    assert.equal(isSameDataSource(left, right), false);
+    expect(isSameDataSource(left, left)).toBe(true);
+    expect(isSameDataSource(left, right)).toBe(false);
   });
 });

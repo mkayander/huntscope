@@ -58,6 +58,9 @@ jobs:
       - name: Check
         run: pnpm check
 
+      - name: Test
+        run: pnpm test
+
       - name: Build project
         run: pnpm build
 

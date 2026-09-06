@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 
 import {
   clearInstallationTokenCache,
@@ -14,7 +13,7 @@ describe("installation token cache", () => {
 
     setCachedInstallationToken(42, "token-abc", expiresAt);
 
-    assert.equal(getCachedInstallationToken(42), "token-abc");
+    expect(getCachedInstallationToken(42)).toBe("token-abc");
   });
 
   it("drops expired tokens", () => {
@@ -23,7 +22,7 @@ describe("installation token cache", () => {
 
     setCachedInstallationToken(7, "expired-token", expiresAt);
 
-    assert.equal(getCachedInstallationToken(7), null);
+    expect(getCachedInstallationToken(7)).toBeNull();
   });
 
   it("clears a single installation", () => {
@@ -35,7 +34,7 @@ describe("installation token cache", () => {
 
     clearInstallationTokenCache(1);
 
-    assert.equal(getCachedInstallationToken(1), null);
-    assert.equal(getCachedInstallationToken(2), "two");
+    expect(getCachedInstallationToken(1)).toBeNull();
+    expect(getCachedInstallationToken(2)).toBe("two");
   });
 });

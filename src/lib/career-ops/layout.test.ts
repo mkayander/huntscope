@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 
 import {
   buildCareerOpsRepoData,
@@ -8,14 +7,13 @@ import {
 
 describe("hasCareerOpsLayoutData", () => {
   it("detects career-ops layout from applications markdown", () => {
-    assert.equal(
+    expect(
       hasCareerOpsLayoutData({
         applicationsMarkdown: "# Applications",
         pipelineMarkdown: null,
         dataFiles: [],
       }),
-      true,
-    );
+    ).toBe(true);
   });
 });
 
@@ -32,23 +30,21 @@ describe("buildCareerOpsRepoData", () => {
       reportsDirectory: [{ path: "reports/a.md", name: "a.md", type: "file" }],
     });
 
-    assert.equal(data.defaultBranch, "develop");
-    assert.equal(data.reportsCount, 1);
+    expect(data.defaultBranch).toBe("develop");
+    expect(data.reportsCount).toBe(1);
   });
 
   it("rejects folders without career-ops data", () => {
-    assert.throws(
-      () =>
-        buildCareerOpsRepoData({
-          owner: "acme",
-          name: "empty",
-          fullName: "acme/empty",
-          applicationsMarkdown: null,
-          pipelineMarkdown: null,
-          dataDirectory: [],
-          reportsDirectory: [],
-        }),
-      /does not look like a career-ops/,
-    );
+    expect(() =>
+      buildCareerOpsRepoData({
+        owner: "acme",
+        name: "empty",
+        fullName: "acme/empty",
+        applicationsMarkdown: null,
+        pipelineMarkdown: null,
+        dataDirectory: [],
+        reportsDirectory: [],
+      }),
+    ).toThrow(/does not look like a career-ops/);
   });
 });
