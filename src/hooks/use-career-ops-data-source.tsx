@@ -19,7 +19,7 @@ import {
   type CareerOpsDataSourcePreference,
   readDataSourcePreference,
   toGitHubDataSource,
-  toLocalDataSource,
+  toLocalDataSourceFromConnectedRepo,
   writeDataSourcePreference,
 } from "~/lib/career-ops/data-source";
 import {
@@ -32,17 +32,12 @@ import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
 
 export function useLocalCareerOpsData(source: CareerOpsDataSource | null) {
   const localSource = source?.kind === "local" ? source : null;
-  const refreshToken =
-    localSource?.directoryHandle || localSource?.fileHandle
-      ? localSource.sessionId
-      : undefined;
 
   return useQuery({
     queryKey: [
       "local-career-ops",
       localSource?.sessionId,
       localSource?.directoryName,
-      refreshToken,
     ],
     queryFn: async () => {
       if (!localSource) {
@@ -71,30 +66,29 @@ const CareerOpsDataSourceContext =
 function useCareerOpsDataSourceState() {
   const { data: session } = authClient.useSession();
   const isSignedIn = Boolean(session?.user);
-  const localRepo = useLocalRepo();
-  const selectedRepoQuery = useSelectedRepoQuery(isSignedIn);
   const [preference, setPreference] =
     useState<CareerOpsDataSourcePreference | null>(() =>
       readDataSourcePreference(),
     );
+
+  const preferLocalSource = useCallback(() => {
+    writeDataSourcePreference("local");
+    setPreference("local");
+  }, []);
+
+  const localRepo = useLocalRepo({ onConnected: preferLocalSource });
+  const selectedRepoQuery = useSelectedRepoQuery(isSignedIn);
 
   const localSource = useMemo(() => {
     if (localRepo.state.status !== "connected" || !localRepo.sessionId) {
       return null;
     }
 
-    const preview = localRepo.state.preview;
-
-    return toLocalDataSource({
-      directoryName: preview.directoryName,
-      displayName: preview.directoryName,
+    return toLocalDataSourceFromConnectedRepo({
+      preview: localRepo.state.preview,
       sessionId: localRepo.sessionId,
-      directoryHandle:
-        preview.source === "directory" ? localRepo.directoryHandle : null,
-      fileHandle:
-        preview.source === "launched-file"
-          ? localRepo.launchedFileHandle
-          : null,
+      directoryHandle: localRepo.directoryHandle,
+      fileHandle: localRepo.launchedFileHandle,
     });
   }, [localRepo]);
 

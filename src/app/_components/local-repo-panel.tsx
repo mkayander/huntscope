@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { InstallPwaButton } from "~/app/_components/install-pwa-button";
 import { DataPreview } from "~/app/_components/data-preview";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
-import { toLocalDataSource } from "~/lib/career-ops/data-source";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 
 type LocalRepoPanelProps = {
@@ -39,37 +36,16 @@ function PanelShell({
 }
 
 export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
-  const { localRepo, setActiveSource } = useCareerOpsDataSource();
+  const { localRepo } = useCareerOpsDataSource();
   const {
     state,
     isRefreshing,
     watchingDisk,
     installedPwa,
-    directoryHandle,
-    launchedFileHandle,
-    sessionId,
     pickDirectory,
     refresh,
     disconnect,
   } = localRepo;
-
-  useEffect(() => {
-    if (state.status !== "connected" || !sessionId) {
-      return;
-    }
-
-    setActiveSource(
-      toLocalDataSource({
-        directoryName: state.preview.directoryName,
-        displayName: state.preview.directoryName,
-        sessionId,
-        directoryHandle:
-          state.preview.source === "directory" ? directoryHandle : null,
-        fileHandle:
-          state.preview.source === "launched-file" ? launchedFileHandle : null,
-      }),
-    );
-  }, [directoryHandle, launchedFileHandle, sessionId, setActiveSource, state]);
 
   const titleClassName =
     variant === "dashboard"

@@ -69,7 +69,7 @@ export function RepoSelector() {
   const { selectRepo, persistRepo } = usePersistSelectedRepo();
   const { setActiveSource } = useCareerOpsDataSource();
 
-  const repos = reposQuery.data ?? [];
+  const repos = useMemo(() => reposQuery.data ?? [], [reposQuery.data]);
   const selectedRepo = selectedRepoQuery.data;
 
   const activeFullName = selectedRepo?.fullName ?? "";

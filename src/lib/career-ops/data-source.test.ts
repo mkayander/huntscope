@@ -4,6 +4,7 @@ import {
   isSameDataSource,
   toGitHubDataSource,
   toLocalDataSource,
+  toLocalDataSourceFromConnectedRepo,
 } from "~/lib/career-ops/data-source";
 
 describe("career-ops data source helpers", () => {
@@ -41,5 +42,27 @@ describe("career-ops data source helpers", () => {
 
     expect(isSameDataSource(left, left)).toBe(true);
     expect(isSameDataSource(left, right)).toBe(false);
+  });
+
+  it("builds a local source from connected repo state", () => {
+    const source = toLocalDataSourceFromConnectedRepo({
+      preview: {
+        directoryName: "career-ops",
+        source: "directory",
+      },
+      sessionId: "session-a",
+      directoryHandle: null,
+      fileHandle: null,
+    });
+
+    expect(source).toEqual(
+      toLocalDataSource({
+        directoryName: "career-ops",
+        displayName: "career-ops",
+        sessionId: "session-a",
+        directoryHandle: null,
+        fileHandle: null,
+      }),
+    );
   });
 });

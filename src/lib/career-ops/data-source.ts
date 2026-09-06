@@ -63,6 +63,26 @@ export function toLocalDataSource(input: {
   };
 }
 
+export function toLocalDataSourceFromConnectedRepo(input: {
+  preview: {
+    directoryName: string;
+    source: "directory" | "launched-file";
+  };
+  sessionId: string;
+  directoryHandle: FileSystemDirectoryHandle | null;
+  fileHandle: FileSystemFileHandle | null;
+}): CareerOpsDataSource {
+  return toLocalDataSource({
+    directoryName: input.preview.directoryName,
+    displayName: input.preview.directoryName,
+    sessionId: input.sessionId,
+    directoryHandle:
+      input.preview.source === "directory" ? input.directoryHandle : null,
+    fileHandle:
+      input.preview.source === "launched-file" ? input.fileHandle : null,
+  });
+}
+
 export function toGitHubDataSource(repo: SelectedRepo): CareerOpsDataSource {
   return {
     kind: "github",

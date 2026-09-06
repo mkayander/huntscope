@@ -34,7 +34,12 @@ type LocalRepoState =
   | { status: "permission-required"; directoryName: string }
   | { status: "error"; message: string };
 
-export function useLocalRepo() {
+type UseLocalRepoOptions = {
+  onConnected?: () => void;
+};
+
+export function useLocalRepo(options: UseLocalRepoOptions = {}) {
+  const { onConnected } = options;
   const [state, setState] = useState<LocalRepoState>({ status: "loading" });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [watchingDisk, setWatchingDisk] = useState(false);
@@ -46,7 +51,7 @@ export function useLocalRepo() {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const refreshDirectory = useCallback(
-    async (handle: FileSystemDirectoryHandle) => {
+    async (handle: FileSystemDirectoryHandle): Promise<boolean> => {
       setIsRefreshing(true);
 
       try {
@@ -57,13 +62,14 @@ export function useLocalRepo() {
             status: "permission-required",
             directoryName: handle.name,
           });
-          return;
+          return false;
         }
 
         const preview = await readLocalRepoPreview(handle);
         setDirectoryHandle(handle);
         setLaunchedFileHandle(null);
         setState({ status: "connected", preview });
+        return true;
       } catch (error) {
         setState({
           status: "error",
@@ -72,6 +78,7 @@ export function useLocalRepo() {
               ? error.message
               : "Could not read the selected folder.",
         });
+        return false;
       } finally {
         setIsRefreshing(false);
       }
@@ -80,7 +87,7 @@ export function useLocalRepo() {
   );
 
   const refreshLaunchedFile = useCallback(
-    async (handle: FileSystemFileHandle) => {
+    async (handle: FileSystemFileHandle): Promise<boolean> => {
       setIsRefreshing(true);
 
       try {
@@ -88,6 +95,7 @@ export function useLocalRepo() {
         setLaunchedFileHandle(handle);
         setDirectoryHandle(null);
         setState({ status: "connected", preview });
+        return true;
       } catch (error) {
         setState({
           status: "error",
@@ -96,6 +104,7 @@ export function useLocalRepo() {
               ? error.message
               : "Could not read the launched file.",
         });
+        return false;
       } finally {
         setIsRefreshing(false);
       }
@@ -146,10 +155,14 @@ export function useLocalRepo() {
         await clearAllLocalRepoHandles();
         const newSessionId = await saveLaunchedFileHandle(fileHandle);
         setSessionId(newSessionId);
-        await refreshLaunchedFile(fileHandle);
+        const connected = await refreshLaunchedFile(fileHandle);
+
+        if (connected) {
+          onConnected?.();
+        }
       })();
     });
-  }, [refreshLaunchedFile]);
+  }, [onConnected, refreshLaunchedFile]);
 
   useEffect(() => {
     if (
@@ -206,7 +219,11 @@ export function useLocalRepo() {
       await clearLaunchedFileHandle();
       const newSessionId = await saveDirectoryHandle(handle);
       setSessionId(newSessionId);
-      await refreshDirectory(handle);
+      const connected = await refreshDirectory(handle);
+
+      if (connected) {
+        onConnected?.();
+      }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
@@ -218,7 +235,7 @@ export function useLocalRepo() {
           error instanceof Error ? error.message : "Could not open the folder.",
       });
     }
-  }, [refreshDirectory]);
+  }, [onConnected, refreshDirectory]);
 
   const reconnect = useCallback(async () => {
     if (launchedFileHandle) {
