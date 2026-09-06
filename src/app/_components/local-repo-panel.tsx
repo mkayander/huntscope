@@ -1,50 +1,103 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { InstallPwaButton } from "~/app/_components/install-pwa-button";
+import { GlowPanel } from "~/components/ui/glow-panel";
+import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
+import { toLocalDataSource } from "~/lib/career-ops/data-source";
+import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
 import { DataPreview } from "~/app/_components/data-preview";
 
-export function LocalRepoPanel() {
+type LocalRepoPanelProps = {
+  variant?: "landing" | "dashboard";
+};
+
+function PanelShell({
+  variant,
+  children,
+}: {
+  variant: "landing" | "dashboard";
+  children: React.ReactNode;
+}) {
+  if (variant === "dashboard") {
+    return (
+      <GlowPanel
+        accent={DASHBOARD_SECTION_IDS.repository}
+        className="flex flex-col gap-4"
+      >
+        {children}
+      </GlowPanel>
+    );
+  }
+
+  return (
+    <section className="flex w-full flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6">
+      {children}
+    </section>
+  );
+}
+
+export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
+  const { setActiveSource } = useCareerOpsDataSource();
   const {
     state,
     isRefreshing,
     watchingDisk,
     installedPwa,
+    directoryHandle,
     pickDirectory,
     refresh,
     disconnect,
   } = useLocalRepo();
 
+  useEffect(() => {
+    if (
+      state.status === "connected" &&
+      state.preview.source === "directory" &&
+      directoryHandle
+    ) {
+      setActiveSource(toLocalDataSource(directoryHandle));
+    }
+  }, [directoryHandle, setActiveSource, state]);
+
+  const titleClassName =
+    variant === "dashboard"
+      ? "text-xl font-semibold text-white"
+      : "text-lg font-semibold text-white";
+
   if (state.status === "loading") {
     return (
-      <section className="flex w-full flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6">
+      <PanelShell variant={variant}>
         <p className="text-sm text-white/70">Loading local repository…</p>
-      </section>
+      </PanelShell>
     );
   }
 
   if (state.status === "unsupported") {
     return (
-      <section className="flex w-full flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h2 className="text-lg font-semibold text-white">Local repository</h2>
-        <p className="text-center text-sm text-white/70">
+      <PanelShell variant={variant}>
+        <h2 className={titleClassName}>Local career-ops project</h2>
+        <p className="text-sm text-white/70">
           Folder picking is not supported in this browser. Use Chrome or Edge on
-          desktop to open a local job-search repo from disk.
+          desktop to open a local career-ops project from disk.
         </p>
-      </section>
+      </PanelShell>
     );
   }
 
   if (state.status === "connected") {
     return (
-      <section className="flex w-full flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-        <div className="flex flex-col items-center gap-2">
-          <h2 className="text-lg font-semibold text-white">Local repository</h2>
+      <PanelShell variant={variant}>
+        <div className="flex flex-col gap-2">
+          <h2 className={titleClassName}>Local career-ops project</h2>
           <p className="font-mono text-sm text-white/80">
             {state.preview.directoryName}
           </p>
           <p className="text-xs text-white/50">
-            Last refreshed {new Date(state.preview.lastRefreshedAt).toLocaleString()}
+            Last refreshed{" "}
+            {new Date(state.preview.lastRefreshedAt).toLocaleString()}
             {state.preview.source === "directory" && watchingDisk
               ? " · watching for disk changes"
               : ""}
@@ -55,15 +108,23 @@ export function LocalRepoPanel() {
           </p>
         </div>
 
-        <InstallPwaButton />
+        {variant === "landing" ? (
+          <>
+            <InstallPwaButton />
+            <DataPreview
+              filePath={state.preview.filePath}
+              preview={state.preview.preview}
+              sourceLabel="local disk"
+            />
+          </>
+        ) : (
+          <p className="text-sm text-white/60">
+            Reading `data/applications.md`, `data/pipeline.md`, and `reports/`
+            from your career-ops project root.
+          </p>
+        )}
 
-        <DataPreview
-          filePath={state.preview.filePath}
-          preview={state.preview.preview}
-          sourceLabel="local disk"
-        />
-
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => void refresh()}
@@ -87,30 +148,30 @@ export function LocalRepoPanel() {
             Disconnect
           </button>
         </div>
-      </section>
+      </PanelShell>
     );
   }
 
   return (
-    <section className="flex w-full flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-      <h2 className="text-lg font-semibold text-white">Local repository</h2>
-      <p className="text-center text-sm text-white/70">
-        Open a job-search data folder from your computer. Huntscope reads files
-        directly from disk and can refresh when the folder changes. Install the
-        app for stronger folder permission persistence.
+    <PanelShell variant={variant}>
+      <h2 className={titleClassName}>Local career-ops project</h2>
+      <p className="text-sm text-white/70">
+        Open your career-ops project root — the folder that contains `data/`,
+        `reports/`, and the rest of your job-search files. Huntscope reads
+        directly from disk and refreshes when the folder changes.
       </p>
 
-      <InstallPwaButton />
+      {variant === "landing" ? <InstallPwaButton /> : null}
 
       {state.status === "permission-required" ? (
-        <p className="text-center text-sm text-amber-200">
+        <p className="text-sm text-amber-200">
           Permission is required to read {state.directoryName} again. Click open
           folder to re-authorize.
         </p>
       ) : null}
 
       {state.status === "error" ? (
-        <p className="text-center text-sm text-red-200">{state.message}</p>
+        <p className="text-sm text-red-200">{state.message}</p>
       ) : null}
 
       <button
@@ -120,6 +181,6 @@ export function LocalRepoPanel() {
       >
         Open local folder
       </button>
-    </section>
+    </PanelShell>
   );
 }

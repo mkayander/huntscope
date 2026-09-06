@@ -21,7 +21,10 @@ import {
   usePersistSelectedRepo,
   useSelectedRepoQuery,
 } from "~/hooks/use-career-ops-repo";
+import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { useHasMounted } from "~/hooks/use-has-mounted";
+import { toGitHubDataSource } from "~/lib/career-ops/data-source";
+import { toSelectedRepo } from "~/lib/career-ops/selected-repo";
 import type { GitHubRepoSummary } from "~/lib/career-ops/types";
 import { filterRepos, hasActiveRepoFilter } from "~/lib/career-ops/repo-list";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
@@ -64,6 +67,7 @@ export function RepoSelector() {
   );
   const selectedRepoQuery = useSelectedRepoQuery();
   const { selectRepo, persistRepo } = usePersistSelectedRepo();
+  const { setActiveSource } = useCareerOpsDataSource();
 
   const repos = reposQuery.data ?? [];
   const selectedRepo = selectedRepoQuery.data;
@@ -113,6 +117,7 @@ export function RepoSelector() {
     }
 
     persistRepo(repo);
+    setActiveSource(toGitHubDataSource(toSelectedRepo(repo)));
   };
 
   const handleReload = () => {
@@ -245,7 +250,7 @@ export function RepoSelector() {
         {repos.length === 0 ? (
           <ErrorAlert
             title="No repositories found"
-            message="No repositories are available from your GitHub App installation. Reinstall the app and select at least one repository."
+            message="No repositories are available from your GitHub App installation. Reinstall the app and select a companion repository with career-ops data files."
           />
         ) : (
           <>
@@ -369,5 +374,6 @@ export function RepoSelector() {
 
 function formatRepoOption(repo: GitHubRepoSummary): string {
   const privacy = repo.private ? "private" : "public";
-  return `${repo.fullName} (${privacy})`;
+  const layout = repo.hasCareerOpsLayout ? "career-ops" : "unknown layout";
+  return `${repo.fullName} (${privacy}, ${layout})`;
 }

@@ -12,8 +12,9 @@ import { ApplicationDate } from "~/components/application-date";
 import { Button } from "~/components/ui/button";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
-import { extractMarkdownLink, resolveRepoFileUrl } from "~/lib/career-ops/links";
+import { resolveArtifactLink } from "~/lib/career-ops/links";
 import { sortStatuses } from "~/lib/career-ops/status-meta";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
@@ -26,14 +27,14 @@ import type { ApplicationEntry } from "~/lib/career-ops/types";
 type TrackerView = "table" | "board";
 
 type TrackerPanelProps = {
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
   applications: ApplicationEntry[];
   statusFilter: string | null;
   onStatusFilterChange: (status: string | null) => void;
 };
 
 export function TrackerPanel({
-  repoFullName,
+  dataSource,
   applications,
   statusFilter,
   onStatusFilterChange,
@@ -112,10 +113,12 @@ export function TrackerPanel({
       <div className="shrink-0">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">Application tracker</h3>
+            <h3 className="text-lg font-semibold text-white">
+              Application tracker
+            </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Overview status chips stay in sync
-              with the status filter here.
+              Search, filter, and sort applications. Overview status chips stay
+              in sync with the status filter here.
             </p>
           </div>
 
@@ -150,7 +153,7 @@ export function TrackerPanel({
         ) : view === "table" ? (
           <TrackerVirtualTable
             applications={filteredApplications}
-            repoFullName={repoFullName}
+            dataSource={dataSource}
             tableQuery={tableQuery}
             onSort={handleSort}
           />
@@ -158,7 +161,7 @@ export function TrackerPanel({
           <TrackerBoard
             statuses={boardStatuses}
             groupedApplications={groupedApplications}
-            repoFullName={repoFullName}
+            dataSource={dataSource}
           />
         )}
       </div>
@@ -169,11 +172,11 @@ export function TrackerPanel({
 function TrackerBoard({
   statuses,
   groupedApplications,
-  repoFullName,
+  dataSource,
 }: {
   statuses: string[];
   groupedApplications: Map<string, ApplicationEntry[]>;
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
 }) {
   return (
     <div className="mt-4 min-h-0 flex-1 overflow-auto">
@@ -201,14 +204,21 @@ function TrackerBoard({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium text-white">{entry.company}</p>
-                        <p className="mt-1 text-sm text-white/70">{entry.role}</p>
+                        <p className="font-medium text-white">
+                          {entry.company}
+                        </p>
+                        <p className="mt-1 text-sm text-white/70">
+                          {entry.role}
+                        </p>
                       </div>
                       <ScoreBadge score={entry.score} />
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
                       <ApplicationDate value={entry.date} />
-                      <ArtifactLink repoFullName={repoFullName} value={entry.report} />
+                      <ArtifactLink
+                        dataSource={dataSource}
+                        value={entry.report}
+                      />
                     </div>
                   </li>
                 ))}
@@ -222,45 +232,34 @@ function TrackerBoard({
 }
 
 function ArtifactLink({
-  repoFullName,
+  dataSource,
   value,
 }: {
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
   value: string;
 }) {
-  const markdownLink = extractMarkdownLink(value);
-  if (markdownLink) {
-    const href = markdownLink.href.startsWith("http")
-      ? markdownLink.href
-      : resolveRepoFileUrl(repoFullName, markdownLink.href);
+  const artifact = resolveArtifactLink(dataSource, value);
 
+  if (!artifact) {
+    return <span className="text-white/40">—</span>;
+  }
+
+  if (!artifact.href) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-      >
-        {markdownLink.label}
-      </a>
+      <span className="block truncate text-white/60">{artifact.label}</span>
     );
   }
 
-  const trimmed = value.trim();
-  if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
-    return (
-      <a
-        href={resolveRepoFileUrl(repoFullName, trimmed)}
-        target="_blank"
-        rel="noreferrer"
-        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-      >
-        Report
-      </a>
-    );
-  }
-
-  return <span className="text-white/40">—</span>;
+  return (
+    <a
+      href={artifact.href}
+      target="_blank"
+      rel="noreferrer"
+      className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+    >
+      {artifact.label}
+    </a>
+  );
 }
 
 function ViewToggle({

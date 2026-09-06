@@ -15,8 +15,9 @@ export function DataSourcePanel({
       <div className="text-center">
         <p className="text-lg text-white">Choose a data source</p>
         <p className="mt-2 text-sm text-white/70">
-          Open a local folder from disk, or optionally connect a private GitHub
-          repository. GitHub sign-in is only required for the cloud option.
+          Open a local career-ops project from disk, or optionally connect a
+          companion repository on GitHub. GitHub sign-in is only required for
+          the cloud option.
         </p>
       </div>
 

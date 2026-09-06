@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  DIRECTORY_PICKER_ID,
-} from "~/lib/local-repo/constants";
+import { DIRECTORY_PICKER_ID } from "~/lib/local-repo/constants";
 import {
   supportsDirectoryPicker,
   supportsFileSystemObserver,
@@ -45,57 +43,63 @@ export function useLocalRepo() {
   const [launchedFileHandle, setLaunchedFileHandle] =
     useState<FileSystemFileHandle | null>(null);
 
-  const refreshDirectory = useCallback(async (handle: FileSystemDirectoryHandle) => {
-    setIsRefreshing(true);
+  const refreshDirectory = useCallback(
+    async (handle: FileSystemDirectoryHandle) => {
+      setIsRefreshing(true);
 
-    try {
-      const hasPermission = await ensureReadPermission(handle);
+      try {
+        const hasPermission = await ensureReadPermission(handle);
 
-      if (!hasPermission) {
+        if (!hasPermission) {
+          setState({
+            status: "permission-required",
+            directoryName: handle.name,
+          });
+          return;
+        }
+
+        const preview = await readLocalRepoPreview(handle);
+        setDirectoryHandle(handle);
+        setLaunchedFileHandle(null);
+        setState({ status: "connected", preview });
+      } catch (error) {
         setState({
-          status: "permission-required",
-          directoryName: handle.name,
+          status: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Could not read the selected folder.",
         });
-        return;
+      } finally {
+        setIsRefreshing(false);
       }
+    },
+    [],
+  );
 
-      const preview = await readLocalRepoPreview(handle);
-      setDirectoryHandle(handle);
-      setLaunchedFileHandle(null);
-      setState({ status: "connected", preview });
-    } catch (error) {
-      setState({
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Could not read the selected folder.",
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, []);
+  const refreshLaunchedFile = useCallback(
+    async (handle: FileSystemFileHandle) => {
+      setIsRefreshing(true);
 
-  const refreshLaunchedFile = useCallback(async (handle: FileSystemFileHandle) => {
-    setIsRefreshing(true);
-
-    try {
-      const preview = await readLaunchedFilePreview(handle);
-      setLaunchedFileHandle(handle);
-      setDirectoryHandle(null);
-      setState({ status: "connected", preview });
-    } catch (error) {
-      setState({
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Could not read the launched file.",
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, []);
+      try {
+        const preview = await readLaunchedFilePreview(handle);
+        setLaunchedFileHandle(handle);
+        setDirectoryHandle(null);
+        setState({ status: "connected", preview });
+      } catch (error) {
+        setState({
+          status: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Could not read the launched file.",
+        });
+      } finally {
+        setIsRefreshing(false);
+      }
+    },
+    [],
+  );
 
   const restore = useCallback(async () => {
     setInstalledPwa(isInstalledPwa());
@@ -224,7 +228,12 @@ export function useLocalRepo() {
     }
 
     await refreshDirectory(handle);
-  }, [directoryHandle, launchedFileHandle, refreshDirectory, refreshLaunchedFile]);
+  }, [
+    directoryHandle,
+    launchedFileHandle,
+    refreshDirectory,
+    refreshLaunchedFile,
+  ]);
 
   const disconnect = useCallback(async () => {
     await clearAllLocalRepoHandles();
@@ -238,6 +247,8 @@ export function useLocalRepo() {
     isRefreshing,
     watchingDisk,
     installedPwa,
+    directoryHandle,
+    launchedFileHandle,
     pickDirectory,
     refresh: reconnect,
     disconnect,

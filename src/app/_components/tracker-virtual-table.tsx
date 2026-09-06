@@ -6,8 +6,12 @@ import { useRef } from "react";
 import { ScoreBadge } from "~/app/_components/score-badge";
 import { TrackerSortableHeader } from "~/app/_components/tracker-table-toolbar";
 import { ApplicationDate } from "~/components/application-date";
-import { extractMarkdownLink, resolveRepoFileUrl } from "~/lib/career-ops/links";
-import type { TrackerSortColumn, TrackerTableQuery } from "~/lib/career-ops/tracker-table";
+import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
+import { resolveArtifactLink } from "~/lib/career-ops/links";
+import type {
+  TrackerSortColumn,
+  TrackerTableQuery,
+} from "~/lib/career-ops/tracker-table";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 const ROW_HEIGHT = 52;
@@ -17,14 +21,14 @@ const TRACKER_GRID_COLUMNS =
 
 type TrackerVirtualTableProps = {
   applications: ApplicationEntry[];
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
   tableQuery: TrackerTableQuery;
   onSort: (column: TrackerSortColumn) => void;
 };
 
 export function TrackerVirtualTable({
   applications,
-  repoFullName,
+  dataSource,
   tableQuery,
   onSort,
 }: TrackerVirtualTableProps) {
@@ -104,10 +108,16 @@ export function TrackerVirtualTable({
           onSort={onSort}
           className="px-2 py-2"
         />
-        <div className="px-2 py-2 font-medium text-white/60" role="columnheader">
+        <div
+          className="px-2 py-2 font-medium text-white/60"
+          role="columnheader"
+        >
           Report
         </div>
-        <div className="px-2 py-2 font-medium text-white/60" role="columnheader">
+        <div
+          className="px-2 py-2 font-medium text-white/60"
+          role="columnheader"
+        >
           Notes
         </div>
       </div>
@@ -138,27 +148,53 @@ export function TrackerVirtualTable({
                 }}
                 role="row"
               >
-                <div className="flex items-center px-2 py-2" role="cell">{entry.num}</div>
-                <div className="flex items-center px-2 py-2 text-white/70" role="cell">
+                <div className="flex items-center px-2 py-2" role="cell">
+                  {entry.num}
+                </div>
+                <div
+                  className="flex items-center px-2 py-2 text-white/70"
+                  role="cell"
+                >
                   <ApplicationDate value={entry.date} />
                 </div>
-                <div className="flex items-center truncate px-2 py-2" title={entry.company} role="cell">
+                <div
+                  className="flex items-center truncate px-2 py-2"
+                  title={entry.company}
+                  role="cell"
+                >
                   {entry.company}
                 </div>
-                <div className="flex items-center truncate px-2 py-2" title={entry.role} role="cell">
+                <div
+                  className="flex items-center truncate px-2 py-2"
+                  title={entry.role}
+                  role="cell"
+                >
                   {entry.role}
                 </div>
                 <div className="flex items-center px-2 py-2" role="cell">
                   <ScoreBadge score={entry.score} />
                 </div>
-                <div className="flex items-center truncate px-2 py-2" title={entry.status} role="cell">
+                <div
+                  className="flex items-center truncate px-2 py-2"
+                  title={entry.status}
+                  role="cell"
+                >
                   {entry.status}
                 </div>
-                <div className="flex items-center truncate px-2 py-2" role="cell">
-                  <ArtifactLink repoFullName={repoFullName} value={entry.report} />
+                <div
+                  className="flex items-center truncate px-2 py-2"
+                  role="cell"
+                >
+                  <ArtifactLink dataSource={dataSource} value={entry.report} />
                 </div>
-                <div className="flex items-center px-2 py-2 text-white/70" role="cell">
-                  <span className="line-clamp-2 break-words" title={entry.notes || undefined}>
+                <div
+                  className="flex items-center px-2 py-2 text-white/70"
+                  role="cell"
+                >
+                  <span
+                    className="line-clamp-2 break-words"
+                    title={entry.notes || undefined}
+                  >
                     {entry.notes || "—"}
                   </span>
                 </div>
@@ -172,43 +208,32 @@ export function TrackerVirtualTable({
 }
 
 function ArtifactLink({
-  repoFullName,
+  dataSource,
   value,
 }: {
-  repoFullName: string;
+  dataSource: CareerOpsDataSource;
   value: string;
 }) {
-  const markdownLink = extractMarkdownLink(value);
-  if (markdownLink) {
-    const href = markdownLink.href.startsWith("http")
-      ? markdownLink.href
-      : resolveRepoFileUrl(repoFullName, markdownLink.href);
+  const artifact = resolveArtifactLink(dataSource, value);
 
+  if (!artifact) {
+    return <span className="text-white/40">—</span>;
+  }
+
+  if (!artifact.href) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-      >
-        {markdownLink.label}
-      </a>
+      <span className="block truncate text-white/60">{artifact.label}</span>
     );
   }
 
-  const trimmed = value.trim();
-  if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
-    return (
-      <a
-        href={resolveRepoFileUrl(repoFullName, trimmed)}
-        target="_blank"
-        rel="noreferrer"
-        className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-      >
-        Report
-      </a>
-    );
-  }
-
-  return <span className="text-white/40">—</span>;
+  return (
+    <a
+      href={artifact.href}
+      target="_blank"
+      rel="noreferrer"
+      className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+    >
+      {artifact.label}
+    </a>
+  );
 }

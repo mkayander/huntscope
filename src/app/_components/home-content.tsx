@@ -1,0 +1,97 @@
+"use client";
+
+import { AuthButton } from "~/app/_components/auth-button";
+import { Dashboard } from "~/app/_components/dashboard";
+import { DashboardAmbientBackground } from "~/app/_components/dashboard-ambient-background";
+import { DataSourcePanel } from "~/app/_components/data-source-panel";
+import {
+  LandingBackgroundCanvas,
+  LandingBackgroundProvider,
+} from "~/app/_components/landing-background/landing-background-shell";
+import {
+  CareerOpsDataSourceProvider,
+  useCareerOpsDataSource,
+} from "~/hooks/use-career-ops-data-source";
+
+type HomeContentProps = {
+  isSignedIn: boolean;
+  githubStatus?: string;
+  githubConfigured: boolean;
+};
+
+export function HomeContent({
+  isSignedIn,
+  githubStatus,
+  githubConfigured,
+}: HomeContentProps) {
+  return (
+    <CareerOpsDataSourceProvider>
+      <HomeContentBody
+        isSignedIn={isSignedIn}
+        githubStatus={githubStatus}
+        githubConfigured={githubConfigured}
+      />
+    </CareerOpsDataSourceProvider>
+  );
+}
+
+function HomeContentBody({
+  isSignedIn,
+  githubStatus,
+  githubConfigured,
+}: HomeContentProps) {
+  const { canShowDashboard } = useCareerOpsDataSource();
+  const showDashboard = isSignedIn || canShowDashboard;
+
+  if (!showDashboard) {
+    return (
+      <LandingBackgroundProvider>
+        <LandingBackgroundCanvas />
+        <main className="relative z-10 flex min-h-screen flex-col items-center text-white">
+          <div className="container flex flex-col items-center gap-10 px-4 py-16 pb-28">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
+                Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>
+              </h1>
+              <p className="max-w-2xl text-lg text-white/80">
+                Analytics for your job-search data repository. Open a local
+                career-ops project from disk or connect a companion repository
+                on GitHub — read-only, repo-first.
+              </p>
+              <p className="text-sm text-white/50">
+                Local folders stay on your machine. GitHub access is optional
+                and scoped to repositories you select.
+              </p>
+            </div>
+
+            <AuthButton />
+            <DataSourcePanel
+              githubStatus={githubStatus}
+              githubConfigured={githubConfigured}
+            />
+          </div>
+        </main>
+      </LandingBackgroundProvider>
+    );
+  }
+
+  return (
+    <main className="relative z-10 flex min-h-screen flex-col items-center text-white">
+      {showDashboard ? <DashboardAmbientBackground /> : null}
+      <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
+            Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>
+          </h1>
+          <p className="max-w-xl text-lg text-white/80">
+            Analytics for your career-ops project or companion repository. Use a
+            local folder or GitHub — read-only, repo-first.
+          </p>
+        </div>
+
+        <AuthButton />
+        <Dashboard />
+      </div>
+    </main>
+  );
+}

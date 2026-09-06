@@ -40,6 +40,7 @@ export type GitHubRepoSummary = {
   private: boolean;
   updatedAt: string;
   description: string | null;
+  hasCareerOpsLayout: boolean;
 };
 
 export type SelectedRepo = {

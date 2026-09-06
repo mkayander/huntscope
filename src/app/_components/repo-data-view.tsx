@@ -11,67 +11,70 @@ import { PipelinePanel } from "~/app/_components/pipeline-panel";
 import { RecentApplications } from "~/app/_components/recent-applications";
 import { TrackerPanel } from "~/app/_components/tracker-panel";
 import { GlowPanel } from "~/components/ui/glow-panel";
-import { useRepoDataQuery, useSelectedRepoQuery } from "~/hooks/use-career-ops-repo";
+import {
+  useCareerOpsDataSource,
+  useCareerOpsRawData,
+} from "~/hooks/use-career-ops-data-source";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { hasAnalyticsChartData } from "~/lib/career-ops/chart-data";
+import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
+import { getDataSourceLabel } from "~/lib/career-ops/data-source";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
-import type { SelectedRepo } from "~/lib/career-ops/types";
 import { useParsedRepoData } from "~/lib/career-ops/use-parsed-repo-data";
 
 export function RepoDataView() {
   const hasMounted = useHasMounted();
-  const selectedRepoQuery = useSelectedRepoQuery();
-  const selectedRepo = selectedRepoQuery.data;
+  const { activeSource, localRefreshToken, hasLocalSource, hasGitHubSource } =
+    useCareerOpsDataSource();
 
-  if (!hasMounted && !selectedRepo) {
+  if (!hasMounted) {
     return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl">
-        <p className="text-sm text-white/70">Loading saved repository…</p>
+      <GlowPanel className="w-full max-w-screen-2xl min-w-0">
+        <p className="text-sm text-white/70">Loading dashboard…</p>
       </GlowPanel>
     );
   }
 
-  if (selectedRepoQuery.isLoading && !selectedRepo) {
+  if (!activeSource) {
     return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl">
-        <p className="text-sm text-white/70">Loading saved repository…</p>
-      </GlowPanel>
-    );
-  }
-
-  if (selectedRepoQuery.error) {
-    return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl">
-        <ErrorAlert
-          title="Could not read your saved repository"
-          message={selectedRepoQuery.error.message}
-        />
-      </GlowPanel>
-    );
-  }
-
-  if (!selectedRepo) {
-    return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl text-center" variant="dashed">
+      <GlowPanel
+        className="w-full max-w-screen-2xl min-w-0 text-center"
+        variant="dashed"
+      >
         <p className="text-white/70">
-          Select a career-ops data repository above to load tracker and pipeline
-          data.
+          {hasLocalSource || hasGitHubSource
+            ? "Choose an active data source above to load tracker and pipeline data."
+            : "Open a local career-ops project or connect a companion repository to load tracker and pipeline data."}
         </p>
       </GlowPanel>
     );
   }
 
-  return <RepoDataContent selectedRepo={selectedRepo} />;
+  return (
+    <RepoDataContent
+      activeSource={activeSource}
+      localRefreshToken={localRefreshToken}
+    />
+  );
 }
 
-function RepoDataContent({ selectedRepo }: { selectedRepo: SelectedRepo }) {
+function RepoDataContent({
+  activeSource,
+  localRefreshToken,
+}: {
+  activeSource: CareerOpsDataSource;
+  localRefreshToken?: string;
+}) {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const { data: raw, error, isLoading } = useRepoDataQuery(selectedRepo);
+  const { raw, error, isLoading } = useCareerOpsRawData(
+    activeSource,
+    localRefreshToken,
+  );
   const { parsed, isParsing, parseError } = useParsedRepoData(raw);
 
   if (isLoading && !raw) {
     return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl">
+      <GlowPanel className="w-full max-w-screen-2xl min-w-0">
         <p className="text-sm text-white/70">Loading repository data…</p>
       </GlowPanel>
     );
@@ -79,39 +82,49 @@ function RepoDataContent({ selectedRepo }: { selectedRepo: SelectedRepo }) {
 
   if (error) {
     return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl">
-        <ErrorAlert title="Could not load repository data" message={error.message} />
+      <GlowPanel className="w-full max-w-screen-2xl min-w-0">
+        <ErrorAlert
+          title="Could not load repository data"
+          message={error.message}
+        />
       </GlowPanel>
     );
   }
 
   if (parseError) {
     return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl">
-        <ErrorAlert title="Could not parse repository data" message={parseError} />
+      <GlowPanel className="w-full max-w-screen-2xl min-w-0">
+        <ErrorAlert
+          title="Could not parse repository data"
+          message={parseError}
+        />
       </GlowPanel>
     );
   }
 
   if (!raw || !parsed) {
     return (
-      <GlowPanel className="w-full min-w-0 max-w-screen-2xl">
+      <GlowPanel className="w-full max-w-screen-2xl min-w-0">
         <p className="text-sm text-white/70">
-          {isParsing ? "Parsing repository data…" : "No repository data available."}
+          {isParsing
+            ? "Parsing repository data…"
+            : "No repository data available."}
         </p>
       </GlowPanel>
     );
   }
 
+  const sourceLabel = getDataSourceLabel(activeSource);
+
   return (
-    <section className="flex w-full min-w-0 max-w-screen-2xl flex-col gap-6">
+    <section className="flex w-full max-w-screen-2xl min-w-0 flex-col gap-6">
       <DashboardSection
         id={DASHBOARD_SECTION_IDS.overview}
         label="Overview"
         order={10}
       >
         <OverviewStrip
-          repoFullName={raw.fullName}
+          repoFullName={sourceLabel}
           analytics={parsed.analytics}
           pipeline={parsed.pipeline}
           reportsCount={raw.reportsCount}
@@ -120,7 +133,10 @@ function RepoDataContent({ selectedRepo }: { selectedRepo: SelectedRepo }) {
         />
       </DashboardSection>
 
-      {hasAnalyticsChartData(parsed.applications, parsed.analytics.statusCounts) ? (
+      {hasAnalyticsChartData(
+        parsed.applications,
+        parsed.analytics.statusCounts,
+      ) ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.analytics}
           label="Analytics"
@@ -149,7 +165,9 @@ function RepoDataContent({ selectedRepo }: { selectedRepo: SelectedRepo }) {
           label="Recent"
           order={40}
         >
-          <RecentApplications applications={parsed.analytics.recentApplications} />
+          <RecentApplications
+            applications={parsed.analytics.recentApplications}
+          />
         </DashboardSection>
       ) : null}
 
@@ -169,7 +187,7 @@ function RepoDataContent({ selectedRepo }: { selectedRepo: SelectedRepo }) {
         order={60}
       >
         <TrackerPanel
-          repoFullName={raw.fullName}
+          dataSource={activeSource}
           applications={parsed.applications}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}

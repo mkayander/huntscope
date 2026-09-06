@@ -1,9 +1,12 @@
 import { TRPCError } from "@trpc/server";
 
+import {
+  buildCareerOpsRepoData,
+  CAREER_OPS_PATHS,
+} from "~/lib/career-ops/layout";
 import type {
   GitHubRepoSummary,
   RawCareerOpsRepoData,
-  RepoDataFile,
   SelectedRepo,
 } from "~/lib/career-ops/types";
 import {
@@ -12,22 +15,6 @@ import {
 } from "~/server/github/api";
 import { isGitHubAppConfigured } from "~/server/github/config";
 import { getInstallationConnection } from "~/server/github/installation-store";
-
-function toRepoDataFile(item: {
-  path: string;
-  name: string;
-  type: string;
-}): RepoDataFile | null {
-  if (item.type !== "file" && item.type !== "dir") {
-    return null;
-  }
-
-  return {
-    path: item.path,
-    name: item.name,
-    type: item.type,
-  };
-}
 
 function parseRepoFullName(fullName: string) {
   const [owner, name] = fullName.split("/");
@@ -73,6 +60,18 @@ async function getAuthorizedInstallation(userId: string, repo?: SelectedRepo) {
   return connection;
 }
 
+async function repositoryHasCareerOpsLayout(
+  installationId: number,
+  fullName: string,
+): Promise<boolean> {
+  const [applicationsContent, pipelineContent] = await Promise.all([
+    readRepositoryFile(installationId, fullName, CAREER_OPS_PATHS.applications),
+    readRepositoryFile(installationId, fullName, CAREER_OPS_PATHS.pipeline),
+  ]);
+
+  return Boolean(applicationsContent ?? pipelineContent);
+}
+
 export function isGitHubRateLimitError(error: unknown): boolean {
   return error instanceof Error && /rate limit exceeded/i.test(error.message);
 }
@@ -82,24 +81,38 @@ export async function listUserRepos(
 ): Promise<GitHubRepoSummary[]> {
   const connection = await getAuthorizedInstallation(userId);
 
-  return connection.repositories.flatMap((repository) => {
+  const repos: GitHubRepoSummary[] = [];
+
+  for (const repository of connection.repositories) {
     const parsed = parseRepoFullName(repository.fullName);
 
     if (!parsed) {
-      return [];
+      continue;
     }
 
-    return [
-      {
-        id: repository.id,
-        owner: parsed.owner,
-        name: parsed.name,
-        fullName: repository.fullName,
-        private: true,
-        updatedAt: connection.connectedAt,
-        description: null,
-      },
-    ];
+    const hasCareerOpsLayout = await repositoryHasCareerOpsLayout(
+      connection.installationId,
+      repository.fullName,
+    );
+
+    repos.push({
+      id: repository.id,
+      owner: parsed.owner,
+      name: parsed.name,
+      fullName: repository.fullName,
+      private: true,
+      updatedAt: connection.connectedAt,
+      description: null,
+      hasCareerOpsLayout,
+    });
+  }
+
+  return repos.sort((left, right) => {
+    if (left.hasCareerOpsLayout !== right.hasCareerOpsLayout) {
+      return left.hasCareerOpsLayout ? -1 : 1;
+    }
+
+    return right.updatedAt.localeCompare(left.updatedAt);
   });
 }
 
@@ -118,35 +131,42 @@ export async function fetchCareerOpsRepoData(
     readRepositoryFile(
       connection.installationId,
       repo.fullName,
-      "data/applications.md",
+      CAREER_OPS_PATHS.applications,
     ),
     readRepositoryFile(
       connection.installationId,
       repo.fullName,
-      "data/pipeline.md",
+      CAREER_OPS_PATHS.pipeline,
     ),
-    listRepositoryContents(connection.installationId, repo.fullName, "data"),
-    listRepositoryContents(connection.installationId, repo.fullName, "reports"),
+    listRepositoryContents(
+      connection.installationId,
+      repo.fullName,
+      CAREER_OPS_PATHS.dataDir,
+    ),
+    listRepositoryContents(
+      connection.installationId,
+      repo.fullName,
+      CAREER_OPS_PATHS.reportsDir,
+    ),
   ]);
 
-  if (!applicationsContent && !pipelineContent && dataDirectory.length === 0) {
+  try {
+    return buildCareerOpsRepoData({
+      owner: repo.owner,
+      name: repo.name,
+      fullName: repo.fullName,
+      applicationsMarkdown: applicationsContent,
+      pipelineMarkdown: pipelineContent,
+      dataDirectory,
+      reportsDirectory,
+    });
+  } catch (error) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message:
-        "This repository does not look like a career-ops data repo. Expected files such as data/applications.md or data/pipeline.md.",
+        error instanceof Error
+          ? error.message
+          : "This repository does not look like a career-ops data repo.",
     });
   }
-
-  return {
-    owner: repo.owner,
-    name: repo.name,
-    fullName: repo.fullName,
-    applicationsMarkdown: applicationsContent,
-    pipelineMarkdown: pipelineContent,
-    dataFiles: dataDirectory
-      .map(toRepoDataFile)
-      .filter((item): item is RepoDataFile => item !== null),
-    reportsCount: reportsDirectory.filter((item) => item.type === "file")
-      .length,
-  };
 }
