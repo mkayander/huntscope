@@ -4,10 +4,11 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef } from "react";
 
 import { ScoreBadge } from "~/app/_components/score-badge";
+import { ArtifactLinkButton } from "~/app/_components/artifact-link-button";
 import { TrackerSortableHeader } from "~/app/_components/tracker-table-toolbar";
+import { TrackerStatusSelect } from "~/app/_components/tracker-status-select";
 import { ApplicationDate } from "~/components/application-date";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
-import { resolveArtifactLink } from "~/lib/career-ops/links";
 import type {
   TrackerSortColumn,
   TrackerTableQuery,
@@ -24,7 +25,11 @@ type TrackerVirtualTableProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   tableQuery: TrackerTableQuery;
+  statusOptions: string[];
+  canEditStatus: boolean;
+  isSavingStatus: boolean;
   onSort: (column: TrackerSortColumn) => void;
+  onStatusChange: (applicationNum: number, status: string) => void;
 };
 
 export function TrackerVirtualTable({
@@ -32,7 +37,11 @@ export function TrackerVirtualTable({
   dataSource,
   defaultBranch,
   tableQuery,
+  statusOptions,
+  canEditStatus,
+  isSavingStatus,
   onSort,
+  onStatusChange,
 }: TrackerVirtualTableProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -176,18 +185,25 @@ export function TrackerVirtualTable({
                 <div className="flex items-center px-2 py-2" role="cell">
                   <ScoreBadge score={entry.score} />
                 </div>
-                <div
-                  className="flex items-center truncate px-2 py-2"
-                  title={entry.status}
-                  role="cell"
-                >
-                  {entry.status}
+                <div className="flex items-center px-2 py-2" role="cell">
+                  {canEditStatus ? (
+                    <TrackerStatusSelect
+                      value={entry.status}
+                      options={statusOptions}
+                      disabled={isSavingStatus}
+                      onChange={(status) => onStatusChange(entry.num, status)}
+                    />
+                  ) : (
+                    <span className="truncate" title={entry.status}>
+                      {entry.status}
+                    </span>
+                  )}
                 </div>
                 <div
                   className="flex items-center truncate px-2 py-2"
                   role="cell"
                 >
-                  <ArtifactLink
+                  <ArtifactLinkButton
                     dataSource={dataSource}
                     defaultBranch={defaultBranch}
                     value={entry.report}
@@ -210,38 +226,5 @@ export function TrackerVirtualTable({
         </div>
       </div>
     </div>
-  );
-}
-
-function ArtifactLink({
-  dataSource,
-  defaultBranch,
-  value,
-}: {
-  dataSource: CareerOpsDataSource;
-  defaultBranch: string | null;
-  value: string;
-}) {
-  const artifact = resolveArtifactLink(dataSource, value, defaultBranch);
-
-  if (!artifact) {
-    return <span className="text-white/40">—</span>;
-  }
-
-  if (!artifact.href) {
-    return (
-      <span className="block truncate text-white/60">{artifact.label}</span>
-    );
-  }
-
-  return (
-    <a
-      href={artifact.href}
-      target="_blank"
-      rel="noreferrer"
-      className="block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-    >
-      {artifact.label}
-    </a>
   );
 }

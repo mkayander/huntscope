@@ -107,11 +107,13 @@ export async function loadCareerOpsFromDirectory(
     pipelineContent,
     dataDirectory,
     reportsDirectory,
+    outputDirectory,
   ] = await Promise.all([
     readTextFile(directoryHandle, CAREER_OPS_PATHS.applications),
     readTextFile(directoryHandle, CAREER_OPS_PATHS.pipeline),
     listDirectoryEntries(directoryHandle, CAREER_OPS_PATHS.dataDir),
     listDirectoryEntries(directoryHandle, CAREER_OPS_PATHS.reportsDir),
+    listDirectoryEntries(directoryHandle, CAREER_OPS_PATHS.outputDir),
   ]);
 
   return buildCareerOpsRepoData({
@@ -123,6 +125,7 @@ export async function loadCareerOpsFromDirectory(
     pipelineMarkdown: pipelineContent,
     dataDirectory,
     reportsDirectory,
+    outputDirectory,
   });
 }
 
@@ -159,6 +162,7 @@ export async function loadCareerOpsFromLaunchedFile(
           ]
         : [],
     reportsDirectory: [],
+    outputDirectory: [],
   });
 }
 
