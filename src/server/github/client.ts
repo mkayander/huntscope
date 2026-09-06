@@ -10,6 +10,7 @@ import type {
   SelectedRepo,
 } from "~/lib/career-ops/types";
 import {
+  getRepositoryDefaultBranch,
   listRepositoryContents,
   readRepositoryFile,
 } from "~/server/github/api";
@@ -81,39 +82,43 @@ export async function listUserRepos(
 ): Promise<GitHubRepoSummary[]> {
   const connection = await getAuthorizedInstallation(userId);
 
-  const repos: GitHubRepoSummary[] = [];
+  const repos = await Promise.all(
+    connection.repositories.map(async (repository) => {
+      const parsed = parseRepoFullName(repository.fullName);
 
-  for (const repository of connection.repositories) {
-    const parsed = parseRepoFullName(repository.fullName);
+      if (!parsed) {
+        return null;
+      }
 
-    if (!parsed) {
-      continue;
-    }
+      const hasCareerOpsLayout = await repositoryHasCareerOpsLayout(
+        connection.installationId,
+        repository.fullName,
+      );
 
-    const hasCareerOpsLayout = await repositoryHasCareerOpsLayout(
-      connection.installationId,
-      repository.fullName,
-    );
+      const summary: GitHubRepoSummary = {
+        id: repository.id,
+        owner: parsed.owner,
+        name: parsed.name,
+        fullName: repository.fullName,
+        private: true,
+        updatedAt: connection.connectedAt,
+        description: null,
+        hasCareerOpsLayout,
+      };
 
-    repos.push({
-      id: repository.id,
-      owner: parsed.owner,
-      name: parsed.name,
-      fullName: repository.fullName,
-      private: true,
-      updatedAt: connection.connectedAt,
-      description: null,
-      hasCareerOpsLayout,
+      return summary;
+    }),
+  );
+
+  return repos
+    .filter((repo): repo is GitHubRepoSummary => repo != null)
+    .sort((left, right) => {
+      if (left.hasCareerOpsLayout !== right.hasCareerOpsLayout) {
+        return left.hasCareerOpsLayout ? -1 : 1;
+      }
+
+      return right.updatedAt.localeCompare(left.updatedAt);
     });
-  }
-
-  return repos.sort((left, right) => {
-    if (left.hasCareerOpsLayout !== right.hasCareerOpsLayout) {
-      return left.hasCareerOpsLayout ? -1 : 1;
-    }
-
-    return right.updatedAt.localeCompare(left.updatedAt);
-  });
 }
 
 export async function fetchCareerOpsRepoData(
@@ -127,6 +132,7 @@ export async function fetchCareerOpsRepoData(
     pipelineContent,
     dataDirectory,
     reportsDirectory,
+    defaultBranch,
   ] = await Promise.all([
     readRepositoryFile(
       connection.installationId,
@@ -148,6 +154,7 @@ export async function fetchCareerOpsRepoData(
       repo.fullName,
       CAREER_OPS_PATHS.reportsDir,
     ),
+    getRepositoryDefaultBranch(connection.installationId, repo.fullName),
   ]);
 
   try {
@@ -155,6 +162,7 @@ export async function fetchCareerOpsRepoData(
       owner: repo.owner,
       name: repo.name,
       fullName: repo.fullName,
+      defaultBranch,
       applicationsMarkdown: applicationsContent,
       pipelineMarkdown: pipelineContent,
       dataDirectory,
@@ -169,4 +177,11 @@ export async function fetchCareerOpsRepoData(
           : "This repository does not look like a career-ops data repo.",
     });
   }
+}
+
+export async function assertRepoInInstallation(
+  userId: string,
+  repo: SelectedRepo,
+): Promise<void> {
+  await getAuthorizedInstallation(userId, repo);
 }

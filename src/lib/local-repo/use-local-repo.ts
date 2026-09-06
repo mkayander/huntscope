@@ -20,6 +20,7 @@ import {
   clearLaunchedFileHandle,
   loadDirectoryHandle,
   loadLaunchedFileHandle,
+  loadLocalRepoSessionId,
   saveDirectoryHandle,
   saveLaunchedFileHandle,
 } from "~/lib/local-repo/storage";
@@ -42,6 +43,7 @@ export function useLocalRepo() {
     useState<FileSystemDirectoryHandle | null>(null);
   const [launchedFileHandle, setLaunchedFileHandle] =
     useState<FileSystemFileHandle | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const refreshDirectory = useCallback(
     async (handle: FileSystemDirectoryHandle) => {
@@ -103,6 +105,8 @@ export function useLocalRepo() {
 
   const restore = useCallback(async () => {
     setInstalledPwa(isInstalledPwa());
+    const storedSessionId = await loadLocalRepoSessionId();
+    setSessionId(storedSessionId);
 
     const launchedFile = await loadLaunchedFileHandle();
 
@@ -140,7 +144,8 @@ export function useLocalRepo() {
 
       void (async () => {
         await clearAllLocalRepoHandles();
-        await saveLaunchedFileHandle(fileHandle);
+        const newSessionId = await saveLaunchedFileHandle(fileHandle);
+        setSessionId(newSessionId);
         await refreshLaunchedFile(fileHandle);
       })();
     });
@@ -199,7 +204,8 @@ export function useLocalRepo() {
       });
 
       await clearLaunchedFileHandle();
-      await saveDirectoryHandle(handle);
+      const newSessionId = await saveDirectoryHandle(handle);
+      setSessionId(newSessionId);
       await refreshDirectory(handle);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
@@ -239,6 +245,7 @@ export function useLocalRepo() {
     await clearAllLocalRepoHandles();
     setDirectoryHandle(null);
     setLaunchedFileHandle(null);
+    setSessionId(null);
     setState({ status: "idle" });
   }, []);
 
@@ -249,6 +256,7 @@ export function useLocalRepo() {
     installedPwa,
     directoryHandle,
     launchedFileHandle,
+    sessionId,
     pickDirectory,
     refresh: reconnect,
     disconnect,

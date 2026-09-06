@@ -26,6 +26,7 @@ export type RawCareerOpsRepoData = {
   owner: string;
   name: string;
   fullName: string;
+  defaultBranch: string | null;
   applicationsMarkdown: string | null;
   pipelineMarkdown: string | null;
   dataFiles: RepoDataFile[];

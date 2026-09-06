@@ -46,20 +46,30 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
     watchingDisk,
     installedPwa,
     directoryHandle,
+    launchedFileHandle,
+    sessionId,
     pickDirectory,
     refresh,
     disconnect,
   } = localRepo;
 
   useEffect(() => {
-    if (
-      state.status === "connected" &&
-      state.preview.source === "directory" &&
-      directoryHandle
-    ) {
-      setActiveSource(toLocalDataSource(directoryHandle));
+    if (state.status !== "connected" || !sessionId) {
+      return;
     }
-  }, [directoryHandle, setActiveSource, state]);
+
+    setActiveSource(
+      toLocalDataSource({
+        directoryName: state.preview.directoryName,
+        displayName: state.preview.directoryName,
+        sessionId,
+        directoryHandle:
+          state.preview.source === "directory" ? directoryHandle : null,
+        fileHandle:
+          state.preview.source === "launched-file" ? launchedFileHandle : null,
+      }),
+    );
+  }, [directoryHandle, launchedFileHandle, sessionId, setActiveSource, state]);
 
   const titleClassName =
     variant === "dashboard"

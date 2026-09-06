@@ -5,9 +5,7 @@ import {
   listInstallationRepositories,
   verifyUserInstallationAccess,
 } from "~/server/github/api";
-import {
-  isGitHubAppConfigured,
-} from "~/server/github/config";
+import { isGitHubAppConfigured } from "~/server/github/config";
 import {
   consumeInstallState,
   setInstallationConnection,
@@ -56,6 +54,10 @@ export async function GET(request: Request) {
         useAccountCookie: true,
       },
     });
+
+    if (!accessToken.accessToken) {
+      return redirectWithMessage(request, "github-account-required");
+    }
 
     const userCanAccessInstallation = await verifyUserInstallationAccess(
       installationId,

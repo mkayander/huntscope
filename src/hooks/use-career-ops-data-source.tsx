@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   createContext,
+  useCallback,
   useContext,
   useMemo,
   useState,
@@ -25,7 +26,7 @@ import {
   GITHUB_CACHE_STALE_TIME_MS,
 } from "~/lib/cache/github-query-options";
 import { authClient } from "~/lib/auth-client";
-import { loadCareerOpsFromDirectory } from "~/lib/local-repo/load-career-ops-data";
+import { loadCareerOpsFromLocalSource } from "~/lib/local-repo/load-career-ops-data";
 import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
 
 function readDataSourcePreference(): CareerOpsDataSourcePreference | null {
@@ -44,20 +45,31 @@ function readDataSourcePreference(): CareerOpsDataSourcePreference | null {
   return null;
 }
 
-export function useLocalCareerOpsData(
-  directoryHandle: FileSystemDirectoryHandle | null,
-  refreshToken?: string,
-) {
+export function useLocalCareerOpsData(source: CareerOpsDataSource | null) {
+  const localSource = source?.kind === "local" ? source : null;
+  const refreshToken =
+    localSource?.directoryHandle || localSource?.fileHandle
+      ? localSource.sessionId
+      : undefined;
+
   return useQuery({
-    queryKey: ["local-career-ops", directoryHandle?.name, refreshToken],
+    queryKey: [
+      "local-career-ops",
+      localSource?.sessionId,
+      localSource?.directoryName,
+      refreshToken,
+    ],
     queryFn: async () => {
-      if (!directoryHandle) {
+      if (!localSource) {
         throw new Error("No local folder is connected.");
       }
 
-      return loadCareerOpsFromDirectory(directoryHandle);
+      return loadCareerOpsFromLocalSource({
+        directoryHandle: localSource.directoryHandle,
+        fileHandle: localSource.fileHandle,
+      });
     },
-    enabled: directoryHandle != null,
+    enabled: localSource != null,
     staleTime: GITHUB_CACHE_STALE_TIME_MS,
     gcTime: GITHUB_CACHE_GC_TIME_MS,
     refetchOnWindowFocus: false,
@@ -81,17 +93,25 @@ function useCareerOpsDataSourceState() {
       readDataSourcePreference(),
     );
 
-  const localDirectoryHandle =
-    localRepo.state.status === "connected" &&
-    localRepo.state.preview.source === "directory"
-      ? localRepo.directoryHandle
-      : null;
+  const localSource = useMemo(() => {
+    if (localRepo.state.status !== "connected" || !localRepo.sessionId) {
+      return null;
+    }
 
-  const localSource = useMemo(
-    () =>
-      localDirectoryHandle ? toLocalDataSource(localDirectoryHandle) : null,
-    [localDirectoryHandle],
-  );
+    const preview = localRepo.state.preview;
+
+    return toLocalDataSource({
+      directoryName: preview.directoryName,
+      displayName: preview.directoryName,
+      sessionId: localRepo.sessionId,
+      directoryHandle:
+        preview.source === "directory" ? localRepo.directoryHandle : null,
+      fileHandle:
+        preview.source === "launched-file"
+          ? localRepo.launchedFileHandle
+          : null,
+    });
+  }, [localRepo]);
 
   const githubSource = useMemo(
     () =>
@@ -121,19 +141,13 @@ function useCareerOpsDataSourceState() {
     return null;
   }, [githubSource, localSource, preference]);
 
-  const setActiveSource = (source: CareerOpsDataSource) => {
+  const setActiveSource = useCallback((source: CareerOpsDataSource) => {
     writeDataSourcePreference(source.kind);
     setPreference(source.kind);
-  };
-
-  const localRefreshToken =
-    localRepo.state.status === "connected"
-      ? localRepo.state.preview.lastRefreshedAt
-      : undefined;
+  }, []);
 
   const localDataQuery = useLocalCareerOpsData(
-    activeSource?.kind === "local" ? activeSource.directoryHandle : null,
-    localRefreshToken,
+    activeSource?.kind === "local" ? activeSource : null,
   );
 
   return {
@@ -144,7 +158,6 @@ function useCareerOpsDataSourceState() {
     activeSource,
     setActiveSource,
     localDataQuery,
-    localRefreshToken,
     hasLocalSource: localSource != null,
     hasGitHubSource: githubSource != null,
     canShowDashboard: localSource != null || githubSource != null,
@@ -177,19 +190,12 @@ export function useCareerOpsDataSource() {
   return context;
 }
 
-export function useCareerOpsRawData(
-  source: CareerOpsDataSource | null,
-  localRefreshToken?: string,
-) {
+export function useCareerOpsRawData(source: CareerOpsDataSource | null) {
   const githubRepo = source?.kind === "github" ? source.repo : null;
-  const localDirectoryHandle =
-    source?.kind === "local" ? source.directoryHandle : null;
+  const localSource = source?.kind === "local" ? source : null;
 
   const githubData = useRepoDataQuery(githubRepo);
-  const localData = useLocalCareerOpsData(
-    localDirectoryHandle,
-    localRefreshToken,
-  );
+  const localData = useLocalCareerOpsData(localSource);
 
   if (!source) {
     return {

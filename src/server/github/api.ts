@@ -1,5 +1,9 @@
 import { createGitHubAppJwt } from "~/server/github/app-auth";
 import { requireGitHubAppConfig } from "~/server/github/config";
+import {
+  getCachedInstallationToken,
+  setCachedInstallationToken,
+} from "~/server/github/installation-token-cache";
 import type { ConnectedRepository } from "~/server/github/types";
 
 type GitHubFetchOptions = {
@@ -37,6 +41,33 @@ async function githubFetch<T>({
   return (await response.json()) as T;
 }
 
+function decodeGitHubBase64Content(content: string): string {
+  const normalized = content.replace(/\s/g, "");
+  return Buffer.from(normalized, "base64").toString("utf8");
+}
+
+async function getInstallationToken(installationId: number): Promise<string> {
+  const cachedToken = getCachedInstallationToken(installationId);
+
+  if (cachedToken) {
+    return cachedToken;
+  }
+
+  const appJwt = await createGitHubAppJwt();
+  const { token, expires_at } = await githubFetch<{
+    token: string;
+    expires_at: string;
+  }>({
+    token: appJwt,
+    path: `/app/installations/${installationId}/access_tokens`,
+    method: "POST",
+    body: {},
+  });
+
+  setCachedInstallationToken(installationId, token, expires_at);
+  return token;
+}
+
 export async function verifyUserInstallationAccess(
   installationId: number,
   userAccessToken: string,
@@ -57,14 +88,8 @@ export async function verifyUserInstallationAccess(
 }
 
 export async function createInstallationAccessToken(installationId: number) {
-  const appJwt = await createGitHubAppJwt();
-
-  return githubFetch<{ token: string; expires_at: string }>({
-    token: appJwt,
-    path: `/app/installations/${installationId}/access_tokens`,
-    method: "POST",
-    body: {},
-  });
+  const token = await getInstallationToken(installationId);
+  return { token };
 }
 
 export async function listInstallationRepositories(
@@ -84,6 +109,29 @@ export async function listInstallationRepositories(
     id: repository.id,
     fullName: repository.full_name,
   }));
+}
+
+export async function getRepositoryDefaultBranch(
+  installationId: number,
+  repositoryFullName: string,
+): Promise<string | null> {
+  requireGitHubAppConfig();
+  const { token } = await createInstallationAccessToken(installationId);
+
+  try {
+    const data = await githubFetch<{ default_branch: string }>({
+      token,
+      path: `/repos/${repositoryFullName}`,
+    });
+
+    return data.default_branch ?? null;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function readRepositoryFile(
@@ -107,7 +155,7 @@ export async function readRepositoryFile(
       return null;
     }
 
-    return Buffer.from(data.content, "base64").toString("utf8");
+    return decodeGitHubBase64Content(data.content);
   } catch (error) {
     if (error instanceof Error && error.message.includes("(404)")) {
       return null;

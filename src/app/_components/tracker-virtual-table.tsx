@@ -22,6 +22,7 @@ const TRACKER_GRID_COLUMNS =
 type TrackerVirtualTableProps = {
   applications: ApplicationEntry[];
   dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
   tableQuery: TrackerTableQuery;
   onSort: (column: TrackerSortColumn) => void;
 };
@@ -29,6 +30,7 @@ type TrackerVirtualTableProps = {
 export function TrackerVirtualTable({
   applications,
   dataSource,
+  defaultBranch,
   tableQuery,
   onSort,
 }: TrackerVirtualTableProps) {
@@ -185,7 +187,11 @@ export function TrackerVirtualTable({
                   className="flex items-center truncate px-2 py-2"
                   role="cell"
                 >
-                  <ArtifactLink dataSource={dataSource} value={entry.report} />
+                  <ArtifactLink
+                    dataSource={dataSource}
+                    defaultBranch={defaultBranch}
+                    value={entry.report}
+                  />
                 </div>
                 <div
                   className="flex items-center px-2 py-2 text-white/70"
@@ -209,12 +215,14 @@ export function TrackerVirtualTable({
 
 function ArtifactLink({
   dataSource,
+  defaultBranch,
   value,
 }: {
   dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
   value: string;
 }) {
-  const artifact = resolveArtifactLink(dataSource, value);
+  const artifact = resolveArtifactLink(dataSource, value, defaultBranch);
 
   if (!artifact) {
     return <span className="text-white/40">—</span>;

@@ -42,6 +42,7 @@ export function buildCareerOpsRepoData(input: {
   owner: string;
   name: string;
   fullName: string;
+  defaultBranch?: string | null;
   applicationsMarkdown: string | null;
   pipelineMarkdown: string | null;
   dataDirectory: Array<{ path: string; name: string; type: string }>;
@@ -67,6 +68,7 @@ export function buildCareerOpsRepoData(input: {
     owner: input.owner,
     name: input.name,
     fullName: input.fullName,
+    defaultBranch: input.defaultBranch ?? null,
     applicationsMarkdown: input.applicationsMarkdown,
     pipelineMarkdown: input.pipelineMarkdown,
     dataFiles,

@@ -23,14 +23,19 @@ export function extractMarkdownLink(
   return null;
 }
 
-export function resolveRepoFileUrl(fullName: string, path: string): string {
+export function resolveRepoFileUrl(
+  fullName: string,
+  path: string,
+  defaultBranch = "main",
+): string {
   const normalizedPath = path.replace(/^\.\//, "");
-  return `https://github.com/${fullName}/blob/main/${normalizedPath}`;
+  return `https://github.com/${fullName}/blob/${defaultBranch}/${normalizedPath}`;
 }
 
 export function resolveDataSourceFileUrl(
   source: CareerOpsDataSource,
   path: string,
+  defaultBranch: string | null = "main",
 ): string | null {
   if (source.kind === "github") {
     const trimmed = path.trim();
@@ -43,7 +48,11 @@ export function resolveDataSourceFileUrl(
       return trimmed;
     }
 
-    return resolveRepoFileUrl(source.repo.fullName, path);
+    return resolveRepoFileUrl(
+      source.repo.fullName,
+      path,
+      defaultBranch ?? "main",
+    );
   }
 
   return null;
@@ -52,13 +61,14 @@ export function resolveDataSourceFileUrl(
 export function resolveArtifactLink(
   source: CareerOpsDataSource,
   value: string,
+  defaultBranch: string | null = "main",
 ): { label: string; href: string | null } | null {
   const markdownLink = extractMarkdownLink(value);
 
   if (markdownLink) {
     const href = markdownLink.href.startsWith("http")
       ? markdownLink.href
-      : resolveDataSourceFileUrl(source, markdownLink.href);
+      : resolveDataSourceFileUrl(source, markdownLink.href, defaultBranch);
 
     return {
       label: markdownLink.label,
@@ -71,7 +81,7 @@ export function resolveArtifactLink(
   if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
     return {
       label: "Report",
-      href: resolveDataSourceFileUrl(source, trimmed),
+      href: resolveDataSourceFileUrl(source, trimmed, defaultBranch),
     };
   }
 

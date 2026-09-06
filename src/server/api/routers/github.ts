@@ -1,9 +1,14 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { fetchCareerOpsRepoData, listUserRepos } from "~/server/github/client";
+import {
+  assertRepoInInstallation,
+  fetchCareerOpsRepoData,
+  listUserRepos,
+} from "~/server/github/client";
 import { throwIfGitHubRateLimited } from "~/server/github/errors";
 import { readRepositoryFile } from "~/server/github/api";
+import { CAREER_OPS_PATHS } from "~/lib/career-ops/layout";
 import {
   clearInstallationConnection,
   getInstallationConnection,
@@ -65,7 +70,11 @@ export const githubRouter = createTRPCRouter({
       return null;
     }
 
-    const repository = connection.repositories[0];
+    const selectedRepo = await getSelectedRepoFromCookies();
+    const repository =
+      connection.repositories.find(
+        (candidate) => candidate.fullName === selectedRepo?.fullName,
+      ) ?? connection.repositories[0];
 
     if (!repository) {
       return null;
@@ -74,13 +83,13 @@ export const githubRouter = createTRPCRouter({
     const content = await readRepositoryFile(
       connection.installationId,
       repository.fullName,
-      "data/applications.md",
+      CAREER_OPS_PATHS.applications,
     );
 
     if (!content) {
       return {
         repositoryFullName: repository.fullName,
-        filePath: "data/applications.md",
+        filePath: CAREER_OPS_PATHS.applications,
         preview: null,
       };
     }
@@ -89,7 +98,7 @@ export const githubRouter = createTRPCRouter({
 
     return {
       repositoryFullName: repository.fullName,
-      filePath: "data/applications.md",
+      filePath: CAREER_OPS_PATHS.applications,
       preview: lines,
     };
   }),
@@ -109,7 +118,14 @@ export const githubRouter = createTRPCRouter({
 
   selectRepo: protectedProcedure
     .input(selectedRepoSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await assertRepoInInstallation(ctx.session.user.id, input);
+      } catch (error) {
+        throwIfGitHubRateLimited(error);
+        throw error;
+      }
+
       await setSelectedRepoCookie(input);
       return input;
     }),

@@ -24,7 +24,7 @@ import { useParsedRepoData } from "~/lib/career-ops/use-parsed-repo-data";
 
 export function RepoDataView() {
   const hasMounted = useHasMounted();
-  const { activeSource, localRefreshToken, hasLocalSource, hasGitHubSource } =
+  const { activeSource, hasLocalSource, hasGitHubSource } =
     useCareerOpsDataSource();
 
   if (!hasMounted) {
@@ -50,26 +50,16 @@ export function RepoDataView() {
     );
   }
 
-  return (
-    <RepoDataContent
-      activeSource={activeSource}
-      localRefreshToken={localRefreshToken}
-    />
-  );
+  return <RepoDataContent activeSource={activeSource} />;
 }
 
 function RepoDataContent({
   activeSource,
-  localRefreshToken,
 }: {
   activeSource: CareerOpsDataSource;
-  localRefreshToken?: string;
 }) {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const { raw, error, isLoading } = useCareerOpsRawData(
-    activeSource,
-    localRefreshToken,
-  );
+  const { raw, error, isLoading } = useCareerOpsRawData(activeSource);
   const { parsed, isParsing, parseError } = useParsedRepoData(raw);
 
   if (isLoading && !raw) {
@@ -188,6 +178,7 @@ function RepoDataContent({
       >
         <TrackerPanel
           dataSource={activeSource}
+          defaultBranch={raw.defaultBranch}
           applications={parsed.applications}
           statusFilter={statusFilter}
           onStatusFilterChange={setStatusFilter}

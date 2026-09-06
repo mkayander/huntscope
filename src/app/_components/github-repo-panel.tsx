@@ -7,7 +7,8 @@ import { api } from "~/trpc/react";
 import { DataPreview } from "~/app/_components/data-preview";
 
 const statusMessages: Record<string, string> = {
-  connected: "Repository connected. Huntscope can now read only the repo you selected.",
+  connected:
+    "Repository connected. Huntscope can now read only the repo you selected.",
   updated: "Repository access updated.",
   "sign-in-required": "Sign in before connecting a repository.",
   "missing-installation": "GitHub did not return an installation ID.",
@@ -15,8 +16,11 @@ const statusMessages: Record<string, string> = {
   "expired-state": "The install link expired. Try connecting again.",
   "installation-forbidden":
     "That GitHub App installation is not accessible with your signed-in account.",
-  "no-repositories": "No repositories were selected. Pick one repo during install.",
+  "no-repositories":
+    "No repositories were selected. Pick one repo during install.",
   "callback-failed": "Could not verify the GitHub App installation.",
+  "github-account-required":
+    "Sign in with GitHub before installing the Huntscope GitHub App.",
   "not-configured": "GitHub cloud sync is not configured on this deployment.",
 };
 
@@ -45,8 +49,9 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
 
       {connection.repositories.length > 1 ? (
         <p className="text-center text-sm text-amber-200">
-          Multiple repositories were selected during install. Huntscope currently
-          reads from {primaryRepository?.fullName ?? "the first repository"}.
+          Multiple repositories were selected during install. Huntscope
+          currently reads from{" "}
+          {primaryRepository?.fullName ?? "the first repository"}.
         </p>
       ) : null}
 
@@ -144,7 +149,11 @@ function GitHubRepoSignedInIdle() {
 }
 
 function GitHubRepoSignedIn({ githubStatus }: { githubStatus?: string }) {
-  const { data: connection, isLoading, error } = api.github.getConnection.useQuery();
+  const {
+    data: connection,
+    isLoading,
+    error,
+  } = api.github.getConnection.useQuery();
 
   if (isLoading) {
     return <p className="text-sm text-white/70">Loading GitHub connection…</p>;

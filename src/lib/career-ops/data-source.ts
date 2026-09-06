@@ -5,7 +5,9 @@ export type CareerOpsDataSource =
       kind: "local";
       directoryName: string;
       displayName: string;
-      directoryHandle: FileSystemDirectoryHandle;
+      sessionId: string;
+      directoryHandle: FileSystemDirectoryHandle | null;
+      fileHandle: FileSystemFileHandle | null;
     }
   | {
       kind: "github";
@@ -44,14 +46,20 @@ export function writeDataSourcePreference(
   window.sessionStorage.setItem(DATA_SOURCE_PREFERENCE_KEY, preference);
 }
 
-export function toLocalDataSource(
-  directoryHandle: FileSystemDirectoryHandle,
-): CareerOpsDataSource {
+export function toLocalDataSource(input: {
+  directoryName: string;
+  displayName: string;
+  sessionId: string;
+  directoryHandle: FileSystemDirectoryHandle | null;
+  fileHandle: FileSystemFileHandle | null;
+}): CareerOpsDataSource {
   return {
     kind: "local",
-    directoryName: directoryHandle.name,
-    displayName: directoryHandle.name,
-    directoryHandle,
+    directoryName: input.directoryName,
+    displayName: input.displayName,
+    sessionId: input.sessionId,
+    directoryHandle: input.directoryHandle,
+    fileHandle: input.fileHandle,
   };
 }
 
@@ -75,7 +83,7 @@ export function isSameDataSource(
   }
 
   if (left.kind === "local" && right.kind === "local") {
-    return left.directoryName === right.directoryName;
+    return left.sessionId === right.sessionId;
   }
 
   if (left.kind === "github" && right.kind === "github") {

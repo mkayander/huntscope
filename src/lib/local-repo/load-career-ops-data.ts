@@ -118,9 +118,61 @@ export async function loadCareerOpsFromDirectory(
     owner: "local",
     name: directoryHandle.name,
     fullName: `local://${directoryHandle.name}`,
+    defaultBranch: null,
     applicationsMarkdown: applicationsContent,
     pipelineMarkdown: pipelineContent,
     dataDirectory,
     reportsDirectory,
   });
+}
+
+export async function loadCareerOpsFromLaunchedFile(
+  fileHandle: FileSystemFileHandle,
+): Promise<RawCareerOpsRepoData> {
+  const file = await fileHandle.getFile();
+  const content = await file.text();
+  const normalizedName = file.name.toLowerCase();
+  const isApplicationsFile =
+    normalizedName === "applications.md" ||
+    file.name.endsWith(CAREER_OPS_PATHS.applications);
+  const isPipelineFile =
+    normalizedName === "pipeline.md" ||
+    file.name.endsWith(CAREER_OPS_PATHS.pipeline);
+
+  return buildCareerOpsRepoData({
+    owner: "local",
+    name: fileHandle.name,
+    fullName: `local://${fileHandle.name}`,
+    defaultBranch: null,
+    applicationsMarkdown: isApplicationsFile ? content : null,
+    pipelineMarkdown: isPipelineFile ? content : null,
+    dataDirectory:
+      isApplicationsFile || isPipelineFile
+        ? [
+            {
+              path: isApplicationsFile
+                ? CAREER_OPS_PATHS.applications
+                : CAREER_OPS_PATHS.pipeline,
+              name: file.name,
+              type: "file",
+            },
+          ]
+        : [],
+    reportsDirectory: [],
+  });
+}
+
+export async function loadCareerOpsFromLocalSource(source: {
+  directoryHandle: FileSystemDirectoryHandle | null;
+  fileHandle: FileSystemFileHandle | null;
+}): Promise<RawCareerOpsRepoData> {
+  if (source.directoryHandle) {
+    return loadCareerOpsFromDirectory(source.directoryHandle);
+  }
+
+  if (source.fileHandle) {
+    return loadCareerOpsFromLaunchedFile(source.fileHandle);
+  }
+
+  throw new Error("No local folder or file is connected.");
 }

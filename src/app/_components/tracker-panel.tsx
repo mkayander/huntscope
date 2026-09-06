@@ -28,6 +28,7 @@ type TrackerView = "table" | "board";
 
 type TrackerPanelProps = {
   dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
   applications: ApplicationEntry[];
   statusFilter: string | null;
   onStatusFilterChange: (status: string | null) => void;
@@ -35,6 +36,7 @@ type TrackerPanelProps = {
 
 export function TrackerPanel({
   dataSource,
+  defaultBranch,
   applications,
   statusFilter,
   onStatusFilterChange,
@@ -154,6 +156,7 @@ export function TrackerPanel({
           <TrackerVirtualTable
             applications={filteredApplications}
             dataSource={dataSource}
+            defaultBranch={defaultBranch}
             tableQuery={tableQuery}
             onSort={handleSort}
           />
@@ -162,6 +165,7 @@ export function TrackerPanel({
             statuses={boardStatuses}
             groupedApplications={groupedApplications}
             dataSource={dataSource}
+            defaultBranch={defaultBranch}
           />
         )}
       </div>
@@ -173,10 +177,12 @@ function TrackerBoard({
   statuses,
   groupedApplications,
   dataSource,
+  defaultBranch,
 }: {
   statuses: string[];
   groupedApplications: Map<string, ApplicationEntry[]>;
   dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
 }) {
   return (
     <div className="mt-4 min-h-0 flex-1 overflow-auto">
@@ -217,6 +223,7 @@ function TrackerBoard({
                       <ApplicationDate value={entry.date} />
                       <ArtifactLink
                         dataSource={dataSource}
+                        defaultBranch={defaultBranch}
                         value={entry.report}
                       />
                     </div>
@@ -233,12 +240,14 @@ function TrackerBoard({
 
 function ArtifactLink({
   dataSource,
+  defaultBranch,
   value,
 }: {
   dataSource: CareerOpsDataSource;
+  defaultBranch: string | null;
   value: string;
 }) {
-  const artifact = resolveArtifactLink(dataSource, value);
+  const artifact = resolveArtifactLink(dataSource, value, defaultBranch);
 
   if (!artifact) {
     return <span className="text-white/40">—</span>;
