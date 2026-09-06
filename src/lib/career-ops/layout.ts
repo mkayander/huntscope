@@ -8,6 +8,8 @@ export const CAREER_OPS_PATHS = {
   pipeline: "data/pipeline.md",
   dataDir: "data",
   reportsDir: "reports",
+  outputDir: "output",
+  profile: "config/profile.yml",
 } as const;
 
 export function toRepoDataFile(item: {
@@ -47,6 +49,7 @@ export function buildCareerOpsRepoData(input: {
   pipelineMarkdown: string | null;
   dataDirectory: Array<{ path: string; name: string; type: string }>;
   reportsDirectory: Array<{ path: string; name: string; type: string }>;
+  outputDirectory: Array<{ path: string; name: string; type: string }>;
 }): RawCareerOpsRepoData {
   const dataFiles = input.dataDirectory
     .map(toRepoDataFile)
@@ -72,6 +75,12 @@ export function buildCareerOpsRepoData(input: {
     applicationsMarkdown: input.applicationsMarkdown,
     pipelineMarkdown: input.pipelineMarkdown,
     dataFiles,
+    reportFiles: input.reportsDirectory
+      .map(toRepoDataFile)
+      .filter((item): item is RepoDataFile => item !== null),
+    outputFiles: input.outputDirectory
+      .map(toRepoDataFile)
+      .filter((item): item is RepoDataFile => item !== null),
     reportsCount: input.reportsDirectory.filter((item) => item.type === "file")
       .length,
   };

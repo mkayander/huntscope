@@ -12,7 +12,10 @@ export type SectionBackdropConfig = {
   wash?: string;
 };
 
-export const SECTION_PANEL_ACCENT_CONFIG: Record<DashboardSectionId, SectionBackdropConfig> = {
+export const SECTION_PANEL_ACCENT_CONFIG: Record<
+  DashboardSectionId,
+  SectionBackdropConfig
+> = {
   [DASHBOARD_SECTION_IDS.repository]: {
     orbs: [
       {
@@ -90,8 +93,7 @@ export const SECTION_PANEL_ACCENT_CONFIG: Record<DashboardSectionId, SectionBack
           "absolute left-1/2 top-0 h-32 w-72 -translate-x-1/2 rounded-full bg-slate-300/8 blur-3xl",
       },
     ],
-    wash:
-      "linear-gradient(180deg, rgba(148, 163, 184, 0.03) 0%, transparent 45%), radial-gradient(circle at 50% 0%, rgba(255,255,255,0.02) 0%, transparent 42%)",
+    wash: "linear-gradient(180deg, rgba(148, 163, 184, 0.03) 0%, transparent 45%), radial-gradient(circle at 50% 0%, rgba(255,255,255,0.02) 0%, transparent 42%)",
   },
   [DASHBOARD_SECTION_IDS.dataFiles]: {
     orbs: [
@@ -101,6 +103,33 @@ export const SECTION_PANEL_ACCENT_CONFIG: Record<DashboardSectionId, SectionBack
       },
     ],
     wash: "linear-gradient(180deg, rgba(168, 85, 247, 0.03) 0%, transparent 46%)",
+  },
+  [DASHBOARD_SECTION_IDS.funnel]: {
+    orbs: [
+      {
+        className:
+          "absolute left-8 -top-6 h-32 w-48 rounded-full bg-amber-400/10 blur-3xl",
+      },
+    ],
+    wash: "linear-gradient(180deg, rgba(251, 191, 36, 0.04) 0%, transparent 50%)",
+  },
+  [DASHBOARD_SECTION_IDS.reports]: {
+    orbs: [
+      {
+        className:
+          "absolute -left-4 top-4 h-36 w-52 rounded-full bg-fuchsia-400/10 blur-3xl",
+      },
+    ],
+    wash: "linear-gradient(180deg, rgba(217, 70, 239, 0.04) 0%, transparent 48%)",
+  },
+  [DASHBOARD_SECTION_IDS.outputs]: {
+    orbs: [
+      {
+        className:
+          "absolute right-6 top-2 h-28 w-40 rounded-full bg-cyan-400/10 blur-3xl",
+      },
+    ],
+    wash: "linear-gradient(180deg, rgba(34, 211, 238, 0.04) 0%, transparent 48%)",
   },
 };
 

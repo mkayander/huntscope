@@ -4,11 +4,20 @@ import { useState } from "react";
 
 import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { AnalyticsChartsPanel } from "~/app/_components/analytics-charts-panel";
+import {
+  DataFilesPanel,
+  OutputFilesPanel,
+} from "~/app/_components/data-files-panel";
 import { DashboardSection } from "~/app/_components/dashboard-section-nav";
 import { ErrorAlert } from "~/app/_components/error-alert";
+import { FunnelPanel } from "~/app/_components/funnel-panel";
 import { OverviewStrip } from "~/app/_components/overview-strip";
 import { PipelinePanel } from "~/app/_components/pipeline-panel";
 import { RecentApplications } from "~/app/_components/recent-applications";
+import {
+  LatestReportCard,
+  ReportsPanel,
+} from "~/app/_components/reports-panel";
 import { TrackerPanel } from "~/app/_components/tracker-panel";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import {
@@ -144,6 +153,14 @@ function RepoDataContent({
       ) : null}
 
       <DashboardSection
+        id={DASHBOARD_SECTION_IDS.funnel}
+        label="Funnel"
+        order={25}
+      >
+        <FunnelPanel applications={parsed.applications} />
+      </DashboardSection>
+
+      <DashboardSection
         id={DASHBOARD_SECTION_IDS.activity}
         label="Activity"
         order={30}
@@ -163,13 +180,31 @@ function RepoDataContent({
         </DashboardSection>
       ) : null}
 
+      <DashboardSection
+        id={DASHBOARD_SECTION_IDS.reports}
+        label="Reports"
+        order={45}
+      >
+        <LatestReportCard
+          dataSource={activeSource}
+          defaultBranch={raw.defaultBranch}
+          reportFiles={raw.reportFiles}
+        />
+        <div className="mt-6">
+          <ReportsPanel reportFiles={raw.reportFiles} />
+        </div>
+      </DashboardSection>
+
       {parsed.pipeline ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.pipeline}
           label="Pipeline"
           order={50}
         >
-          <PipelinePanel pipeline={parsed.pipeline} />
+          <PipelinePanel
+            pipeline={parsed.pipeline}
+            pipelineMarkdown={raw.pipelineMarkdown}
+          />
         </DashboardSection>
       ) : null}
 
@@ -187,30 +222,25 @@ function RepoDataContent({
         />
       </DashboardSection>
 
+      <DashboardSection
+        id={DASHBOARD_SECTION_IDS.outputs}
+        label="Outputs"
+        order={65}
+      >
+        <OutputFilesPanel
+          dataSource={activeSource}
+          defaultBranch={raw.defaultBranch}
+          outputFiles={raw.outputFiles}
+        />
+      </DashboardSection>
+
       {raw.dataFiles.length > 0 ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.dataFiles}
           label="Data files"
           order={70}
         >
-          <GlowPanel accent={DASHBOARD_SECTION_IDS.dataFiles}>
-            <details>
-              <summary className="cursor-pointer text-sm font-medium text-white/80">
-                Data files in `data/`
-              </summary>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {raw.dataFiles.map((file) => (
-                  <li
-                    key={file.path}
-                    className="rounded-full bg-black/30 px-3 py-1 text-xs text-white/80"
-                  >
-                    {file.name}
-                    {file.type === "dir" ? "/" : ""}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          </GlowPanel>
+          <DataFilesPanel dataFiles={raw.dataFiles} />
         </DashboardSection>
       ) : null}
     </section>

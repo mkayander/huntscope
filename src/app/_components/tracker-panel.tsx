@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { ScoreBadge } from "~/app/_components/score-badge";
+import { ArtifactLinkButton } from "~/app/_components/artifact-link-button";
 import {
   createDefaultTrackerQuery,
   TrackerTableToolbar,
@@ -15,10 +16,16 @@ import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { cn } from "~/lib/utils";
-import { TrackerArtifactLink } from "~/app/_components/tracker-artifact-link";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
 import { arraysEqual } from "~/lib/career-ops/status-filters";
-import { getBoardColumnOrder } from "~/lib/career-ops/status-meta";
+import {
+  getBoardColumnOrder,
+  sortStatuses,
+} from "~/lib/career-ops/status-meta";
+import {
+  serializeApplicationsMarkdown,
+  updateApplicationStatus,
+} from "~/lib/career-ops/serialize-applications";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
   queryTrackerApplications,
@@ -26,6 +33,7 @@ import {
   type TrackerTableQuery,
 } from "~/lib/career-ops/tracker-table";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
+import { useLocalRepoMutations } from "~/hooks/use-local-repo-mutations";
 
 type TrackerView = "table" | "board";
 
@@ -44,6 +52,8 @@ export function TrackerPanel({
   statusFilters,
   onStatusFiltersChange,
 }: TrackerPanelProps) {
+  const { canWrite, isSaving, writeApplicationsMarkdown } =
+    useLocalRepoMutations();
   const [view, setView] = useState<TrackerView>("table");
   const [tableQuery, setTableQuery] = useState<TrackerTableQuery>(() =>
     createDefaultTrackerQuery(statusFilters),
@@ -77,6 +87,27 @@ export function TrackerPanel({
 
     return getBoardColumnOrder(statusCounts);
   }, [groupedApplications]);
+
+  const statusOptions = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    for (const application of applications) {
+      counts[application.status] = (counts[application.status] ?? 0) + 1;
+    }
+
+    return sortStatuses(counts);
+  }, [applications]);
+
+  const handleStatusChange = async (applicationNum: number, status: string) => {
+    const nextApplications = updateApplicationStatus(
+      applications,
+      applicationNum,
+      status,
+    );
+    await writeApplicationsMarkdown(
+      serializeApplicationsMarkdown(nextApplications),
+    );
+  };
 
   const handleQueryChange = (nextQuery: TrackerTableQuery) => {
     setTableQuery(nextQuery);
@@ -120,8 +151,8 @@ export function TrackerPanel({
               Application tracker
             </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Overview status chips stay
-              in sync with the status filter here.
+              Search, filter, and sort applications. Local folders support
+              inline status edits.
             </p>
           </div>
 
@@ -159,7 +190,13 @@ export function TrackerPanel({
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             tableQuery={tableQuery}
+            statusOptions={statusOptions}
+            canEditStatus={canWrite}
+            isSavingStatus={isSaving}
             onSort={handleSort}
+            onStatusChange={(applicationNum, status) => {
+              void handleStatusChange(applicationNum, status);
+            }}
           />
         ) : (
           <TrackerBoard
@@ -226,10 +263,11 @@ function TrackerBoard({
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
                         <ApplicationDate value={entry.date} />
-                        <TrackerArtifactLink
+                        <ArtifactLinkButton
                           dataSource={dataSource}
                           defaultBranch={defaultBranch}
                           value={entry.report}
+                          className="block truncate text-xs font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
                         />
                       </div>
                     </li>
