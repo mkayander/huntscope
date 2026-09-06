@@ -54,7 +54,7 @@ export function getGitHubStatusMessage(status?: string) {
   return githubStatusMessages[status];
 }
 
-function getGitHubStatusTitle(status: string) {
+export function getGitHubStatusTitle(status: string) {
   return githubStatusTitles[status] ?? "GitHub connection issue";
 }
 

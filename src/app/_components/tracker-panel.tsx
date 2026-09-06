@@ -185,57 +185,59 @@ function TrackerBoard({
   defaultBranch: string | null;
 }) {
   return (
-    <div className="mt-4 min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-      <div className="flex h-full min-w-min gap-4 pb-2">
-        {statuses.map((status) => {
-          const entries = groupedApplications.get(status) ?? [];
+    <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+        <div className="flex h-full min-h-0 min-w-min items-stretch gap-4 pb-2">
+          {statuses.map((status) => {
+            const entries = groupedApplications.get(status) ?? [];
 
-          return (
-            <div
-              key={status}
-              className={cn(
-                glassCardSurfaceClassName,
-                "flex w-72 shrink-0 flex-col rounded-xl p-3",
-              )}
-            >
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h4 className="text-sm font-semibold text-white">{status}</h4>
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
-                  {entries.length}
-                </span>
-              </div>
+            return (
+              <div
+                key={status}
+                className={cn(
+                  glassCardSurfaceClassName,
+                  "flex h-full min-h-0 w-72 shrink-0 flex-col rounded-xl p-3",
+                )}
+              >
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-white">{status}</h4>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                    {entries.length}
+                  </span>
+                </div>
 
-              <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto">
-                {entries.map((entry) => (
-                  <li
-                    key={entry.num}
-                    className="rounded-lg border border-white/10 bg-[#15162c] p-3"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-white">
-                          {entry.company}
-                        </p>
-                        <p className="mt-1 text-sm text-white/70">
-                          {entry.role}
-                        </p>
+                <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+                  {entries.map((entry) => (
+                    <li
+                      key={entry.num}
+                      className="rounded-lg border border-white/10 bg-[#15162c] p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium text-white">
+                            {entry.company}
+                          </p>
+                          <p className="mt-1 text-sm text-white/70">
+                            {entry.role}
+                          </p>
+                        </div>
+                        <ScoreBadge score={entry.score} />
                       </div>
-                      <ScoreBadge score={entry.score} />
-                    </div>
-                    <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
-                      <ApplicationDate value={entry.date} />
-                      <ArtifactLink
-                        dataSource={dataSource}
-                        defaultBranch={defaultBranch}
-                        value={entry.report}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
+                      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
+                        <ApplicationDate value={entry.date} />
+                        <ArtifactLink
+                          dataSource={dataSource}
+                          defaultBranch={defaultBranch}
+                          value={entry.report}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

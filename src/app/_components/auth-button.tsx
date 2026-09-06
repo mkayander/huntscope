@@ -22,7 +22,7 @@ import { useGitHubInstallStatus } from "~/hooks/use-github-install-status";
 export function AuthButton() {
   const hasMounted = useHasMounted();
   const queryClient = useQueryClient();
-  const { activeSource } = useCareerOpsDataSource();
+  const { activeSource, hasGitHubSource } = useCareerOpsDataSource();
   const { isSignedIn: initialIsSignedIn, userLabel: initialUserLabel } =
     useHomeShell();
   const { data: session, isPending } = authClient.useSession();
@@ -103,8 +103,12 @@ export function AuthButton() {
 
                 clearGitHubInstallStatus();
 
-                if (activeSource?.kind === "github") {
-                  await clearGitHubViewState(queryClient);
+                if (activeSource?.kind === "github" || hasGitHubSource) {
+                  try {
+                    await clearGitHubViewState(queryClient);
+                  } catch {
+                    // Sign-out already succeeded; avoid surfacing cleanup failures.
+                  }
                 }
               })
               .catch(() => {
