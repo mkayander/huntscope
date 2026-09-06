@@ -4,7 +4,11 @@ import { useState } from "react";
 
 import { FeedbackRegion } from "~/app/_components/feedback-region";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
-import { LANDING_CTA_BUTTON_CLASS } from "~/app/_components/panel-loading-skeleton";
+import { StableButtonLabel } from "~/app/_components/panel-content-slots";
+import {
+  AUTH_BUTTON_LABEL_PLACEHOLDER,
+  LANDING_CTA_BUTTON_CLASS,
+} from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
 
@@ -100,7 +104,9 @@ export function AuthButton() {
         }}
       >
         <ButtonLoadingIcon isLoading={isBusy} />
-        <span>{buttonLabel}</span>
+        <StableButtonLabel placeholder={AUTH_BUTTON_LABEL_PLACEHOLDER}>
+          {buttonLabel}
+        </StableButtonLabel>
       </Button>
 
       <FeedbackRegion

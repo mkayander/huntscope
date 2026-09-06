@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { PanelInstallHintSlot } from "~/app/_components/panel-content-slots";
 import { Button } from "~/components/ui/button";
 import { isInstalledPwa } from "~/lib/pwa/environment";
 
@@ -37,42 +38,38 @@ export function InstallPwaButton() {
     };
   }, []);
 
-  if (installed) {
-    return (
-      <p className="text-sm text-emerald-200">
-        Installed as an app. Folder permissions persist longer in this mode.
-      </p>
-    );
-  }
-
-  if (!deferredPrompt) {
-    return (
-      <p className="text-sm text-white/60">
-        Install Huntscope from your browser menu for stronger local folder
-        access and offline shell caching.
-      </p>
-    );
-  }
-
   return (
-    <Button
-      type="button"
-      variant="brandSecondary"
-      size="pill"
-      onClick={() => {
-        void (async () => {
-          await deferredPrompt.prompt();
-          const choice = await deferredPrompt.userChoice;
+    <PanelInstallHintSlot>
+      {installed ? (
+        <p className="max-w-sm text-center text-sm text-emerald-200">
+          Installed as an app. Folder permissions persist longer in this mode.
+        </p>
+      ) : !deferredPrompt ? (
+        <p className="max-w-sm text-center text-sm text-white/60">
+          Install Huntscope from your browser menu for stronger local folder
+          access and offline shell caching.
+        </p>
+      ) : (
+        <Button
+          type="button"
+          variant="brandSecondary"
+          size="pill"
+          onClick={() => {
+            void (async () => {
+              await deferredPrompt.prompt();
+              const choice = await deferredPrompt.userChoice;
 
-          if (choice.outcome === "accepted") {
-            setInstalled(true);
-          }
+              if (choice.outcome === "accepted") {
+                setInstalled(true);
+              }
 
-          setDeferredPrompt(null);
-        })();
-      }}
-    >
-      Install app
-    </Button>
+              setDeferredPrompt(null);
+            })();
+          }}
+        >
+          Install app
+        </Button>
+      )}
+    </PanelInstallHintSlot>
   );
 }

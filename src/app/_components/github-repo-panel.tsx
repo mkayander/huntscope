@@ -7,9 +7,13 @@ import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { DataPreview } from "~/app/_components/data-preview";
 import { GitHubStatusMessage } from "~/app/_components/github-status-message";
 import {
-  PanelIdleLoadingSkeleton,
-  LANDING_CTA_BUTTON_CLASS,
+  PanelDescriptionSlot,
+  PanelPrimaryActionSlot,
+} from "~/app/_components/panel-content-slots";
+import {
+  PanelButtonSkeleton,
   PanelDescriptionSkeleton,
+  LANDING_CTA_BUTTON_CLASS,
 } from "~/app/_components/panel-loading-skeleton";
 import {
   PanelSection,
@@ -20,7 +24,7 @@ import { authClient } from "~/lib/auth-client";
 import { api } from "~/trpc/react";
 
 function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
-  const { data: connection } = api.github.getConnection.useQuery();
+  const { data: connection, isLoading } = api.github.getConnection.useQuery();
   const { data: preview } = api.github.previewDataFile.useQuery();
   const disconnect = api.github.disconnect.useMutation({
     onSuccess: () => {
@@ -28,8 +32,8 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
     },
   });
 
-  if (!connection) {
-    return null;
+  if (isLoading || !connection) {
+    return <PanelDescriptionSkeleton centered />;
   }
 
   const primaryRepository = connection.repositories[0];
@@ -90,38 +94,42 @@ function GitHubRepoSignedOut({
 }: {
   githubConfigured: boolean;
 }) {
-  if (!githubConfigured) {
-    return (
-      <p className="text-center text-sm text-white/70">
-        GitHub cloud sync is not configured for this deployment. Use a local
-        folder instead.
-      </p>
-    );
-  }
-
   return (
-    <p className="text-center text-sm text-white/70">
-      Optional: sign in with GitHub below, then install the Huntscope GitHub App
-      on exactly one private repository.
-    </p>
+    <PanelDescriptionSlot variant="landing">
+      {!githubConfigured ? (
+        <p className="text-sm text-white/70">
+          GitHub cloud sync is not configured for this deployment. Use a local
+          folder instead.
+        </p>
+      ) : (
+        <p className="text-sm text-white/70">
+          Optional: sign in with GitHub below, then install the Huntscope GitHub
+          App on exactly one private repository.
+        </p>
+      )}
+    </PanelDescriptionSlot>
   );
 }
 
 function GitHubRepoSignedInIdle() {
   return (
     <>
-      <p className="text-center text-sm text-white/70">
-        Install the Huntscope GitHub App on one selected repository. Huntscope
-        only receives read-only access to the repo you pick.
-      </p>
-      <Button
-        asChild
-        variant="brand"
-        size="cta"
-        className={LANDING_CTA_BUTTON_CLASS}
-      >
-        <Link href="/api/github/install">Connect GitHub repository</Link>
-      </Button>
+      <PanelDescriptionSlot variant="landing">
+        <p className="text-sm text-white/70">
+          Install the Huntscope GitHub App on one selected repository. Huntscope
+          only receives read-only access to the repo you pick.
+        </p>
+      </PanelDescriptionSlot>
+      <PanelPrimaryActionSlot centered>
+        <Button
+          asChild
+          variant="brand"
+          size="cta"
+          className={LANDING_CTA_BUTTON_CLASS}
+        >
+          <Link href="/api/github/install">Connect GitHub repository</Link>
+        </Button>
+      </PanelPrimaryActionSlot>
     </>
   );
 }
@@ -134,14 +142,23 @@ function GitHubRepoSignedIn({ githubStatus }: { githubStatus?: string }) {
   } = api.github.getConnection.useQuery();
 
   if (isLoading) {
-    return <PanelIdleLoadingSkeleton variant="landing" descriptionLines={2} />;
+    return (
+      <>
+        <PanelDescriptionSkeleton centered />
+        <PanelPrimaryActionSlot centered>
+          <PanelButtonSkeleton variant="landing" centered />
+        </PanelPrimaryActionSlot>
+      </>
+    );
   }
 
   if (error?.data?.code === "PRECONDITION_FAILED") {
     return (
-      <p className="text-center text-sm text-white/70">
-        GitHub cloud sync is not configured for this deployment.
-      </p>
+      <PanelDescriptionSlot variant="landing">
+        <p className="text-sm text-white/70">
+          GitHub cloud sync is not configured for this deployment.
+        </p>
+      </PanelDescriptionSlot>
     );
   }
 
@@ -166,7 +183,7 @@ export function GitHubRepoPanel({
       <h2 className={panelTitleClassName("landing")}>GitHub repository</h2>
 
       {isPending ? (
-        <PanelDescriptionSkeleton centered lines={2} />
+        <PanelDescriptionSkeleton centered />
       ) : session?.user ? (
         <GitHubRepoSignedIn githubStatus={githubStatus} />
       ) : (
