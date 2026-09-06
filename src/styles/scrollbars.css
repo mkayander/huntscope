@@ -9,18 +9,20 @@
 }
 
 @layer utilities {
-  /* Layout viewport is narrower than visual viewport when gutter is stable. */
   .fixed-viewport-bleed {
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
-    right: calc(-1 * var(--scrollbar-size));
+    right: 0;
+  }
+
+  html[data-scrollbar-gutter] .fixed-viewport-bleed {
+    right: calc(100% - 100vw);
   }
 
   .scrollbar-gutter-fill {
-    right: calc(-1 * var(--scrollbar-size));
-    width: var(--scrollbar-size);
+    right: calc(100% - 100vw);
     background-image: var(--page-shell-background);
     background-size: 100vw 100%;
     background-position: right top;
@@ -37,8 +39,16 @@
   html {
     color-scheme: dark;
     min-height: 100%;
+    overflow-y: auto;
     scrollbar-gutter: stable;
     background-color: var(--background);
+    background-image: var(--page-shell-background);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  html[data-page-shell="dashboard"] {
+    background-image: none;
   }
 
   html,
