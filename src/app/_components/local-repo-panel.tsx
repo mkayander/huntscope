@@ -1,39 +1,20 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+
+import { ActionButtonRow } from "~/app/_components/action-button-row";
 import { InstallPwaButton } from "~/app/_components/install-pwa-button";
 import { DataPreview } from "~/app/_components/data-preview";
-import { GlowPanel } from "~/components/ui/glow-panel";
+import {
+  PanelSection,
+  panelTitleClassName,
+} from "~/app/_components/panel-section";
+import { Button } from "~/components/ui/button";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
-import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 
 type LocalRepoPanelProps = {
   variant?: "landing" | "dashboard";
 };
-
-function PanelShell({
-  variant,
-  children,
-}: {
-  variant: "landing" | "dashboard";
-  children: React.ReactNode;
-}) {
-  if (variant === "dashboard") {
-    return (
-      <GlowPanel
-        accent={DASHBOARD_SECTION_IDS.repository}
-        className="flex flex-col gap-4"
-      >
-        {children}
-      </GlowPanel>
-    );
-  }
-
-  return (
-    <section className="flex w-full flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-      {children}
-    </section>
-  );
-}
 
 export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
   const { localRepo } = useCareerOpsDataSource();
@@ -47,34 +28,33 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
     disconnect,
   } = localRepo;
 
-  const titleClassName =
-    variant === "dashboard"
-      ? "text-xl font-semibold text-white"
-      : "text-lg font-semibold text-white";
+  const titleClassName = panelTitleClassName(variant);
+  const isLanding = variant === "landing";
+  const primaryButtonSize = isLanding ? "cta" : "pill";
 
   if (state.status === "loading") {
     return (
-      <PanelShell variant={variant}>
+      <PanelSection variant={variant}>
         <p className="text-sm text-white/70">Loading local repository…</p>
-      </PanelShell>
+      </PanelSection>
     );
   }
 
   if (state.status === "unsupported") {
     return (
-      <PanelShell variant={variant}>
+      <PanelSection variant={variant}>
         <h2 className={titleClassName}>Local career-ops project</h2>
         <p className="text-sm text-white/70">
           Folder picking is not supported in this browser. Use Chrome or Edge on
           desktop to open a local career-ops project from disk.
         </p>
-      </PanelShell>
+      </PanelSection>
     );
   }
 
   if (state.status === "connected") {
     return (
-      <PanelShell variant={variant}>
+      <PanelSection variant={variant}>
         <div className="flex flex-col gap-2">
           <h2 className={titleClassName}>Local career-ops project</h2>
           <p className="font-mono text-sm text-white/80">
@@ -93,7 +73,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
           </p>
         </div>
 
-        {variant === "landing" ? (
+        {isLanding ? (
           <>
             <InstallPwaButton />
             <DataPreview
@@ -109,36 +89,42 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
           </p>
         )}
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
+        <ActionButtonRow centered={isLanding}>
+          <Button
             type="button"
-            onClick={() => void refresh()}
+            variant="brandSecondary"
+            size="pill"
             disabled={isRefreshing}
-            className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold transition hover:bg-white/20 disabled:opacity-50"
+            onClick={() => void refresh()}
           >
-            {isRefreshing ? "Refreshing…" : "Refresh"}
-          </button>
-          <button
+            {isRefreshing ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : null}
+            <span>{isRefreshing ? "Refreshing…" : "Refresh"}</span>
+          </Button>
+          <Button
             type="button"
+            variant="brandSecondary"
+            size="pill"
             onClick={() => void pickDirectory()}
-            className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold transition hover:bg-white/20"
           >
             Change folder
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="brandSecondary"
+            size="pill"
             onClick={() => void disconnect()}
-            className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold transition hover:bg-white/20"
           >
             Disconnect
-          </button>
-        </div>
-      </PanelShell>
+          </Button>
+        </ActionButtonRow>
+      </PanelSection>
     );
   }
 
   return (
-    <PanelShell variant={variant}>
+    <PanelSection variant={variant}>
       <h2 className={titleClassName}>Local career-ops project</h2>
       <p className="text-sm text-white/70">
         Open your career-ops project root — the folder that contains `data/`,
@@ -147,7 +133,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
         is optional.
       </p>
 
-      {variant === "landing" ? <InstallPwaButton /> : null}
+      {isLanding ? <InstallPwaButton /> : null}
 
       {state.status === "permission-required" ? (
         <p className="text-sm text-amber-200">
@@ -160,13 +146,15 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
         <p className="text-sm text-red-200">{state.message}</p>
       ) : null}
 
-      <button
+      <Button
         type="button"
+        variant="brand"
+        size={primaryButtonSize}
+        className={isLanding ? "min-w-[15.5rem]" : undefined}
         onClick={() => void pickDirectory()}
-        className="rounded-full bg-[hsl(280,100%,70%)] px-8 py-3 font-semibold text-[#15162c] transition hover:opacity-90"
       >
         Open local folder
-      </button>
-    </PanelShell>
+      </Button>
+    </PanelSection>
   );
 }

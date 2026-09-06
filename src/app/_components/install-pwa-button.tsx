@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { Button } from "~/components/ui/button";
 import { isInstalledPwa } from "~/lib/pwa/environment";
 
 type BeforeInstallPromptEvent = Event & {
@@ -54,8 +55,10 @@ export function InstallPwaButton() {
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="brandSecondary"
+      size="pill"
       onClick={() => {
         void (async () => {
           await deferredPrompt.prompt();
@@ -68,9 +71,8 @@ export function InstallPwaButton() {
           setDeferredPrompt(null);
         })();
       }}
-      className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold transition hover:bg-white/20"
     >
       Install app
-    </button>
+    </Button>
   );
 }

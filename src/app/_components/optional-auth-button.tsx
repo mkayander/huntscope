@@ -1,5 +1,8 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+
+import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
 
 export function OptionalAuthButton() {
@@ -7,9 +10,16 @@ export function OptionalAuthButton() {
 
   if (isPending) {
     return (
-      <span className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold">
-        Checking session…
-      </span>
+      <Button
+        type="button"
+        variant="brandSecondary"
+        size="pill"
+        disabled
+        className="pointer-events-none"
+      >
+        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+        <span>Checking session…</span>
+      </Button>
     );
   }
 
@@ -19,13 +29,14 @@ export function OptionalAuthButton() {
         <p className="text-sm text-white/70">
           Signed in as {session.user.name ?? session.user.email}
         </p>
-        <button
+        <Button
           type="button"
+          variant="brandSecondary"
+          size="pill"
           onClick={() => void authClient.signOut()}
-          className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold transition hover:bg-white/20"
         >
           Sign out
-        </button>
+        </Button>
       </div>
     );
   }

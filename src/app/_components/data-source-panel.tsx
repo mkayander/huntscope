@@ -12,16 +12,18 @@ export function DataSourcePanel({
 }) {
   return (
     <div className="flex w-full max-w-3xl flex-col gap-6">
-      <div className="text-center">
-        <p className="text-lg text-white">Choose a data source</p>
-        <p className="mt-2 text-sm text-white/70">
+      <header className="flex flex-col gap-2 text-center">
+        <h2 className="text-lg font-semibold text-white">
+          Choose a data source
+        </h2>
+        <p className="text-sm text-white/70">
           Start with a local career-ops project — no account needed. GitHub
           sign-in is only required if you want to connect a companion repository
           in the cloud.
         </p>
-      </div>
+      </header>
 
-      <LocalRepoPanel />
+      <LocalRepoPanel variant="landing" />
       <GitHubRepoPanel
         githubStatus={githubStatus}
         githubConfigured={githubConfigured}

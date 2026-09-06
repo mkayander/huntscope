@@ -1,28 +1,18 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
+import { ActionButtonRow } from "~/app/_components/action-button-row";
+import { DataPreview } from "~/app/_components/data-preview";
+import { GitHubStatusMessage } from "~/app/_components/github-status-message";
+import {
+  PanelSection,
+  panelTitleClassName,
+} from "~/app/_components/panel-section";
+import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
 import { api } from "~/trpc/react";
-import { DataPreview } from "~/app/_components/data-preview";
-
-const statusMessages: Record<string, string> = {
-  connected:
-    "Repository connected. Huntscope can now read only the repo you selected.",
-  updated: "Repository access updated.",
-  "sign-in-required": "Sign in before connecting a repository.",
-  "missing-installation": "GitHub did not return an installation ID.",
-  "missing-state": "GitHub did not return install state.",
-  "expired-state": "The install link expired. Try connecting again.",
-  "installation-forbidden":
-    "That GitHub App installation is not accessible with your signed-in account.",
-  "no-repositories":
-    "No repositories were selected. Pick one repo during install.",
-  "callback-failed": "Could not verify the GitHub App installation.",
-  "github-account-required":
-    "Sign in with GitHub before installing the Huntscope GitHub App.",
-  "not-configured": "GitHub cloud sync is not configured on this deployment.",
-};
 
 function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
   const { data: connection } = api.github.getConnection.useQuery();
@@ -33,8 +23,6 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
     },
   });
 
-  const statusMessage = githubStatus ? statusMessages[githubStatus] : undefined;
-
   if (!connection) {
     return null;
   }
@@ -43,9 +31,7 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
 
   return (
     <>
-      {statusMessage ? (
-        <p className="text-center text-sm text-emerald-200">{statusMessage}</p>
-      ) : null}
+      <GitHubStatusMessage status={githubStatus} />
 
       {connection.repositories.length > 1 ? (
         <p className="text-center text-sm text-amber-200">
@@ -75,22 +61,23 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
         />
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <Link
-          href="/api/github/install"
-          className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold transition hover:bg-white/20"
-        >
-          Change repository
-        </Link>
-        <button
+      <ActionButtonRow centered>
+        <Button asChild variant="brandSecondary" size="pill">
+          <Link href="/api/github/install">Change repository</Link>
+        </Button>
+        <Button
           type="button"
-          onClick={() => disconnect.mutate()}
+          variant="brandSecondary"
+          size="pill"
           disabled={disconnect.isPending}
-          className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold transition hover:bg-white/20 disabled:opacity-50"
+          onClick={() => disconnect.mutate()}
         >
-          Disconnect
-        </button>
-      </div>
+          {disconnect.isPending ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          ) : null}
+          <span>{disconnect.isPending ? "Disconnecting…" : "Disconnect"}</span>
+        </Button>
+      </ActionButtonRow>
     </>
   );
 }
@@ -110,24 +97,10 @@ function GitHubRepoSignedOut({
   }
 
   return (
-    <>
-      <p className="text-center text-sm text-white/70">
-        Optional: sign in with GitHub, then install the Huntscope GitHub App on
-        exactly one private repository.
-      </p>
-      <button
-        type="button"
-        onClick={() =>
-          void authClient.signIn.social({
-            provider: "github",
-            callbackURL: "/",
-          })
-        }
-        className="rounded-full bg-white/10 px-8 py-3 font-semibold transition hover:bg-white/20"
-      >
-        Sign in with GitHub
-      </button>
-    </>
+    <p className="text-center text-sm text-white/70">
+      Optional: sign in with GitHub below, then install the Huntscope GitHub App
+      on exactly one private repository.
+    </p>
   );
 }
 
@@ -138,12 +111,14 @@ function GitHubRepoSignedInIdle() {
         Install the Huntscope GitHub App on one selected repository. Huntscope
         only receives read-only access to the repo you pick.
       </p>
-      <Link
-        href="/api/github/install"
-        className="rounded-full bg-white/10 px-8 py-3 font-semibold transition hover:bg-white/20"
+      <Button
+        asChild
+        variant="brand"
+        size="cta"
+        className="min-w-[15.5rem] justify-center"
       >
-        Connect GitHub repository
-      </Link>
+        <Link href="/api/github/install">Connect GitHub repository</Link>
+      </Button>
     </>
   );
 }
@@ -184,8 +159,8 @@ export function GitHubRepoPanel({
   const { data: session, isPending } = authClient.useSession();
 
   return (
-    <section className="flex w-full flex-col items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-      <h2 className="text-lg font-semibold text-white">GitHub repository</h2>
+    <PanelSection variant="landing">
+      <h2 className={panelTitleClassName("landing")}>GitHub repository</h2>
 
       {isPending ? (
         <p className="text-sm text-white/70">Checking session…</p>
@@ -194,6 +169,6 @@ export function GitHubRepoPanel({
       ) : (
         <GitHubRepoSignedOut githubConfigured={githubConfigured} />
       )}
-    </section>
+    </PanelSection>
   );
 }
