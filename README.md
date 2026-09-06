@@ -95,6 +95,20 @@ Open [http://localhost:3000](http://localhost:3000) and click **Open local folde
 | `pnpm build` | Production build |
 | `pnpm check` | Lint + typecheck |
 
+## Releases
+
+Huntscope uses [semantic-release](https://semantic-release.gitbook.io/) on pushes to `main`, matching the flow used in [dStruct](https://github.com/mkayander/dStruct).
+
+- Conventional commits drive version bumps (`feat:`, `fix:`, `chore:`, etc.)
+- `CHANGELOG.md`, `package.json`, and `pnpm-lock.yaml` are updated automatically
+- GitHub Releases are created from the generated notes
+- The package stays private, so nothing is published to npm
+
+Local git hooks (via Husky):
+
+- `pre-commit` — `lint-staged` + Prettier on staged files
+- `pre-push` — `pnpm check`
+
 ## Deploy (Vercel)
 
 Set these in **Project → Settings → Environment Variables** (Production, Preview, Development):

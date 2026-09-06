@@ -1,5 +1,4 @@
 import {
-  type FileSystemObserverConstructor,
   type FileSystemObserverInstance,
   supportsFileSystemObserver,
 } from "~/lib/local-repo/file-system-types";
@@ -12,7 +11,12 @@ export function watchDirectory(
     return () => undefined;
   }
 
-  const Observer = window.FileSystemObserver as FileSystemObserverConstructor;
+  const Observer = window.FileSystemObserver;
+
+  if (!Observer) {
+    return () => undefined;
+  }
+
   const observer: FileSystemObserverInstance = new Observer(() => {
     onChange();
   });
