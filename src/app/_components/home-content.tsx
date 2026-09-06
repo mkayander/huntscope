@@ -12,22 +12,20 @@ import {
   CareerOpsDataSourceProvider,
   useCareerOpsDataSource,
 } from "~/hooks/use-career-ops-data-source";
+import { authClient } from "~/lib/auth-client";
 
 type HomeContentProps = {
-  isSignedIn: boolean;
   githubStatus?: string;
   githubConfigured: boolean;
 };
 
 export function HomeContent({
-  isSignedIn,
   githubStatus,
   githubConfigured,
 }: HomeContentProps) {
   return (
     <CareerOpsDataSourceProvider>
       <HomeContentBody
-        isSignedIn={isSignedIn}
         githubStatus={githubStatus}
         githubConfigured={githubConfigured}
       />
@@ -35,13 +33,11 @@ export function HomeContent({
   );
 }
 
-function HomeContentBody({
-  isSignedIn,
-  githubStatus,
-  githubConfigured,
-}: HomeContentProps) {
-  const { canShowDashboard } = useCareerOpsDataSource();
-  const showDashboard = isSignedIn || canShowDashboard;
+function HomeContentBody({ githubStatus, githubConfigured }: HomeContentProps) {
+  const { data: session } = authClient.useSession();
+  const isSignedIn = Boolean(session?.user);
+  const { canShowDashboard, hasLocalSource } = useCareerOpsDataSource();
+  const showDashboard = canShowDashboard || isSignedIn;
 
   if (!showDashboard) {
     return (
@@ -55,8 +51,8 @@ function HomeContentBody({
               </h1>
               <p className="max-w-2xl text-lg text-white/80">
                 Analytics for your job-search data repository. Open a local
-                career-ops project from disk or connect a companion repository
-                on GitHub — read-only, repo-first.
+                career-ops project from disk — no sign-in required — or
+                optionally connect a companion repository on GitHub.
               </p>
               <p className="text-sm text-white/50">
                 Local folders stay on your machine. GitHub access is optional
@@ -64,11 +60,11 @@ function HomeContentBody({
               </p>
             </div>
 
-            <AuthButton />
             <DataSourcePanel
               githubStatus={githubStatus}
               githubConfigured={githubConfigured}
             />
+            <AuthButton />
           </div>
         </main>
       </LandingBackgroundProvider>
@@ -77,15 +73,16 @@ function HomeContentBody({
 
   return (
     <main className="relative z-10 flex min-h-screen flex-col items-center text-white">
-      {showDashboard ? <DashboardAmbientBackground /> : null}
+      <DashboardAmbientBackground />
       <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-4 text-center">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
             Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>
           </h1>
           <p className="max-w-xl text-lg text-white/80">
-            Analytics for your career-ops project or companion repository. Use a
-            local folder or GitHub — read-only, repo-first.
+            {hasLocalSource
+              ? "Viewing your local career-ops project. GitHub sign-in remains optional for companion repositories."
+              : "Analytics for your career-ops project or companion repository."}
           </p>
         </div>
 

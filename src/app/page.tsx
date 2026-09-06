@@ -29,7 +29,6 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <HydrateClient>
       <HomeContent
-        isSignedIn={Boolean(session?.user)}
         githubStatus={githubStatus}
         githubConfigured={githubConfigured}
       />

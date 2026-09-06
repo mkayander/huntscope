@@ -80,24 +80,16 @@ export function DataSourceSelector() {
         </GlowPanel>
       ) : null}
 
-      {!hasLocalSource ||
-      activeSource?.kind === "local" ||
-      showSourceSwitcher ? (
-        <LocalRepoPanel variant="dashboard" />
-      ) : null}
+      <LocalRepoPanel variant="dashboard" />
 
-      {isSignedIn &&
-      (!hasGitHubSource ||
-        activeSource?.kind === "github" ||
-        showSourceSwitcher) ? (
-        <RepoSelector />
-      ) : null}
+      {isSignedIn ? <RepoSelector /> : null}
 
       {!hasLocalSource && !hasGitHubSource ? (
         <GlowPanel accent={DASHBOARD_SECTION_IDS.repository} variant="dashed">
           <p className="text-sm text-white/70">
-            Open a local career-ops project folder or connect a companion
-            repository on GitHub to load your tracker and pipeline data.
+            Open a local career-ops project folder to get started without
+            signing in, or sign in with GitHub to connect a companion
+            repository.
           </p>
         </GlowPanel>
       ) : null}

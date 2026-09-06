@@ -3,12 +3,11 @@
 import { useEffect } from "react";
 
 import { InstallPwaButton } from "~/app/_components/install-pwa-button";
+import { DataPreview } from "~/app/_components/data-preview";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { toLocalDataSource } from "~/lib/career-ops/data-source";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
-import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
-import { DataPreview } from "~/app/_components/data-preview";
 
 type LocalRepoPanelProps = {
   variant?: "landing" | "dashboard";
@@ -40,7 +39,7 @@ function PanelShell({
 }
 
 export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
-  const { setActiveSource } = useCareerOpsDataSource();
+  const { localRepo, setActiveSource } = useCareerOpsDataSource();
   const {
     state,
     isRefreshing,
@@ -50,7 +49,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
     pickDirectory,
     refresh,
     disconnect,
-  } = useLocalRepo();
+  } = localRepo;
 
   useEffect(() => {
     if (
@@ -120,7 +119,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
         ) : (
           <p className="text-sm text-white/60">
             Reading `data/applications.md`, `data/pipeline.md`, and `reports/`
-            from your career-ops project root.
+            from your career-ops project root. No GitHub sign-in is required.
           </p>
         )}
 
@@ -158,7 +157,8 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
       <p className="text-sm text-white/70">
         Open your career-ops project root — the folder that contains `data/`,
         `reports/`, and the rest of your job-search files. Huntscope reads
-        directly from disk and refreshes when the folder changes.
+        directly from disk and refreshes when the folder changes. GitHub sign-in
+        is optional.
       </p>
 
       {variant === "landing" ? <InstallPwaButton /> : null}
