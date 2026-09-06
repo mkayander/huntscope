@@ -3,7 +3,7 @@
 import { ActionButtonRow } from "~/app/_components/action-button-row";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { DataPreview } from "~/app/_components/data-preview";
-import { GitHubInstallLink } from "~/app/_components/github-install-link";
+import { GitHubInstallButton } from "~/app/_components/github-install-button";
 import {
   GitHubInstallationHealthCheckError,
   useGitHubInstallationHealthCheck,
@@ -73,9 +73,14 @@ function GitHubRepoConnected() {
       ) : null}
 
       <ActionButtonRow centered>
-        <Button asChild variant="brandSecondary" size="pill">
-          <GitHubInstallLink>Change repository</GitHubInstallLink>
-        </Button>
+        <GitHubInstallButton
+          variant="brandSecondary"
+          size="pill"
+          loadingLabel="Opening GitHub…"
+          labelPlaceholder="Opening GitHub…"
+        >
+          Change repository
+        </GitHubInstallButton>
         <Button
           type="button"
           variant="brandSecondary"
@@ -125,14 +130,13 @@ function GitHubRepoSignedInIdle() {
         </p>
       </PanelDescriptionSlot>
       <PanelPrimaryActionSlot centered>
-        <Button
-          asChild
+        <GitHubInstallButton
           variant="brand"
           size="cta"
           className={LANDING_CTA_BUTTON_CLASS}
         >
-          <GitHubInstallLink>Connect GitHub repository</GitHubInstallLink>
-        </Button>
+          Connect GitHub repository
+        </GitHubInstallButton>
       </PanelPrimaryActionSlot>
     </>
   );

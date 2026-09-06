@@ -5,7 +5,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { FeedbackRegion } from "~/app/_components/feedback-region";
-import { GitHubInstallLink } from "~/app/_components/github-install-link";
+import { GitHubInstallButton } from "~/app/_components/github-install-button";
 import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import {
   GitHubInstallationHealthCheckError,
@@ -109,9 +109,13 @@ function RepoSelectorNoConnectionContent() {
           career-ops data.
         </p>
       </div>
-      <Button asChild variant="brandSecondary" size="pill" className="w-fit">
-        <GitHubInstallLink>Connect GitHub repository</GitHubInstallLink>
-      </Button>
+      <GitHubInstallButton
+        variant="brandSecondary"
+        size="pill"
+        className="w-fit"
+      >
+        Connect GitHub repository
+      </GitHubInstallButton>
     </div>
   );
 }
@@ -387,9 +391,14 @@ export function RepoSelector() {
                   </StableButtonLabel>
                 </Button>
 
-                <Button asChild variant="outline" size="pill">
-                  <GitHubInstallLink>Change installation</GitHubInstallLink>
-                </Button>
+                <GitHubInstallButton
+                  variant="outline"
+                  size="pill"
+                  loadingLabel="Opening GitHub…"
+                  labelPlaceholder="Opening GitHub…"
+                >
+                  Change installation
+                </GitHubInstallButton>
 
                 <p className="min-w-[12rem] text-sm text-white/70">
                   {selectedRepo ? (
