@@ -10,7 +10,10 @@ type TiltWrapperProps = {
   enabled?: boolean;
 };
 
-export function CanvasTiltWrapper({ children, enabled = true }: TiltWrapperProps) {
+export function CanvasTiltWrapper({
+  children,
+  enabled = true,
+}: TiltWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const currentRef = useRef({ x: 0, y: 0 });
   const targetRef = useRef({ x: 0, y: 0 });
@@ -21,7 +24,9 @@ export function CanvasTiltWrapper({ children, enabled = true }: TiltWrapperProps
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     if (reducedMotion) {
       return;
     }
@@ -41,8 +46,12 @@ export function CanvasTiltWrapper({ children, enabled = true }: TiltWrapperProps
       const container = containerRef.current;
       if (container) {
         currentRef.current = {
-          x: currentRef.current.x + (targetRef.current.x - currentRef.current.x) * SMOOTHING,
-          y: currentRef.current.y + (targetRef.current.y - currentRef.current.y) * SMOOTHING,
+          x:
+            currentRef.current.x +
+            (targetRef.current.x - currentRef.current.x) * SMOOTHING,
+          y:
+            currentRef.current.y +
+            (targetRef.current.y - currentRef.current.y) * SMOOTHING,
         };
 
         container.style.transform = [
@@ -70,7 +79,7 @@ export function CanvasTiltWrapper({ children, enabled = true }: TiltWrapperProps
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 origin-center will-change-transform"
+      className="absolute inset-[-4%] origin-center will-change-transform"
       style={{ transformStyle: "preserve-3d" }}
     >
       {children}

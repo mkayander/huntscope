@@ -15,6 +15,7 @@ import {
   useCareerOpsDataSource,
   useCareerOpsRawData,
 } from "~/hooks/use-career-ops-data-source";
+import { useHomeShell } from "~/hooks/use-home-shell";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { hasAnalyticsChartData } from "~/lib/career-ops/chart-data";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
@@ -24,10 +25,11 @@ import { useParsedRepoData } from "~/lib/career-ops/use-parsed-repo-data";
 
 export function RepoDataView() {
   const hasMounted = useHasMounted();
+  const { showDashboard: initialShowDashboard } = useHomeShell();
   const { activeSource, hasLocalSource, hasGitHubSource } =
     useCareerOpsDataSource();
 
-  if (!hasMounted) {
+  if (!hasMounted && !initialShowDashboard) {
     return (
       <GlowPanel className="w-full max-w-screen-2xl min-w-0">
         <p className="text-sm text-white/70">Loading dashboard…</p>

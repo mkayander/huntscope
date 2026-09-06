@@ -2,19 +2,31 @@ import { NextResponse } from "next/server";
 
 import { auth } from "~/server/auth";
 import {
-  listInstallationRepositories,
-  verifyUserInstallationAccess,
-} from "~/server/github/api";
+  connectInstallationForUser,
+  syncInstallationFromGitHub,
+} from "~/server/github/connect-installation";
 import { isGitHubAppConfigured } from "~/server/github/config";
-import {
-  consumeInstallState,
-  setInstallationConnection,
-} from "~/server/github/installation-store";
+import { consumeInstallState } from "~/server/github/installation-store";
+import { getGitHubUserAccessToken } from "~/server/github/user-access-token";
+import type { ConnectInstallationErrorCode } from "~/server/github/connect-installation";
 
 function redirectWithMessage(request: Request, message: string) {
   const url = new URL("/", request.url);
   url.searchParams.set("github", message);
   return NextResponse.redirect(url);
+}
+
+function statusFromConnectError(code: ConnectInstallationErrorCode): string {
+  switch (code) {
+    case "github-account-required":
+      return "github-account-required";
+    case "installation-forbidden":
+      return "installation-forbidden";
+    case "no-repositories":
+      return "no-repositories";
+    case "no-installation":
+      return "no-installation";
+  }
 }
 
 export async function GET(request: Request) {
@@ -33,56 +45,54 @@ export async function GET(request: Request) {
   const setupAction = url.searchParams.get("setup_action");
   const stateNonce = url.searchParams.get("state");
 
-  if (!installationId || Number.isNaN(installationId)) {
-    return redirectWithMessage(request, "missing-installation");
-  }
+  const accessToken = await getGitHubUserAccessToken(request.headers);
 
-  if (!stateNonce) {
-    return redirectWithMessage(request, "missing-state");
-  }
-
-  const installState = await consumeInstallState(session.user.id);
-
-  if (installState?.nonce !== stateNonce) {
-    return redirectWithMessage(request, "expired-state");
+  if (!accessToken) {
+    return redirectWithMessage(request, "github-account-required");
   }
 
   try {
-    const { accessToken } = await auth.api.getAccessToken({
-      headers: request.headers,
-      body: {
-        useAccountCookie: true,
-      },
-    });
+    if (installationId && !Number.isNaN(installationId)) {
+      if (!stateNonce) {
+        return redirectWithMessage(request, "missing-state");
+      }
 
-    if (!accessToken) {
-      return redirectWithMessage(request, "github-account-required");
+      const installState = await consumeInstallState(session.user.id);
+
+      if (installState?.nonce !== stateNonce) {
+        return redirectWithMessage(request, "expired-state");
+      }
+
+      const result = await connectInstallationForUser(
+        session.user.id,
+        installationId,
+        accessToken,
+        setupAction === "update" ? "updated" : "connected",
+      );
+
+      if (!result.ok) {
+        return redirectWithMessage(
+          request,
+          statusFromConnectError(result.code),
+        );
+      }
+
+      return redirectWithMessage(request, result.action);
     }
 
-    const userCanAccessInstallation = await verifyUserInstallationAccess(
-      installationId,
+    const syncResult = await syncInstallationFromGitHub(
+      session.user.id,
       accessToken,
     );
 
-    if (!userCanAccessInstallation) {
-      return redirectWithMessage(request, "installation-forbidden");
+    if (!syncResult.ok) {
+      return redirectWithMessage(
+        request,
+        statusFromConnectError(syncResult.code),
+      );
     }
 
-    const repositories = await listInstallationRepositories(installationId);
-
-    if (repositories.length === 0) {
-      return redirectWithMessage(request, "no-repositories");
-    }
-
-    await setInstallationConnection({
-      installationId,
-      userId: session.user.id,
-      repositories,
-      connectedAt: new Date().toISOString(),
-    });
-
-    const action = setupAction === "update" ? "updated" : "connected";
-    return redirectWithMessage(request, action);
+    return redirectWithMessage(request, syncResult.action);
   } catch (error) {
     console.error("GitHub installation callback failed:", error);
     return redirectWithMessage(request, "callback-failed");

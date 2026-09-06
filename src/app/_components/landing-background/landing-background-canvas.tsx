@@ -52,7 +52,9 @@ function ScopeOverlayLayer({ placement }: { placement: "back" | "front" }) {
           : "pointer-events-none absolute inset-0 z-[0]"
       }
     >
-      <ScopeEffect variant={placement === "front" ? "overlay-front" : "overlay-back"} />
+      <ScopeEffect
+        variant={placement === "front" ? "overlay-front" : "overlay-back"}
+      />
     </div>
   );
 }
@@ -99,7 +101,8 @@ function EffectRenderer({ effect }: { effect: LandingBackgroundEffect }) {
 }
 
 export function LandingBackgroundCanvas() {
-  const { effect, scopeOverlayEnabled, scopeOverlayLayer } = useLandingBackground();
+  const { effect, scopeOverlayEnabled, scopeOverlayLayer } =
+    useLandingBackground();
   const isInteractive3d = effect === "three" || effect === "graph-grid";
   const showScopeOverlay = scopeOverlayEnabled && effect !== "scope";
   const scopeBehindParticles = effect === "three";
@@ -112,8 +115,8 @@ export function LandingBackgroundCanvas() {
     <div
       className={
         isInteractive3d
-          ? "pointer-events-auto fixed inset-0 z-0 overflow-hidden"
-          : "pointer-events-none fixed inset-0 z-0 overflow-hidden"
+          ? "pointer-events-auto fixed inset-x-0 top-0 z-0 h-[100dvh] overflow-hidden"
+          : "pointer-events-none fixed inset-x-0 top-0 z-0 h-[100dvh] overflow-hidden"
       }
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#2e026d] to-[#15162c]" />
@@ -130,7 +133,9 @@ export function LandingBackgroundCanvas() {
 
       <div
         className={
-          scopeBehindParticles ? "absolute inset-0 z-[1]" : "absolute inset-0 z-[0]"
+          scopeBehindParticles
+            ? "absolute inset-0 z-[1]"
+            : "absolute inset-0 z-[0]"
         }
       >
         <EffectRenderer effect={effect} />

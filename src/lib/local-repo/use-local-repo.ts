@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useHasMounted } from "~/hooks/use-has-mounted";
 import { DIRECTORY_PICKER_ID } from "~/lib/local-repo/constants";
 import {
   supportsDirectoryPicker,
@@ -40,6 +41,7 @@ type UseLocalRepoOptions = {
 
 export function useLocalRepo(options: UseLocalRepoOptions = {}) {
   const { onConnected } = options;
+  const hasMounted = useHasMounted();
   const [state, setState] = useState<LocalRepoState>({ status: "loading" });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [watchingDisk, setWatchingDisk] = useState(false);
@@ -140,8 +142,12 @@ export function useLocalRepo(options: UseLocalRepoOptions = {}) {
   }, [refreshDirectory, refreshLaunchedFile]);
 
   useEffect(() => {
+    if (!hasMounted) {
+      return;
+    }
+
     void restore();
-  }, [restore]);
+  }, [hasMounted, restore]);
 
   useEffect(() => {
     registerLaunchConsumer((files) => {

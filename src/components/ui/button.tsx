@@ -1,10 +1,10 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
-import { Slot } from "radix-ui"
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "cn";
+import { Slot } from "radix-ui";
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border-0 bg-clip-padding text-sm font-medium whitespace-nowrap shadow-none transition-[color,background-color,box-shadow,transform,filter] duration-200 outline-none select-none cursor-pointer focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:ring-offset-0 active:not-aria-[haspopup]:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none aria-invalid:ring-[3px] aria-invalid:ring-destructive/25 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border-0 bg-clip-padding text-sm font-medium leading-none whitespace-nowrap shadow-none transition-[color,background-color,box-shadow,transform,filter] duration-200 outline-none select-none cursor-pointer focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:ring-offset-0 active:not-aria-[haspopup]:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none aria-invalid:ring-[3px] aria-invalid:ring-destructive/25 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -23,8 +23,7 @@ const buttonVariants = cva(
           "rounded-full bg-gradient-to-b from-violet-400 to-violet-600 font-semibold text-white shadow-lg shadow-violet-950/40 hover:from-violet-300 hover:to-violet-500 hover:shadow-violet-900/50 active:from-violet-500 active:to-violet-700 focus-visible:ring-violet-300/50",
         brandSecondary:
           "rounded-full bg-white/10 font-medium text-white backdrop-blur-sm hover:bg-white/16 active:bg-white/22 focus-visible:ring-white/35",
-        chip:
-          "h-auto rounded-full bg-transparent px-3 py-1 text-xs font-medium hover:brightness-110 active:scale-[0.98]",
+        chip: "h-auto rounded-full bg-transparent px-3 py-1 text-xs font-medium hover:brightness-110 active:scale-[0.98]",
       },
       size: {
         default:
@@ -47,8 +46,8 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
-)
+  },
+);
 
 function Button({
   className,
@@ -58,9 +57,9 @@ function Button({
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
   }) {
-  const Comp = asChild ? Slot.Root : "button"
+  const Comp = asChild ? Slot.Root : "button";
 
   return (
     <Comp
@@ -70,7 +69,7 @@ function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

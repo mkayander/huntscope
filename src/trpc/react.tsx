@@ -2,7 +2,7 @@
 
 import { type QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { httpBatchStreamLink } from "@trpc/client";
+import { httpBatchLink, httpBatchStreamLink, splitLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
@@ -13,7 +13,7 @@ import {
   QUERY_PERSIST_MAX_AGE_MS,
   queryPersister,
 } from "~/lib/cache/query-persister";
-import { type AppRouter } from "~/server/api/root";
+import type { AppRouter } from "~/server/api/router-type";
 import { createQueryClient } from "./query-client";
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
@@ -34,21 +34,34 @@ export type RouterOutputs = inferRouterOutputs<AppRouter>;
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
-  const [trpcClient] = useState(() =>
-    api.createClient({
+  const [trpcClient] = useState(() => {
+    const url = getBaseUrl() + "/api/trpc";
+    const headers = () => {
+      const nextHeaders = new Headers();
+      nextHeaders.set("x-trpc-source", "nextjs-react");
+      return nextHeaders;
+    };
+
+    return api.createClient({
       links: [
-        httpBatchStreamLink({
-          transformer: SuperJSON,
-          url: getBaseUrl() + "/api/trpc",
-          headers: () => {
-            const headers = new Headers();
-            headers.set("x-trpc-source", "nextjs-react");
-            return headers;
-          },
+        splitLink({
+          // Streaming responses commit headers before procedures run, so mutations
+          // that set cookies (e.g. selectRepo) must use the non-streaming link.
+          condition: (operation) => operation.type === "mutation",
+          true: httpBatchLink({
+            transformer: SuperJSON,
+            url,
+            headers,
+          }),
+          false: httpBatchStreamLink({
+            transformer: SuperJSON,
+            url,
+            headers,
+          }),
         }),
       ],
-    }),
-  );
+    });
+  });
 
   return (
     <PersistQueryClientProvider

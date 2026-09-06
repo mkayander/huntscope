@@ -14,6 +14,7 @@ import {
   useRepoDataQuery,
   useSelectedRepoQuery,
 } from "~/hooks/use-career-ops-repo";
+import { useRestoreGitHubSelection } from "~/hooks/use-restore-github-selection";
 import {
   type CareerOpsDataSource,
   type CareerOpsDataSourcePreference,
@@ -29,6 +30,8 @@ import {
 import { authClient } from "~/lib/auth-client";
 import { loadCareerOpsFromLocalSource } from "~/lib/local-repo/load-career-ops-data";
 import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
+import { useHomeShell } from "~/hooks/use-home-shell";
+import { api } from "~/trpc/react";
 
 export function useLocalCareerOpsData(source: CareerOpsDataSource | null) {
   const localSource = source?.kind === "local" ? source : null;
@@ -64,8 +67,9 @@ const CareerOpsDataSourceContext =
   createContext<CareerOpsDataSourceContextValue | null>(null);
 
 function useCareerOpsDataSourceState() {
+  const { isSignedIn: initialIsSignedIn } = useHomeShell();
   const { data: session } = authClient.useSession();
-  const isSignedIn = Boolean(session?.user);
+  const isSignedIn = Boolean(session?.user) || initialIsSignedIn;
   const [preference, setPreference] =
     useState<CareerOpsDataSourcePreference | null>(() =>
       readDataSourcePreference(),
@@ -77,6 +81,10 @@ function useCareerOpsDataSourceState() {
   }, []);
 
   const localRepo = useLocalRepo({ onConnected: preferLocalSource });
+  const connectionQuery = api.github.getConnection.useQuery(undefined, {
+    enabled: isSignedIn,
+    refetchOnWindowFocus: false,
+  });
   const selectedRepoQuery = useSelectedRepoQuery(isSignedIn);
 
   const localSource = useMemo(() => {
@@ -125,12 +133,22 @@ function useCareerOpsDataSourceState() {
     setPreference(source.kind);
   }, []);
 
+  useRestoreGitHubSelection({
+    enabled: isSignedIn,
+    selectedRepo: selectedRepoQuery.data,
+    connection: connectionQuery.data ?? undefined,
+    preference,
+    hasLocalSource: localSource != null,
+    setActiveSource,
+  });
+
   const localDataQuery = useLocalCareerOpsData(
     activeSource?.kind === "local" ? activeSource : null,
   );
 
   return {
     localRepo,
+    connectionQuery,
     selectedRepoQuery,
     localSource,
     githubSource,

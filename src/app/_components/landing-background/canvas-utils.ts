@@ -30,7 +30,9 @@ export function useCanvasAnimation(
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     let animationFrame = 0;
     let lastTime = performance.now();
 
@@ -94,9 +96,21 @@ export function clearCanvas(frame: CanvasFrameContext): void {
 }
 
 export function computeGalaxyScale(width: number, height: number): number {
-  return Math.min(width * 0.92, height * 0.96, Math.hypot(width, height) * 0.52);
+  return Math.min(
+    width * 0.92,
+    height * 0.96,
+    Math.hypot(width, height) * 0.52,
+  );
 }
 
 export function computeScopeRadius(width: number, height: number): number {
-  return Math.min(width * 0.72, height * 0.78, Math.hypot(width, height) * 0.42);
+  const inset = 0.03;
+  const verticalRadius = height * 0.5 * (1 - inset);
+  const horizontalRadius = width * 0.5 * (1 - inset);
+
+  // Tall viewports: fill the full screen height (minor horizontal clipping is ok).
+  // Wide viewports: height is the limiting axis, so the same vertical radius fits.
+  return height >= width
+    ? verticalRadius
+    : Math.min(verticalRadius, horizontalRadius);
 }

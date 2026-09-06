@@ -29,7 +29,7 @@ export function GlowPanel({
   children,
   className,
   contentClassName,
-  interactive = true,
+  interactive = false,
   variant = "default",
   accent,
   onPointerEnter,
@@ -40,32 +40,43 @@ export function GlowPanel({
   const rootRef = useRef<HTMLElement>(null);
   const accentConfig = accent ? getSectionPanelAccent(accent) : null;
 
-  const updateGlowPosition = useCallback((event: PointerEvent<HTMLElement>) => {
-    const element = rootRef.current;
-    if (!element) {
-      return;
-    }
+  const updateGlowPosition = useCallback(
+    (event: PointerEvent<HTMLElement>) => {
+      if (!interactive) {
+        return;
+      }
 
-    const rect = element.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) {
-      return;
-    }
+      const element = rootRef.current;
+      if (!element) {
+        return;
+      }
 
-    const pointerXPct = ((event.clientX - rect.left) / rect.width) * 100;
-    const pointerYPct = ((event.clientY - rect.top) / rect.height) * 100;
-    element.style.setProperty("--glow-x", `${pointerXPct}%`);
-    element.style.setProperty("--glow-y", `${pointerYPct}%`);
-  }, []);
+      const rect = element.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        return;
+      }
 
-  const handlePointerEnter = (event: PointerEvent<HTMLElement>) => {
-    updateGlowPosition(event);
-    onPointerEnter?.(event);
-  };
+      const pointerXPct = ((event.clientX - rect.left) / rect.width) * 100;
+      const pointerYPct = ((event.clientY - rect.top) / rect.height) * 100;
+      element.style.setProperty("--glow-x", `${pointerXPct}%`);
+      element.style.setProperty("--glow-y", `${pointerYPct}%`);
+    },
+    [interactive],
+  );
 
-  const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
-    updateGlowPosition(event);
-    onPointerMove?.(event);
-  };
+  const handlePointerEnter = interactive
+    ? (event: PointerEvent<HTMLElement>) => {
+        updateGlowPosition(event);
+        onPointerEnter?.(event);
+      }
+    : undefined;
+
+  const handlePointerMove = interactive
+    ? (event: PointerEvent<HTMLElement>) => {
+        updateGlowPosition(event);
+        onPointerMove?.(event);
+      }
+    : undefined;
 
   return (
     <section

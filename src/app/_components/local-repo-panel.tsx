@@ -19,6 +19,7 @@ import {
   panelTitleClassName,
 } from "~/app/_components/panel-section";
 import { Button } from "~/components/ui/button";
+import { useHasMounted } from "~/hooks/use-has-mounted";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 
 type LocalRepoPanelProps = {
@@ -26,6 +27,7 @@ type LocalRepoPanelProps = {
 };
 
 export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
+  const hasMounted = useHasMounted();
   const { localRepo } = useCareerOpsDataSource();
   const {
     state,
@@ -40,7 +42,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
   const titleClassName = panelTitleClassName(variant);
   const isLanding = variant === "landing";
   const primaryButtonSize = isLanding ? "cta" : "pill";
-  const isLoading = state.status === "loading";
+  const isLoading = !hasMounted || state.status === "loading";
 
   if (state.status === "connected") {
     return (

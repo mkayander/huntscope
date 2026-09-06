@@ -51,8 +51,9 @@ pnpm vercel:env
 
 1. Create a **GitHub OAuth App** for user sign-in (scopes: `read:user`, `user:email` only).
 2. Create a **GitHub App** for repository access with read permissions on repository contents.
-3. Set the App's callback URL to `{BETTER_AUTH_URL}/api/github/install/callback`.
-4. Configure the environment variables listed above.
+3. Set the App **Setup URL** to `{BETTER_AUTH_URL}/api/github/install/callback` and enable **Redirect on update** so GitHub returns users to Huntscope after install. See [GitHub's setup URL docs](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/about-the-setup-url).
+4. If GitHub shows the installation settings page instead, return to Huntscope — the app will automatically link an existing installation when you are signed in.
+5. Configure the environment variables listed above.
 
 ## Local Repository
 

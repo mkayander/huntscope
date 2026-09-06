@@ -1,10 +1,14 @@
+import "server-only";
+
 import { cookies } from "next/headers";
 
 import type { SelectedRepo } from "~/lib/career-ops/types";
 
 export const SELECTED_REPO_COOKIE = "huntscope_selected_repo";
 
-export function parseSelectedRepo(value: string | undefined): SelectedRepo | null {
+export function parseSelectedRepo(
+  value: string | undefined,
+): SelectedRepo | null {
   if (!value) {
     return null;
   }
@@ -35,4 +39,9 @@ export async function setSelectedRepoCookie(repo: SelectedRepo): Promise<void> {
     maxAge: 60 * 60 * 24 * 365,
     path: "/",
   });
+}
+
+export async function clearSelectedRepoCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(SELECTED_REPO_COOKIE);
 }

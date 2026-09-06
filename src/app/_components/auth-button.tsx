@@ -8,29 +8,43 @@ import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import {
   AUTH_BUTTON_LABEL_PLACEHOLDER,
   LANDING_CTA_BUTTON_CLASS,
+  PanelButtonSkeleton,
 } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
+import { useHomeShell } from "~/hooks/use-home-shell";
+import { useHasMounted } from "~/hooks/use-has-mounted";
 import { authClient } from "~/lib/auth-client";
+import { useGitHubInstallStatus } from "~/hooks/use-github-install-status";
 
 export function AuthButton() {
+  const hasMounted = useHasMounted();
+  const { isSignedIn: initialIsSignedIn, userLabel: initialUserLabel } =
+    useHomeShell();
   const { data: session, isPending } = authClient.useSession();
+  const { clearGitHubInstallStatus } = useGitHubInstallStatus();
   const [signInError, setSignInError] = useState<string | null>(null);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const isAuthenticated = Boolean(session?.user);
-  const isBusy = isPending || isSigningIn || isSigningOut;
+  const isAuthenticated =
+    Boolean(session?.user) || (!hasMounted && initialIsSignedIn);
+  const displayUserLabel =
+    session?.user?.name ?? session?.user?.email ?? initialUserLabel;
+  const showAuthSkeleton = !initialIsSignedIn && (!hasMounted || isPending);
 
-  const buttonLabel = isPending
-    ? "Loading session"
-    : isAuthenticated
-      ? isSigningOut
-        ? "Signing out"
-        : "Sign out"
-      : isSigningIn
-        ? "Redirecting to GitHub"
-        : "Sign in with GitHub";
+  const buttonLabel =
+    isPending && !initialIsSignedIn
+      ? "Loading session"
+      : isAuthenticated
+        ? isSigningOut
+          ? "Signing out"
+          : "Sign out"
+        : isSigningIn
+          ? "Redirecting to GitHub"
+          : "Sign in with GitHub";
+
+  const isBusy = isPending || isSigningIn || isSigningOut;
 
   const feedbackErrorTitle = signOutError
     ? "Could not sign out"
@@ -39,6 +53,18 @@ export function AuthButton() {
       : null;
   const feedbackErrorMessage = signOutError ?? signInError;
 
+  if (showAuthSkeleton) {
+    return (
+      <div className="flex w-full max-w-md flex-col items-center gap-4">
+        <PanelButtonSkeleton
+          variant="landing"
+          centered
+          className="w-full max-w-sm"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-4">
       {isAuthenticated ? (
@@ -46,7 +72,7 @@ export function AuthButton() {
           className="flex min-h-10 w-full items-center justify-center text-center text-2xl text-white"
           aria-live="polite"
         >
-          <p>Logged in as {session?.user?.name ?? session?.user?.email}</p>
+          <p>Logged in as {displayUserLabel}</p>
         </div>
       ) : null}
 
@@ -79,6 +105,7 @@ export function AuthButton() {
           }
 
           setSignInError(null);
+          clearGitHubInstallStatus();
           setIsSigningIn(true);
           void authClient.signIn
             .social({
@@ -91,14 +118,13 @@ export function AuthButton() {
                   error.message ??
                     "GitHub sign-in failed. Check your OAuth app callback URL and try again.",
                 );
+                setIsSigningIn(false);
               }
             })
             .catch(() => {
               setSignInError(
                 "GitHub sign-in failed. Check your OAuth app callback URL and try again.",
               );
-            })
-            .finally(() => {
               setIsSigningIn(false);
             });
         }}

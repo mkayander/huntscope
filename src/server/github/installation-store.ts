@@ -1,8 +1,13 @@
+import "server-only";
+
 import { cookies } from "next/headers";
 import { EncryptJWT, jwtDecrypt } from "jose";
 
 import { getCookieEncryptionKey } from "~/server/github/config";
-import type { InstallState, InstallationConnection } from "~/server/github/types";
+import type {
+  InstallState,
+  InstallationConnection,
+} from "~/server/github/types";
 
 const INSTALLATION_COOKIE = "huntscope.github.installation";
 const INSTALL_STATE_COOKIE = "huntscope.github.install.state";

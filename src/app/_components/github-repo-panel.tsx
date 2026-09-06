@@ -1,11 +1,14 @@
 "use client";
 
-import Link from "next/link";
-
 import { ActionButtonRow } from "~/app/_components/action-button-row";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { DataPreview } from "~/app/_components/data-preview";
-import { GitHubStatusMessage } from "~/app/_components/github-status-message";
+import { GitHubInstallLink } from "~/app/_components/github-install-link";
+import { GitHubInstallStatusBanner } from "~/app/_components/github-install-status-banner";
+import {
+  GitHubInstallationHealthCheckError,
+  useGitHubInstallationHealthCheck,
+} from "~/hooks/use-github-installation-health-check";
 import {
   PanelDescriptionSlot,
   PanelPrimaryActionSlot,
@@ -20,10 +23,11 @@ import {
   panelTitleClassName,
 } from "~/app/_components/panel-section";
 import { Button } from "~/components/ui/button";
+import { useHasMounted } from "~/hooks/use-has-mounted";
 import { authClient } from "~/lib/auth-client";
 import { api } from "~/trpc/react";
 
-function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
+function GitHubRepoConnected() {
   const { data: connection, isLoading } = api.github.getConnection.useQuery();
   const { data: preview } = api.github.previewDataFile.useQuery();
   const disconnect = api.github.disconnect.useMutation({
@@ -40,7 +44,7 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
 
   return (
     <>
-      <GitHubStatusMessage status={githubStatus} />
+      <GitHubInstallStatusBanner />
 
       {connection.repositories.length > 1 ? (
         <p className="text-center text-sm text-amber-200">
@@ -72,7 +76,7 @@ function GitHubRepoConnected({ githubStatus }: { githubStatus?: string }) {
 
       <ActionButtonRow centered>
         <Button asChild variant="brandSecondary" size="pill">
-          <Link href="/api/github/install">Change repository</Link>
+          <GitHubInstallLink>Change repository</GitHubInstallLink>
         </Button>
         <Button
           type="button"
@@ -114,6 +118,7 @@ function GitHubRepoSignedOut({
 function GitHubRepoSignedInIdle() {
   return (
     <>
+      <GitHubInstallStatusBanner />
       <PanelDescriptionSlot variant="landing">
         <p className="text-sm text-white/70">
           Install the Huntscope GitHub App on one selected repository. Huntscope
@@ -127,21 +132,26 @@ function GitHubRepoSignedInIdle() {
           size="cta"
           className={LANDING_CTA_BUTTON_CLASS}
         >
-          <Link href="/api/github/install">Connect GitHub repository</Link>
+          <GitHubInstallLink>Connect GitHub repository</GitHubInstallLink>
         </Button>
       </PanelPrimaryActionSlot>
     </>
   );
 }
 
-function GitHubRepoSignedIn({ githubStatus }: { githubStatus?: string }) {
+function GitHubRepoSignedIn() {
   const {
     data: connection,
     isLoading,
     error,
   } = api.github.getConnection.useQuery();
 
-  if (isLoading) {
+  const shouldHealthCheck = !isLoading && !connection && error == null;
+  const { isChecking, errorMessage } = useGitHubInstallationHealthCheck({
+    enabled: shouldHealthCheck,
+  });
+
+  if (isLoading || isChecking) {
     return (
       <>
         <PanelDescriptionSkeleton centered />
@@ -163,29 +173,35 @@ function GitHubRepoSignedIn({ githubStatus }: { githubStatus?: string }) {
   }
 
   if (connection) {
-    return <GitHubRepoConnected githubStatus={githubStatus} />;
+    return <GitHubRepoConnected />;
   }
 
-  return <GitHubRepoSignedInIdle />;
+  return (
+    <>
+      <GitHubInstallationHealthCheckError message={errorMessage} />
+      <GitHubInstallStatusBanner />
+      <GitHubRepoSignedInIdle />
+    </>
+  );
 }
 
 export function GitHubRepoPanel({
-  githubStatus,
   githubConfigured,
 }: {
-  githubStatus?: string;
   githubConfigured: boolean;
 }) {
+  const hasMounted = useHasMounted();
   const { data: session, isPending } = authClient.useSession();
+  const showSessionSkeleton = !hasMounted || isPending;
 
   return (
     <PanelSection variant="landing">
       <h2 className={panelTitleClassName("landing")}>GitHub repository</h2>
 
-      {isPending ? (
+      {showSessionSkeleton ? (
         <PanelDescriptionSkeleton centered />
       ) : session?.user ? (
-        <GitHubRepoSignedIn githubStatus={githubStatus} />
+        <GitHubRepoSignedIn />
       ) : (
         <GitHubRepoSignedOut githubConfigured={githubConfigured} />
       )}

@@ -1,5 +1,5 @@
 import type { TRPCClientErrorLike } from "@trpc/client";
-import type { AppRouter } from "~/server/api/root";
+import type { AppRouter } from "~/server/api/router-type";
 
 export const GITHUB_CACHE_STALE_TIME_MS = 30 * 60 * 1000;
 export const GITHUB_CACHE_GC_TIME_MS = 24 * 60 * 60 * 1000;
@@ -19,7 +19,7 @@ const githubQuerySharedOptions = {
   gcTime: GITHUB_CACHE_GC_TIME_MS,
   refetchOnWindowFocus: false,
   refetchOnReconnect: true,
-  placeholderData: <T,>(previousData: T | undefined) => previousData,
+  placeholderData: <T>(previousData: T | undefined) => previousData,
   retry: (failureCount: number, error: TrpcError) => {
     if (isRateLimitError(error)) {
       return false;

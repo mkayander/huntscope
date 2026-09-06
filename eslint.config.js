@@ -1,19 +1,14 @@
-import { FlatCompat } from "@eslint/eslintrc";
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import tseslint from "typescript-eslint";
-
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-});
 
 export default tseslint.config(
   {
-    ignores: [".next", "**/*.test.ts"],
+    ignores: ["**/*.test.ts"],
   },
-  ...compat.extends("next/core-web-vitals"),
+  ...nextCoreWebVitals,
   {
     files: ["**/*.ts", "**/*.tsx"],
     extends: [
-      ...tseslint.configs.recommended,
       ...tseslint.configs.recommendedTypeChecked,
       ...tseslint.configs.stylisticTypeChecked,
     ],
@@ -33,16 +28,20 @@ export default tseslint.config(
         "error",
         { checksVoidReturn: { attributes: false } },
       ],
-    },
-  },
-  {
-    linterOptions: {
-      reportUnusedDisableDirectives: true,
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/incompatible-library": "off",
     },
     languageOptions: {
       parserOptions: {
         projectService: true,
       },
+    },
+  },
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: true,
     },
   },
 );

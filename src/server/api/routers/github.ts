@@ -15,9 +15,12 @@ import {
 } from "~/server/github/installation-store";
 import { isGitHubAppConfigured } from "~/server/github/config";
 import {
-  getSelectedRepoFromCookies,
-  setSelectedRepoCookie,
-} from "~/server/github/selected-repo";
+  syncInstallationFromGitHub,
+  type ConnectInstallationErrorCode,
+} from "~/server/github/connect-installation";
+import { getGitHubUserAccessToken } from "~/server/github/user-access-token";
+import { setSelectedRepoCookie } from "~/server/github/selected-repo";
+import { resolveSelectedRepoForUser } from "~/server/github/resolve-selected-repo";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 const selectedRepoSchema = z.object({
@@ -32,6 +35,37 @@ function assertGitHubConfigured() {
       code: "PRECONDITION_FAILED",
       message: "GitHub App is not configured on this deployment.",
     });
+  }
+}
+
+function trpcErrorFromConnectCode(
+  code: ConnectInstallationErrorCode,
+): TRPCError {
+  switch (code) {
+    case "github-account-required":
+      return new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message:
+          "Sign in with GitHub before linking a repository installation.",
+      });
+    case "installation-forbidden":
+      return new TRPCError({
+        code: "FORBIDDEN",
+        message:
+          "Your signed-in GitHub account cannot access that app installation.",
+      });
+    case "no-repositories":
+      return new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "The GitHub App installation has no repositories selected. Add a repository on GitHub, then sync again.",
+      });
+    case "no-installation":
+      return new TRPCError({
+        code: "NOT_FOUND",
+        message:
+          "No Huntscope GitHub App installation was found on your account. Install the app first.",
+      });
   }
 }
 
@@ -62,6 +96,39 @@ export const githubRouter = createTRPCRouter({
     return { success: true };
   }),
 
+  syncInstallation: protectedProcedure.mutation(async ({ ctx }) => {
+    assertGitHubConfigured();
+
+    const accessToken = await getGitHubUserAccessToken(ctx.headers);
+
+    if (!accessToken) {
+      throw trpcErrorFromConnectCode("github-account-required");
+    }
+
+    try {
+      const result = await syncInstallationFromGitHub(
+        ctx.session.user.id,
+        accessToken,
+      );
+
+      if (!result.ok) {
+        throw trpcErrorFromConnectCode(result.code);
+      }
+
+      return {
+        installationId: result.installationId,
+        repositories: result.repositories,
+        action: result.action,
+        selectedRepo: await resolveSelectedRepoForUser(ctx.session.user.id, {
+          clearIfInvalid: true,
+        }),
+      };
+    } catch (error) {
+      throwIfGitHubRateLimited(error);
+      throw error;
+    }
+  }),
+
   previewDataFile: protectedProcedure.query(async ({ ctx }) => {
     assertGitHubConfigured();
     const connection = await getInstallationConnection(ctx.session.user.id);
@@ -70,11 +137,13 @@ export const githubRouter = createTRPCRouter({
       return null;
     }
 
-    const selectedRepo = await getSelectedRepoFromCookies();
+    const selectedRepo = await resolveSelectedRepoForUser(ctx.session.user.id);
     const repository =
-      connection.repositories.find(
-        (candidate) => candidate.fullName === selectedRepo?.fullName,
-      ) ?? connection.repositories[0];
+      (selectedRepo
+        ? connection.repositories.find(
+            (candidate) => candidate.fullName === selectedRepo.fullName,
+          )
+        : undefined) ?? connection.repositories[0];
 
     if (!repository) {
       return null;
@@ -112,8 +181,10 @@ export const githubRouter = createTRPCRouter({
     }
   }),
 
-  getSelectedRepo: protectedProcedure.query(async () => {
-    return getSelectedRepoFromCookies();
+  getSelectedRepo: protectedProcedure.query(async ({ ctx }) => {
+    return resolveSelectedRepoForUser(ctx.session.user.id, {
+      clearIfInvalid: ctx.headers.get("x-trpc-source") === "nextjs-react",
+    });
   }),
 
   selectRepo: protectedProcedure
@@ -133,7 +204,8 @@ export const githubRouter = createTRPCRouter({
   getRepoData: protectedProcedure
     .input(selectedRepoSchema.optional())
     .query(async ({ ctx, input }) => {
-      const repo = input ?? (await getSelectedRepoFromCookies());
+      const repo =
+        input ?? (await resolveSelectedRepoForUser(ctx.session.user.id));
 
       if (!repo) {
         throw new TRPCError({

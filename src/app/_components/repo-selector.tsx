@@ -5,6 +5,12 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { FeedbackRegion } from "~/app/_components/feedback-region";
+import { GitHubInstallLink } from "~/app/_components/github-install-link";
+import { GitHubInstallStatusBanner } from "~/app/_components/github-install-status-banner";
+import {
+  GitHubInstallationHealthCheckError,
+  useGitHubInstallationHealthCheck,
+} from "~/hooks/use-github-installation-health-check";
 import { PanelButtonSkeleton } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { GlowPanel } from "~/components/ui/glow-panel";
@@ -23,6 +29,7 @@ import {
   useSelectedRepoQuery,
 } from "~/hooks/use-career-ops-repo";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
+import { useHomeShell } from "~/hooks/use-home-shell";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { toGitHubDataSource } from "~/lib/career-ops/data-source";
 import { toSelectedRepo } from "~/lib/career-ops/selected-repo";
@@ -80,8 +87,38 @@ function RepoSelectorLoadingContent() {
   );
 }
 
+function RepoSelectorNoConnectionContent() {
+  const { isChecking, errorMessage } = useGitHubInstallationHealthCheck({
+    enabled: true,
+  });
+
+  if (isChecking) {
+    return <RepoSelectorLoadingContent />;
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <GitHubInstallationHealthCheckError message={errorMessage} />
+      <GitHubInstallStatusBanner />
+      <div className="flex flex-col gap-1.5">
+        <h2 className="text-xl font-semibold text-white">
+          Connect a repository
+        </h2>
+        <p className="text-sm text-white/60">
+          Install the Huntscope GitHub App on the repository that contains your
+          career-ops data.
+        </p>
+      </div>
+      <Button asChild variant="brandSecondary" size="pill" className="w-fit">
+        <GitHubInstallLink>Connect GitHub repository</GitHubInstallLink>
+      </Button>
+    </div>
+  );
+}
+
 export function RepoSelector() {
   const hasMounted = useHasMounted();
+  const { isSignedIn: initialIsSignedIn } = useHomeShell();
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [repoFilterQuery, setRepoFilterQuery] = useState("");
   const utils = api.useUtils();
@@ -94,7 +131,7 @@ export function RepoSelector() {
     undefined,
     withClientOnlyQuery(
       githubListReposQueryOptions,
-      hasMounted && connectionQuery.data != null,
+      connectionQuery.data != null,
     ),
   );
   const selectedRepoQuery = useSelectedRepoQuery();
@@ -162,7 +199,9 @@ export function RepoSelector() {
     void utils.github.getRepoData.invalidate(selectedRepo);
   };
 
-  if (!hasMounted || connectionQuery.isLoading) {
+  const deferUntilMounted = !hasMounted && !initialIsSignedIn;
+
+  if (deferUntilMounted || connectionQuery.isLoading) {
     return (
       <RepoSelectorCard>
         <RepoSelectorLoadingContent />
@@ -184,26 +223,7 @@ export function RepoSelector() {
   if (!connectionQuery.data) {
     return (
       <RepoSelectorCard>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <h2 className="text-xl font-semibold text-white">
-              Connect a repository
-            </h2>
-            <p className="text-sm text-white/60">
-              Install the Huntscope GitHub App on the repository that contains
-              your career-ops data. Access is read-only and limited to
-              repositories you select during install.
-            </p>
-          </div>
-          <Button
-            asChild
-            variant="brandSecondary"
-            size="pill"
-            className="w-fit"
-          >
-            <a href="/api/github/install">Connect repository</a>
-          </Button>
-        </div>
+        <RepoSelectorNoConnectionContent />
       </RepoSelectorCard>
     );
   }
@@ -351,12 +371,14 @@ export function RepoSelector() {
                   disabled={!selectedRepo || selectRepo.isPending}
                   onClick={handleReload}
                 >
-                  <ButtonLoadingIcon isLoading={selectRepo.isPending} />
+                  {selectRepo.isPending ? (
+                    <ButtonLoadingIcon isLoading />
+                  ) : null}
                   Reload data
                 </Button>
 
                 <Button asChild variant="outline" size="pill">
-                  <a href="/api/github/install">Change installation</a>
+                  <GitHubInstallLink>Change installation</GitHubInstallLink>
                 </Button>
 
                 <p className="min-w-[12rem] text-sm text-white/70">

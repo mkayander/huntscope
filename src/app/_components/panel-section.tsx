@@ -39,6 +39,7 @@ export function PanelSection({
     <GlowPanel
       accent={accent}
       variant={glowVariant}
+      interactive={isLanding}
       className={cn("w-full", className)}
       contentClassName={cn(
         "flex flex-col gap-4",

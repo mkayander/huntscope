@@ -4,10 +4,8 @@ import { GitHubRepoPanel } from "~/app/_components/github-repo-panel";
 import { LocalRepoPanel } from "~/app/_components/local-repo-panel";
 
 export function DataSourcePanel({
-  githubStatus,
   githubConfigured,
 }: {
-  githubStatus?: string;
   githubConfigured: boolean;
 }) {
   return (
@@ -24,10 +22,7 @@ export function DataSourcePanel({
       </header>
 
       <LocalRepoPanel variant="landing" />
-      <GitHubRepoPanel
-        githubStatus={githubStatus}
-        githubConfigured={githubConfigured}
-      />
+      <GitHubRepoPanel githubConfigured={githubConfigured} />
     </div>
   );
 }
