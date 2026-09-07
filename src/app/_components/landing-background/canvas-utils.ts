@@ -92,7 +92,12 @@ export function useCanvasAnimation(
 }
 
 export function clearCanvas(frame: CanvasFrameContext): void {
-  frame.ctx.clearRect(0, 0, frame.width, frame.height);
+  const { ctx, width, height } = frame;
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, "#2e026d");
+  gradient.addColorStop(1, "#15162c");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
 }
 
 export function computeGalaxyScale(width: number, height: number): number {

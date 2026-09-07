@@ -4,6 +4,7 @@ import {
   getStatusChipClassName,
   sortStatuses,
 } from "~/lib/career-ops/status-meta";
+import { toggleStatusFilter } from "~/lib/career-ops/status-filters";
 import { Button } from "~/components/ui/button";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
@@ -15,8 +16,8 @@ type OverviewStripProps = {
   analytics: ApplicationAnalytics;
   pipeline: PipelineSummary | null;
   reportsCount: number;
-  activeStatusFilter: string | null;
-  onStatusFilterChange: (status: string | null) => void;
+  activeStatusFilters: string[];
+  onStatusFiltersChange: (statuses: string[]) => void;
 };
 
 export function OverviewStrip({
@@ -24,8 +25,8 @@ export function OverviewStrip({
   analytics,
   pipeline,
   reportsCount,
-  activeStatusFilter,
-  onStatusFilterChange,
+  activeStatusFilters,
+  onStatusFiltersChange,
 }: OverviewStripProps) {
   const statuses = sortStatuses(analytics.statusCounts);
 
@@ -108,9 +109,9 @@ export function OverviewStrip({
               variant="chip"
               className={getStatusChipClassName(
                 "All",
-                activeStatusFilter === null,
+                activeStatusFilters.length === 0,
               )}
-              onClick={() => onStatusFilterChange(null)}
+              onClick={() => onStatusFiltersChange([])}
             >
               All {analytics.total}
             </Button>
@@ -121,11 +122,11 @@ export function OverviewStrip({
                 variant="chip"
                 className={getStatusChipClassName(
                   status,
-                  activeStatusFilter === status,
+                  activeStatusFilters.includes(status),
                 )}
                 onClick={() =>
-                  onStatusFilterChange(
-                    activeStatusFilter === status ? null : status,
+                  onStatusFiltersChange(
+                    toggleStatusFilter(activeStatusFilters, status),
                   )
                 }
               >
