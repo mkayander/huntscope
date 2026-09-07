@@ -8,6 +8,10 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import {
+  animatedExitClassName,
+  useAnimatedPresence,
+} from "~/hooks/use-animated-presence";
+import {
   countActiveDashboardFilters,
   DASHBOARD_FILTERS_OPEN_EVENT,
   type DashboardFilters,
@@ -34,26 +38,23 @@ export function DashboardFiltersControl({
   onFiltersChange,
 }: DashboardFiltersControlProps) {
   const [open, setOpen] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
   const [focusSearchOnOpen, setFocusSearchOnOpen] = useState(false);
+  const { isRendered, isClosing } = useAnimatedPresence(open, {
+    durationMs: PANEL_ANIMATION_MS,
+  });
   const activeFilterCount = countActiveDashboardFilters(filters);
 
   const handleClose = useCallback(() => {
-    if (isClosing) {
+    if (isClosing || !open) {
       return;
     }
 
-    setIsClosing(true);
-    window.setTimeout(() => {
-      setOpen(false);
-      setIsClosing(false);
-      setFocusSearchOnOpen(false);
-    }, PANEL_ANIMATION_MS);
-  }, [isClosing]);
+    setOpen(false);
+    setFocusSearchOnOpen(false);
+  }, [isClosing, open]);
 
   const handleOpen = useCallback((options?: { focusSearch?: boolean }) => {
     setOpen(true);
-    setIsClosing(false);
     setFocusSearchOnOpen(options?.focusSearch ?? false);
   }, []);
 
@@ -82,7 +83,7 @@ export function DashboardFiltersControl({
   }, [focusSearchOnOpen, isClosing, open]);
 
   useEffect(() => {
-    if (!open || isClosing) {
+    if (!isRendered || isClosing) {
       return;
     }
 
@@ -94,7 +95,7 @@ export function DashboardFiltersControl({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClose, isClosing, open]);
+  }, [handleClose, isClosing, isRendered]);
 
   return (
     <>
@@ -104,10 +105,10 @@ export function DashboardFiltersControl({
           variant="brand"
           size="pill"
           className="pointer-events-auto shadow-lg shadow-violet-950/40"
-          aria-expanded={open}
+          aria-expanded={isRendered}
           aria-controls="dashboard-filters-panel"
           onClick={() => {
-            if (open) {
+            if (isRendered) {
               handleClose();
             } else {
               handleOpen();
@@ -124,7 +125,7 @@ export function DashboardFiltersControl({
         </Button>
       </div>
 
-      {open ? (
+      {isRendered ? (
         <aside
           id="dashboard-filters-panel"
           role="dialog"
@@ -133,13 +134,16 @@ export function DashboardFiltersControl({
           className={cn(
             glassCardSurfaceClassName,
             filtersPanelShadowClassName,
-            "fixed z-50 flex max-h-[min(85dvh,42rem)] w-full flex-col overflow-hidden border border-white/10 bg-[#0f1024] motion-reduce:animate-none",
+            "fixed z-50 flex max-h-[min(85dvh,42rem)] w-full flex-col overflow-hidden border border-white/10 bg-[#0f1024]",
             "inset-x-4 bottom-20 max-w-none",
             "sm:inset-x-auto sm:right-6 sm:bottom-24 sm:w-[min(24rem,calc(100vw-3rem))]",
             "rounded-2xl",
             isClosing
-              ? "animate-out fade-out-0 slide-out-to-bottom-2 sm:slide-out-to-bottom-0 sm:zoom-out-95 duration-250"
-              : "animate-in fade-in-0 slide-in-from-bottom-2 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-250",
+              ? cn(
+                  animatedExitClassName,
+                  "animate-out fade-out-0 slide-out-to-bottom-2 sm:slide-out-to-bottom-0 sm:zoom-out-95 duration-250",
+                )
+              : "animate-in fade-in-0 slide-in-from-bottom-2 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-250 motion-reduce:animate-none",
           )}
         >
           <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-5">
