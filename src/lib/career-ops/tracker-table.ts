@@ -1,8 +1,9 @@
 import { filterApplications } from "~/lib/career-ops/analytics";
+import { applicationHasReport } from "~/lib/career-ops/application-reports";
 import { parseApplicationDate } from "~/lib/career-ops/dates";
 import { parseScore } from "~/lib/career-ops/score";
 import { normalizeStatus } from "~/lib/career-ops/status-meta";
-import type { ApplicationEntry } from "~/lib/career-ops/types";
+import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
 export type TrackerSortColumn =
   "num" | "date" | "company" | "role" | "score" | "status";
@@ -28,8 +29,11 @@ export const DEFAULT_TRACKER_TABLE_QUERY: TrackerTableQuery = {
   sortDirection: "desc",
 };
 
-function hasReportValue(value: string): boolean {
-  return value.trim().length > 0 && value.trim() !== "—";
+function hasReportValue(
+  application: ApplicationEntry,
+  reportFiles: readonly RepoDataFile[],
+): boolean {
+  return applicationHasReport(application, reportFiles);
 }
 
 function matchesScoreValue(
@@ -58,10 +62,11 @@ function matchesScoreValue(
 }
 
 function matchesReportValue(
-  report: string,
+  application: ApplicationEntry,
   filter: TrackerReportFilterValue,
+  reportFiles: readonly RepoDataFile[],
 ): boolean {
-  const hasReport = hasReportValue(report);
+  const hasReport = hasReportValue(application, reportFiles);
   return filter === "with" ? hasReport : !hasReport;
 }
 
@@ -77,14 +82,17 @@ function matchesScoreFilters(
 }
 
 function matchesReportFilters(
-  report: string,
+  application: ApplicationEntry,
   reportFilters: TrackerReportFilterValue[],
+  reportFiles: readonly RepoDataFile[],
 ): boolean {
   if (reportFilters.length === 0) {
     return true;
   }
 
-  return reportFilters.some((filter) => matchesReportValue(report, filter));
+  return reportFilters.some((filter) =>
+    matchesReportValue(application, filter, reportFiles),
+  );
 }
 
 function compareDates(left: string, right: string): number {
@@ -188,6 +196,7 @@ export function sortApplications(
 export function queryTrackerApplications(
   applications: ApplicationEntry[],
   query: TrackerTableQuery,
+  reportFiles: readonly RepoDataFile[] = [],
 ): ApplicationEntry[] {
   const filtered = filterApplications(applications, {
     statusFilters: query.statusFilters,
@@ -195,7 +204,7 @@ export function queryTrackerApplications(
   }).filter(
     (application) =>
       matchesScoreFilters(application.score, query.scoreFilters) &&
-      matchesReportFilters(application.report, query.reportFilters),
+      matchesReportFilters(application, query.reportFilters, reportFiles),
   );
 
   return sortApplications(filtered, query.sortColumn, query.sortDirection);

@@ -88,6 +88,27 @@ describe("queryTrackerApplications", () => {
     expect(results[0]?.company).toBe("Acme");
   });
 
+  it("treats inferred report files as report coverage", () => {
+    const results = queryTrackerApplications(
+      applications,
+      {
+        ...DEFAULT_TRACKER_TABLE_QUERY,
+        reportFilters: ["with"],
+        statusFilters: ["Rejected"],
+      },
+      [
+        {
+          path: "reports/002-beta.md",
+          name: "002-beta.md",
+          type: "file",
+        },
+      ],
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.company).toBe("Beta");
+  });
+
   it("matches any selected status when multiple are chosen", () => {
     const results = queryTrackerApplications(applications, {
       ...DEFAULT_TRACKER_TABLE_QUERY,
