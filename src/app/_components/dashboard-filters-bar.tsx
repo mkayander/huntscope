@@ -14,7 +14,10 @@ import {
   hasActiveDashboardFilters,
   type DashboardFilters,
 } from "~/lib/career-ops/dashboard-filters";
-import { sortStatuses } from "~/lib/career-ops/status-meta";
+import {
+  countApplicationsByStatus,
+  sortStatuses,
+} from "~/lib/career-ops/status-meta";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 type DashboardFiltersBarProps = {
@@ -31,10 +34,7 @@ export function DashboardFiltersBar({
   onFiltersChange,
 }: DashboardFiltersBarProps) {
   const statusOptions = sortStatuses(
-    applications.reduce<Record<string, number>>((counts, application) => {
-      counts[application.status] = (counts[application.status] ?? 0) + 1;
-      return counts;
-    }, {}),
+    countApplicationsByStatus(applications),
   ).map((status) => ({
     value: status,
     label: status,

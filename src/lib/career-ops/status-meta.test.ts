@@ -1,9 +1,43 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  countApplicationsByStatus,
   getBoardColumnOrder,
+  normalizeStatus,
   sortStatuses,
 } from "~/lib/career-ops/status-meta";
+
+describe("normalizeStatus", () => {
+  it("trims whitespace", () => {
+    expect(normalizeStatus(" Applied ")).toBe("Applied");
+  });
+
+  it("collapses dated applied statuses to the base status", () => {
+    expect(normalizeStatus("Applied 2026-09-07")).toBe("Applied");
+    expect(normalizeStatus("Evaluated 2025-01-01")).toBe("Evaluated");
+  });
+
+  it("preserves unknown statuses with date-like suffixes", () => {
+    expect(normalizeStatus("Phone Screen 2026-09-07")).toBe(
+      "Phone Screen 2026-09-07",
+    );
+  });
+});
+
+describe("countApplicationsByStatus", () => {
+  it("groups dated statuses under their base status", () => {
+    expect(
+      countApplicationsByStatus([
+        { status: "Applied" },
+        { status: "Applied 2026-09-07" },
+        { status: "Rejected" },
+      ]),
+    ).toEqual({
+      Applied: 2,
+      Rejected: 1,
+    });
+  });
+});
 
 describe("sortStatuses", () => {
   it("orders known statuses by pipeline progression", () => {

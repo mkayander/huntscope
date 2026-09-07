@@ -19,6 +19,7 @@ import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { cn } from "~/lib/utils";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
 import {
+  countApplicationsByStatus,
   getBoardColumnOrder,
   sortStatuses,
 } from "~/lib/career-ops/status-meta";
@@ -88,15 +89,10 @@ export function TrackerPanel({
     return getBoardColumnOrder(statusCounts);
   }, [groupedApplications]);
 
-  const statusOptions = useMemo(() => {
-    const counts: Record<string, number> = {};
-
-    for (const application of applications) {
-      counts[application.status] = (counts[application.status] ?? 0) + 1;
-    }
-
-    return sortStatuses(counts);
-  }, [applications]);
+  const statusOptions = useMemo(
+    () => sortStatuses(countApplicationsByStatus(applications)),
+    [applications],
+  );
 
   const handleStatusChange = async (applicationNum: number, status: string) => {
     const nextApplications = updateApplicationStatus(
