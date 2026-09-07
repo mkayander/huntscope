@@ -22,39 +22,48 @@ describe("buildFunnelSankeyData", () => {
     expect(buildFunnelSankeyData([])).toBeNull();
   });
 
-  it("builds a balanced funnel graph from status counts", () => {
+  it("builds a sequential funnel from evaluations through offer", () => {
     const applications = [
-      createApplication(1, "Applied"),
+      createApplication(1, "Evaluated"),
       createApplication(2, "Applied"),
-      createApplication(3, "Rejected"),
-      createApplication(4, "Responded"),
-      createApplication(5, "Interview"),
-      createApplication(6, "Offer"),
-      createApplication(7, "Discarded"),
+      createApplication(3, "Applied"),
+      createApplication(4, "Rejected"),
+      createApplication(5, "Responded"),
+      createApplication(6, "Interview"),
+      createApplication(7, "Offer"),
+      createApplication(8, "Discarded"),
+      createApplication(9, "SKIP"),
     ];
 
     const data = buildFunnelSankeyData(applications);
 
     expect(data).not.toBeNull();
-    expect(data?.nodes[0]?.label).toBe("Applications");
+    expect(data?.nodes[0]?.label).toBe("Evaluations");
 
-    const rootLinks =
-      data?.links.filter((link) => link.source === "applications") ?? [];
-    const rootTotal = rootLinks.reduce((sum, link) => sum + link.value, 0);
-    expect(rootTotal).toBe(applications.length);
+    const evaluationLinks =
+      data?.links.filter((link) => link.source === "evaluations") ?? [];
+    expect(evaluationLinks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: "evaluated", value: 1 }),
+        expect.objectContaining({ target: "skip", value: 1 }),
+        expect.objectContaining({ target: "applied-flow", value: 7 }),
+      ]),
+    );
 
-    expect(rootLinks).toEqual(
+    const appliedLinks =
+      data?.links.filter((link) => link.source === "applied-flow") ?? [];
+    expect(appliedLinks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ target: "applied", value: 2 }),
         expect.objectContaining({ target: "rejected", value: 1 }),
         expect.objectContaining({ target: "discarded", value: 1 }),
-        expect.objectContaining({ target: "in-pipeline", value: 3 }),
+        expect.objectContaining({ target: "responded-flow", value: 3 }),
       ]),
     );
 
-    const pipelineLinks =
-      data?.links.filter((link) => link.source === "in-pipeline") ?? [];
-    expect(pipelineLinks).toEqual(
+    const respondedLinks =
+      data?.links.filter((link) => link.source === "responded-flow") ?? [];
+    expect(respondedLinks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ target: "responded", value: 1 }),
         expect.objectContaining({ target: "interview-flow", value: 2 }),
