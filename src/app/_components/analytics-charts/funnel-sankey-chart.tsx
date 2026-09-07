@@ -112,7 +112,7 @@ export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
       .select(svgElement)
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("role", "img")
-      .attr("aria-label", "Evaluation pipeline funnel sankey chart");
+      .attr("aria-label", "Job search pipeline funnel sankey chart");
 
     svg.selectAll("*").remove();
 
@@ -231,8 +231,8 @@ export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
       <div>
         <h4 className="text-sm font-semibold text-white">Pipeline funnel</h4>
         <p className="mt-1 text-xs text-white/50">
-          Flow width reflects how many applications reached each stage or
-          outcome.
+          Scan → evaluation → apply, with flow width showing how many jobs
+          reached each stage or outcome.
         </p>
       </div>
       <div ref={containerRef} className="mt-4 min-h-[220px] flex-1">

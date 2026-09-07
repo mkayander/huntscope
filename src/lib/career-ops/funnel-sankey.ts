@@ -13,7 +13,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const FLOW_NODE_IDS = new Set([
-  "evaluations",
+  "scanned",
+  "evaluation-flow",
   "applied-flow",
   "responded-flow",
   "interview-flow",
@@ -41,7 +42,8 @@ export type FunnelSankeyData = {
   links: FunnelSankeyLink[];
 };
 
-const ROOT_NODE_ID = "evaluations";
+const ROOT_NODE_ID = "scanned";
+const EVALUATION_FLOW_NODE_ID = "evaluation-flow";
 const APPLIED_FLOW_NODE_ID = "applied-flow";
 const RESPONDED_FLOW_NODE_ID = "responded-flow";
 const INTERVIEW_FLOW_NODE_ID = "interview-flow";
@@ -164,6 +166,7 @@ export function buildFunnelSankeyData(
     }
   }
 
+  const evaluationFlowCount = total - skipCount;
   const appliedFlowCount =
     appliedCount + rejectedCount + respondedCount + interviewCount + offerCount;
   const appliedStageCount = appliedFlowCount + unknownCount;
@@ -172,24 +175,32 @@ export function buildFunnelSankeyData(
 
   const links: FunnelSankeyLink[] = [];
 
-  pushLink(
-    links,
-    ROOT_NODE_ID,
-    "evaluated",
-    evaluatedCount,
-    getStatusColor("Evaluated"),
-  );
   pushLink(links, ROOT_NODE_ID, "skip", skipCount, getStatusColor("SKIP"));
   pushLink(
     links,
     ROOT_NODE_ID,
+    EVALUATION_FLOW_NODE_ID,
+    evaluationFlowCount,
+    getStatusColor("Evaluated"),
+  );
+
+  pushLink(
+    links,
+    EVALUATION_FLOW_NODE_ID,
+    "to-apply",
+    evaluatedCount,
+    getStatusColor("Evaluated"),
+  );
+  pushLink(
+    links,
+    EVALUATION_FLOW_NODE_ID,
     "discarded",
     discardedCount,
     getStatusColor("Discarded"),
   );
   pushLink(
     links,
-    ROOT_NODE_ID,
+    EVALUATION_FLOW_NODE_ID,
     APPLIED_FLOW_NODE_ID,
     appliedStageCount,
     getStatusColor("Applied"),
@@ -267,16 +278,23 @@ export function buildFunnelSankeyData(
   }
 
   const nodes: FunnelSankeyNode[] = [
-    createNode(ROOT_NODE_ID, "Evaluations", getStatusColor("Evaluated")),
+    createNode(ROOT_NODE_ID, "Scanned", getStatusColor("Evaluated")),
   ];
 
-  if (nodeIds.has("evaluated")) {
-    nodes.push(
-      createNode("evaluated", "Evaluated", getStatusColor("Evaluated")),
-    );
-  }
   if (nodeIds.has("skip")) {
     nodes.push(createNode("skip", "Skipped", getStatusColor("SKIP")));
+  }
+  if (nodeIds.has(EVALUATION_FLOW_NODE_ID)) {
+    nodes.push(
+      createNode(
+        EVALUATION_FLOW_NODE_ID,
+        "Evaluation",
+        getStatusColor("Evaluated"),
+      ),
+    );
+  }
+  if (nodeIds.has("to-apply")) {
+    nodes.push(createNode("to-apply", "To apply", getStatusColor("Evaluated")));
   }
   if (nodeIds.has("discarded")) {
     nodes.push(
