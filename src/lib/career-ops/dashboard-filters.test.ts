@@ -27,28 +27,31 @@ function createApplication(
   };
 }
 
-describe("filterDashboardApplications", () => {
-  const applications = [
-    createApplication(1, {
-      date: "2026-01-10",
-      score: "4.5",
-      status: "Applied",
-      company: "Acme",
-    }),
-    createApplication(2, {
-      date: "2025-01-01",
-      score: "2.0",
-      status: "Rejected",
-      company: "Beta",
-    }),
-    createApplication(3, {
-      date: "2026-02-01",
-      score: "4.1",
-      status: "Interview",
-      company: "Gamma",
-    }),
-  ];
+const applications: ApplicationEntry[] = [
+  createApplication(1, {
+    date: "2026-01-10",
+    score: "4.5",
+    status: "Applied",
+    company: "Acme",
+    pdf: "[cv](output/acme.pdf)",
+    report: "reports/acme.md",
+  }),
+  createApplication(2, {
+    date: "2025-01-01",
+    score: "2.0",
+    status: "Rejected",
+    company: "Beta",
+  }),
+  createApplication(3, {
+    date: "2026-02-01",
+    score: "4.1",
+    status: "Interview",
+    company: "Gamma",
+    report: "reports/gamma.md",
+  }),
+];
 
+describe("filterDashboardApplications", () => {
   it("filters by score band and status together", () => {
     const filtered = filterDashboardApplications(applications, {
       ...DEFAULT_DASHBOARD_FILTERS,
@@ -66,7 +69,7 @@ describe("filterDashboardApplications", () => {
         ...DEFAULT_DASHBOARD_FILTERS,
         periodWeeks: 12,
       },
-      new Date("2026-02-15"),
+      { referenceDate: new Date("2026-02-15") },
     );
 
     expect(filtered.map((entry) => entry.company)).toEqual(["Acme", "Gamma"]);
@@ -80,6 +83,104 @@ describe("filterDashboardApplications", () => {
 
     expect(filtered).toHaveLength(1);
     expect(filtered[0]?.company).toBe("Beta");
+  });
+
+  it("filters by report presence", () => {
+    const filtered = filterDashboardApplications(
+      applications,
+      {
+        ...DEFAULT_DASHBOARD_FILTERS,
+        statusFilters: ["Applied"],
+        scoreFilters: ["high"],
+        reportFilters: ["with"],
+      },
+      {
+        repoFiles: {
+          reportFiles: [],
+          outputFiles: [],
+        },
+      },
+    );
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.company).toBe("Acme");
+  });
+
+  it("filters by pdf presence using inferred output files", () => {
+    const filtered = filterDashboardApplications(
+      applications,
+      {
+        ...DEFAULT_DASHBOARD_FILTERS,
+        statusFilters: ["Rejected"],
+        pdfFilters: ["with"],
+      },
+      {
+        repoFiles: {
+          reportFiles: [],
+          outputFiles: [
+            {
+              path: "output/beta.pdf",
+              name: "beta.pdf",
+              type: "file",
+            },
+          ],
+        },
+      },
+    );
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.company).toBe("Beta");
+  });
+
+  it("treats inferred report files as report coverage", () => {
+    const filtered = filterDashboardApplications(
+      applications,
+      {
+        ...DEFAULT_DASHBOARD_FILTERS,
+        statusFilters: ["Rejected"],
+        reportFilters: ["with"],
+      },
+      {
+        repoFiles: {
+          reportFiles: [
+            {
+              path: "reports/002-beta.md",
+              name: "002-beta.md",
+              type: "file",
+            },
+          ],
+          outputFiles: [],
+        },
+      },
+    );
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.company).toBe("Beta");
+  });
+
+  it("matches any selected status when multiple are chosen", () => {
+    const results = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
+      statusFilters: ["Applied", "Rejected"],
+    });
+
+    expect(results.map((entry) => entry.company).sort()).toEqual([
+      "Acme",
+      "Beta",
+    ]);
+  });
+
+  it("matches any selected score band when multiple are chosen", () => {
+    const results = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
+      scoreFilters: ["high", "low"],
+    });
+
+    expect(results.map((entry) => entry.company).sort()).toEqual([
+      "Acme",
+      "Beta",
+      "Gamma",
+    ]);
   });
 });
 
@@ -117,6 +218,12 @@ describe("hasActiveDashboardFilters", () => {
       hasActiveDashboardFilters({
         ...DEFAULT_DASHBOARD_FILTERS,
         scoreFilters: ["high"],
+      }),
+    ).toBe(true);
+    expect(
+      hasActiveDashboardFilters({
+        ...DEFAULT_DASHBOARD_FILTERS,
+        reportFilters: ["with"],
       }),
     ).toBe(true);
   });
