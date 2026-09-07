@@ -17,6 +17,7 @@ export type {
 } from "~/lib/career-ops/dashboard-period";
 export {
   DASHBOARD_PERIOD_DAYS_QUICK_OPTIONS,
+  DASHBOARD_PERIOD_PRESETS,
   DASHBOARD_PERIOD_WEEKS_OPTIONS,
   DEFAULT_DASHBOARD_PERIOD,
   getDashboardPeriodCutoff,

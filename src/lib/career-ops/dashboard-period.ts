@@ -18,6 +18,20 @@ export type DashboardPeriod =
 
 export const DEFAULT_DASHBOARD_PERIOD: DashboardPeriod = { kind: "all" };
 
+export type DashboardPeriodPreset = {
+  period: DashboardPeriod;
+  label: string;
+};
+
+export const DASHBOARD_PERIOD_PRESETS: DashboardPeriodPreset[] = [
+  { period: { kind: "all" }, label: "All time" },
+  { period: { kind: "days", days: 7 }, label: "7d" },
+  { period: { kind: "days", days: 30 }, label: "30d" },
+  { period: { kind: "weeks", weeks: 26 }, label: "6 mo" },
+  { period: { kind: "weeks", weeks: 52 }, label: "1 yr" },
+];
+
+/** @deprecated Use DASHBOARD_PERIOD_PRESETS instead. */
 export const DASHBOARD_PERIOD_WEEKS_OPTIONS: {
   weeks: DashboardPeriodWeeks;
   label: string;
@@ -27,7 +41,26 @@ export const DASHBOARD_PERIOD_WEEKS_OPTIONS: {
   { weeks: 52, label: "1 year" },
 ];
 
+/** @deprecated Use DASHBOARD_PERIOD_PRESETS instead. */
 export const DASHBOARD_PERIOD_DAYS_QUICK_OPTIONS = [4, 7, 14, 30, 90] as const;
+
+export function matchesDashboardPeriodPreset(
+  period: DashboardPeriod,
+): DashboardPeriodPreset | null {
+  return (
+    DASHBOARD_PERIOD_PRESETS.find((preset) =>
+      isDashboardPeriodEqual(preset.period, period),
+    ) ?? null
+  );
+}
+
+export function isDashboardPeriodCustom(period: DashboardPeriod): boolean {
+  if (period.kind === "all") {
+    return false;
+  }
+
+  return matchesDashboardPeriodPreset(period) == null;
+}
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());

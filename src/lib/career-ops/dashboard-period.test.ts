@@ -7,7 +7,9 @@ import {
   getCalendarMonthDays,
   getDashboardPeriodLabel,
   getDashboardPeriodStartKey,
+  isDashboardPeriodCustom,
   matchesDashboardPeriod,
+  matchesDashboardPeriodPreset,
   normalizeDashboardDateRange,
   normalizeDashboardPeriodDays,
 } from "~/lib/career-ops/dashboard-period";
@@ -144,6 +146,28 @@ describe("normalizeDashboardPeriodDays", () => {
   it("clamps custom day counts", () => {
     expect(normalizeDashboardPeriodDays(0)).toBe(1);
     expect(normalizeDashboardPeriodDays(999)).toBe(365);
+  });
+});
+
+describe("dashboard period presets", () => {
+  it("matches known preset periods", () => {
+    expect(matchesDashboardPeriodPreset({ kind: "days", days: 7 })?.label).toBe(
+      "7d",
+    );
+    expect(matchesDashboardPeriodPreset({ kind: "days", days: 4 })).toBeNull();
+  });
+
+  it("detects custom periods", () => {
+    expect(isDashboardPeriodCustom({ kind: "all" })).toBe(false);
+    expect(isDashboardPeriodCustom({ kind: "days", days: 7 })).toBe(false);
+    expect(isDashboardPeriodCustom({ kind: "days", days: 4 })).toBe(true);
+    expect(
+      isDashboardPeriodCustom({
+        kind: "range",
+        start: "2026-01-01",
+        end: "2026-01-10",
+      }),
+    ).toBe(true);
   });
 });
 

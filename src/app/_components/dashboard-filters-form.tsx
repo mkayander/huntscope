@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
-import { DashboardPeriodCalendar } from "~/app/_components/dashboard-period-calendar";
+import { DashboardPeriodPicker } from "~/app/_components/dashboard-period-picker";
 import { FilterMultiSelect } from "~/app/_components/filter-multi-select";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -10,8 +8,6 @@ import { Label } from "~/components/ui/label";
 import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
 import {
   DASHBOARD_PDF_FILTER_OPTIONS,
-  DASHBOARD_PERIOD_DAYS_QUICK_OPTIONS,
-  DASHBOARD_PERIOD_WEEKS_OPTIONS,
   DASHBOARD_REPORT_FILTER_OPTIONS,
   DASHBOARD_SCORE_FILTER_OPTIONS,
   DEFAULT_DASHBOARD_FILTERS,
@@ -19,11 +15,6 @@ import {
   hasActiveDashboardFilters,
   type DashboardFilters,
 } from "~/lib/career-ops/dashboard-filters";
-import {
-  isDashboardPeriodEqual,
-  normalizeDashboardPeriodDays,
-  type DashboardPeriod,
-} from "~/lib/career-ops/dashboard-period";
 import {
   countApplicationsByStatus,
   sortStatuses,
@@ -45,9 +36,6 @@ export function DashboardFiltersForm({
   onFiltersChange,
 }: DashboardFiltersFormProps) {
   const locale = useLocale();
-  const [customDaysInput, setCustomDaysInput] = useState(
-    filters.period.kind === "days" ? String(filters.period.days) : "7",
-  );
   const statusOptions = sortStatuses(
     countApplicationsByStatus(applications),
   ).map((status) => ({
@@ -62,99 +50,14 @@ export function DashboardFiltersForm({
     locale,
   });
 
-  const setPeriod = (period: DashboardPeriod) => {
-    onFiltersChange({ ...filters, period });
-  };
-
-  const handleCustomDaysApply = () => {
-    const days = normalizeDashboardPeriodDays(Number(customDaysInput));
-    setCustomDaysInput(String(days));
-    setPeriod({ kind: "days", days });
-  };
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3">
-        <Label className="text-white/80">Period</Label>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant={filters.period.kind === "all" ? "brand" : "brandSecondary"}
-            size="pillSm"
-            onClick={() => setPeriod({ kind: "all" })}
-          >
-            All time
-          </Button>
-          {DASHBOARD_PERIOD_WEEKS_OPTIONS.map((option) => (
-            <Button
-              key={option.label}
-              type="button"
-              variant={
-                isDashboardPeriodEqual(filters.period, {
-                  kind: "weeks",
-                  weeks: option.weeks,
-                })
-                  ? "brand"
-                  : "brandSecondary"
-              }
-              size="pillSm"
-              onClick={() => setPeriod({ kind: "weeks", weeks: option.weeks })}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="dashboard-period-days" className="text-white/80">
-          Last N days
-        </Label>
-        <div className="flex flex-wrap gap-2">
-          {DASHBOARD_PERIOD_DAYS_QUICK_OPTIONS.map((days) => (
-            <Button
-              key={days}
-              type="button"
-              variant={
-                isDashboardPeriodEqual(filters.period, { kind: "days", days })
-                  ? "brand"
-                  : "brandSecondary"
-              }
-              size="pillSm"
-              onClick={() => {
-                setCustomDaysInput(String(days));
-                setPeriod({ kind: "days", days });
-              }}
-            >
-              {days}d
-            </Button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            id="dashboard-period-days"
-            type="number"
-            min={1}
-            max={365}
-            value={customDaysInput}
-            onChange={(event) => setCustomDaysInput(event.target.value)}
-            className="border-white/15 bg-[#15162c] text-white placeholder:text-white/40"
-          />
-          <Button
-            type="button"
-            variant="brandSecondary"
-            size="pillSm"
-            onClick={handleCustomDaysApply}
-          >
-            Apply
-          </Button>
-        </div>
-      </div>
-
-      <DashboardPeriodCalendar
+      <DashboardPeriodPicker
         applications={applications}
         period={filters.period}
-        onPeriodChange={setPeriod}
+        onPeriodChange={(period) => {
+          onFiltersChange({ ...filters, period });
+        }}
       />
 
       <div className="flex justify-end">
