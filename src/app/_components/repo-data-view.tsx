@@ -30,6 +30,7 @@ import {
   filterDashboardApplications,
   type DashboardFilters,
 } from "~/lib/career-ops/dashboard-filters";
+import { getActivityHeatmapPeriodWeeks } from "~/lib/career-ops/dashboard-period";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { useParsedRepoData } from "~/lib/career-ops/use-parsed-repo-data";
 
@@ -206,7 +207,7 @@ function RepoDataContent({
       >
         <ActivityHeatmapPanel
           applications={filteredApplications}
-          periodWeeks={dashboardFilters.periodWeeks ?? 52}
+          periodWeeks={getActivityHeatmapPeriodWeeks(dashboardFilters.period)}
         />
       </DashboardSection>
 

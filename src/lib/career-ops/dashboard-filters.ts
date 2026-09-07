@@ -2,14 +2,26 @@ import { applicationHasPdf } from "~/lib/career-ops/application-pdfs";
 import { applicationHasReport } from "~/lib/career-ops/application-reports";
 import { filterApplications } from "~/lib/career-ops/analytics";
 import {
-  dateKeyToDate,
-  parseApplicationDate,
-  toDateKey,
-} from "~/lib/career-ops/dates";
+  DEFAULT_DASHBOARD_PERIOD,
+  getDashboardPeriodLabel,
+  isDashboardPeriodActive,
+  matchesDashboardPeriod,
+  type DashboardPeriod,
+} from "~/lib/career-ops/dashboard-period";
 import { parseScore } from "~/lib/career-ops/score";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
-export type DashboardPeriodWeeks = 12 | 26 | 52;
+export type {
+  DashboardPeriod,
+  DashboardPeriodWeeks,
+} from "~/lib/career-ops/dashboard-period";
+export {
+  DASHBOARD_PERIOD_DAYS_QUICK_OPTIONS,
+  DASHBOARD_PERIOD_WEEKS_OPTIONS,
+  DEFAULT_DASHBOARD_PERIOD,
+  getDashboardPeriodCutoff,
+  getDashboardPeriodLabel,
+} from "~/lib/career-ops/dashboard-period";
 
 export type DashboardScoreFilterValue = "high" | "medium" | "low" | "unknown";
 
@@ -18,7 +30,7 @@ export type DashboardReportFilterValue = "with" | "without";
 export type DashboardPdfFilterValue = "with" | "without";
 
 export type DashboardFilters = {
-  periodWeeks: DashboardPeriodWeeks | null;
+  period: DashboardPeriod;
   searchQuery: string;
   statusFilters: string[];
   scoreFilters: DashboardScoreFilterValue[];
@@ -32,7 +44,7 @@ export type DashboardRepoFiles = {
 };
 
 export const DEFAULT_DASHBOARD_FILTERS: DashboardFilters = {
-  periodWeeks: null,
+  period: DEFAULT_DASHBOARD_PERIOD,
   searchQuery: "",
   statusFilters: [],
   scoreFilters: [],
@@ -40,14 +52,17 @@ export const DEFAULT_DASHBOARD_FILTERS: DashboardFilters = {
   pdfFilters: [],
 };
 
-export const DASHBOARD_PERIOD_OPTIONS: {
-  value: DashboardPeriodWeeks | null;
-  label: string;
-}[] = [
+/** @deprecated Use DASHBOARD_PERIOD_WEEKS_OPTIONS with DashboardPeriod instead. */
+export const DASHBOARD_PERIOD_OPTIONS = [
   { value: null, label: "All time" },
-  { value: 12, label: "12 weeks" },
-  { value: 26, label: "6 months" },
-  { value: 52, label: "1 year" },
+  ...[
+    { weeks: 12 as const, label: "12 weeks" },
+    { weeks: 26 as const, label: "6 months" },
+    { weeks: 52 as const, label: "1 year" },
+  ].map((option) => ({
+    value: option.weeks,
+    label: option.label,
+  })),
 ];
 
 export const DASHBOARD_SCORE_FILTER_OPTIONS: {
@@ -163,39 +178,6 @@ function matchesPdfFilters(
   );
 }
 
-export function getDashboardPeriodCutoff(
-  periodWeeks: DashboardPeriodWeeks,
-  referenceDate = new Date(),
-): string {
-  const cutoff = new Date(referenceDate);
-  cutoff.setHours(0, 0, 0, 0);
-  cutoff.setDate(cutoff.getDate() - periodWeeks * 7);
-  return toDateKey(cutoff);
-}
-
-export function matchesDashboardPeriod(
-  application: ApplicationEntry,
-  periodWeeks: DashboardPeriodWeeks | null,
-  referenceDate = new Date(),
-): boolean {
-  if (periodWeeks === null) {
-    return true;
-  }
-
-  const dateKey = parseApplicationDate(application.date);
-  if (!dateKey) {
-    return false;
-  }
-
-  const applicationDate = dateKeyToDate(dateKey);
-  if (!applicationDate) {
-    return false;
-  }
-
-  const cutoffKey = getDashboardPeriodCutoff(periodWeeks, referenceDate);
-  return dateKey >= cutoffKey;
-}
-
 export function filterDashboardApplications(
   applications: ApplicationEntry[],
   filters: DashboardFilters,
@@ -213,7 +195,7 @@ export function filterDashboardApplications(
     statusFilters: filters.statusFilters,
   }).filter(
     (application) =>
-      matchesDashboardPeriod(application, filters.periodWeeks, referenceDate) &&
+      matchesDashboardPeriod(application, filters.period, referenceDate) &&
       matchesScoreFilters(application.score, filters.scoreFilters) &&
       matchesReportFilters(application, filters.reportFilters, reportFiles) &&
       matchesPdfFilters(application, filters.pdfFilters, outputFiles),
@@ -222,7 +204,7 @@ export function filterDashboardApplications(
 
 export function hasActiveDashboardFilters(filters: DashboardFilters): boolean {
   return (
-    filters.periodWeeks !== null ||
+    isDashboardPeriodActive(filters.period) ||
     filters.searchQuery.trim().length > 0 ||
     filters.statusFilters.length > 0 ||
     filters.scoreFilters.length > 0 ||
@@ -234,7 +216,7 @@ export function hasActiveDashboardFilters(filters: DashboardFilters): boolean {
 export function countActiveDashboardFilters(filters: DashboardFilters): number {
   let count = 0;
 
-  if (filters.periodWeeks !== null) {
+  if (isDashboardPeriodActive(filters.period)) {
     count += 1;
   }
 
@@ -266,21 +248,13 @@ export function formatDashboardFilterSummary(
     .join(", ");
 }
 
-export function getDashboardPeriodLabel(
-  periodWeeks: DashboardPeriodWeeks | null,
-): string {
-  return (
-    DASHBOARD_PERIOD_OPTIONS.find((option) => option.value === periodWeeks)
-      ?.label ?? "All time"
-  );
-}
-
 export function getDashboardFilterSummaryLine(
   filters: DashboardFilters,
   options: {
     resultCount: number;
     totalCount: number;
     statusOptions?: { value: string; label: string }[];
+    locale?: string;
   },
 ): string {
   const statusSummary = formatDashboardFilterSummary(
@@ -306,7 +280,7 @@ export function getDashboardFilterSummaryLine(
 
   return [
     `Showing ${options.resultCount} of ${options.totalCount} applications`,
-    `period: ${getDashboardPeriodLabel(filters.periodWeeks)}`,
+    `period: ${getDashboardPeriodLabel(filters.period, options.locale)}`,
     statusSummary ? `status: ${statusSummary}` : "",
     scoreSummary ? `score: ${scoreSummary}` : "",
     reportSummary ? `report: ${reportSummary}` : "",

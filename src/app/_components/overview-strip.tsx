@@ -21,6 +21,7 @@ import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
+import { useLocale } from "~/lib/i18n/locale-context";
 import { cn } from "~/lib/utils";
 
 type OverviewStripProps = {
@@ -48,6 +49,7 @@ export function OverviewStrip({
   onDashboardFiltersChange,
   totalApplications,
 }: OverviewStripProps) {
+  const locale = useLocale();
   const { scrollToSection } = useDashboardSections();
   const statuses = sortStatuses(analytics.statusCounts);
   const filtersActive = hasActiveDashboardFilters(dashboardFilters);
@@ -59,6 +61,7 @@ export function OverviewStrip({
           value: status,
           label: status,
         })),
+        locale,
       })
     : null;
 

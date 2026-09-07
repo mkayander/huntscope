@@ -6,21 +6,14 @@ import { ErrorAlert } from "~/app/_components/error-alert";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import {
-  type ActivityHeatmapPeriod,
+  ACTIVITY_LEVEL_CLASS_NAMES,
   type ActivityLevel,
-} from "~/lib/career-ops/activity-heatmap";
+} from "~/lib/career-ops/activity-levels";
+import { type ActivityHeatmapPeriod } from "~/lib/career-ops/activity-heatmap";
 import { useActivityHeatmap } from "~/lib/career-ops/use-activity-heatmap";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { formatDisplayDate, getWeekdayLabels } from "~/lib/i18n/date-format";
 import { useLocale } from "~/lib/i18n/locale-context";
-
-const LEVEL_CLASS_NAMES: Record<ActivityLevel, string> = {
-  0: "bg-white/8 ring-1 ring-white/5",
-  1: "bg-violet-900/70 ring-1 ring-violet-800/40",
-  2: "bg-violet-700/75 ring-1 ring-violet-600/40",
-  3: "bg-violet-500/85 ring-1 ring-violet-400/40",
-  4: "bg-violet-300 ring-1 ring-violet-200/50",
-};
 
 type ActivityHeatmapProps = {
   applications: ApplicationEntry[];
@@ -123,7 +116,7 @@ export function ActivityHeatmapPanel({
                           key={day.date}
                           type="button"
                           aria-label={`${day.count} evaluation${day.count === 1 ? "" : "s"} on ${formatDisplayDate(day.date, locale)}`}
-                          className={`h-3 w-3 cursor-pointer rounded-[3px] transition hover:ring-2 hover:ring-white/40 ${LEVEL_CLASS_NAMES[day.level]}`}
+                          className={`h-3 w-3 cursor-pointer rounded-[3px] transition hover:ring-2 hover:ring-white/40 ${ACTIVITY_LEVEL_CLASS_NAMES[day.level]}`}
                           onMouseEnter={() =>
                             setHoveredDay({ date: day.date, count: day.count })
                           }
@@ -163,7 +156,7 @@ export function ActivityHeatmapPanel({
             {([0, 1, 2, 3, 4] as ActivityLevel[]).map((level) => (
               <span
                 key={level}
-                className={`h-3 w-3 rounded-[3px] ${LEVEL_CLASS_NAMES[level]}`}
+                className={`h-3 w-3 rounded-[3px] ${ACTIVITY_LEVEL_CLASS_NAMES[level]}`}
               />
             ))}
             <span>More</span>

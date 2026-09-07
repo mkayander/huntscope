@@ -1,5 +1,11 @@
+import {
+  countToActivityLevel,
+  type ActivityLevel,
+} from "~/lib/career-ops/activity-levels";
 import { parseApplicationDate, toDateKey } from "~/lib/career-ops/dates";
 import { formatMonthLabel } from "~/lib/i18n/date-format";
+
+export type { ActivityLevel } from "~/lib/career-ops/activity-levels";
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -16,8 +22,6 @@ function getSundayWeekStart(date: Date): Date {
   normalized.setDate(normalized.getDate() - normalized.getDay());
   return normalized;
 }
-
-export type ActivityLevel = 0 | 1 | 2 | 3 | 4;
 
 export type ActivityDay = {
   date: string;
@@ -41,28 +45,7 @@ export type ActivityHeatmap = {
 };
 
 function countToLevel(count: number, maxCount: number): ActivityLevel {
-  if (count <= 0) {
-    return 0;
-  }
-
-  if (maxCount <= 1) {
-    return 1;
-  }
-
-  const ratio = count / maxCount;
-  if (ratio <= 0.25) {
-    return 1;
-  }
-
-  if (ratio <= 0.5) {
-    return 2;
-  }
-
-  if (ratio <= 0.75) {
-    return 3;
-  }
-
-  return 4;
+  return countToActivityLevel(count, maxCount);
 }
 
 export function computeActivityHeatmap(
@@ -164,7 +147,12 @@ export function buildHeatmapFromApplications(
     }
   }
 
-  const heatmap = computeActivityHeatmap(parsedDates, periodWeeks, new Date(), locale);
+  const heatmap = computeActivityHeatmap(
+    parsedDates,
+    periodWeeks,
+    new Date(),
+    locale,
+  );
   return {
     ...heatmap,
     undatedApplications,

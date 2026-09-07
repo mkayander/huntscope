@@ -4,9 +4,7 @@ import {
   DEFAULT_DASHBOARD_FILTERS,
   filterDashboardApplications,
   getDashboardFilterSummaryLine,
-  getDashboardPeriodCutoff,
   hasActiveDashboardFilters,
-  matchesDashboardPeriod,
 } from "~/lib/career-ops/dashboard-filters";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
@@ -48,7 +46,6 @@ const applications: ApplicationEntry[] = [
     score: "4.1",
     status: "Interview",
     company: "Gamma",
-    report: "reports/gamma.md",
   }),
 ];
 
@@ -63,12 +60,12 @@ describe("filterDashboardApplications", () => {
     expect(filtered.map((entry) => entry.company)).toEqual(["Acme", "Gamma"]);
   });
 
-  it("filters by period using application dates", () => {
+  it("filters by preset weeks using application dates", () => {
     const filtered = filterDashboardApplications(
       applications,
       {
         ...DEFAULT_DASHBOARD_FILTERS,
-        periodWeeks: 12,
+        period: { kind: "weeks", weeks: 12 },
       },
       { referenceDate: new Date("2026-02-15") },
     );
@@ -76,14 +73,27 @@ describe("filterDashboardApplications", () => {
     expect(filtered.map((entry) => entry.company)).toEqual(["Acme", "Gamma"]);
   });
 
+  it("filters by last N days", () => {
+    const filtered = filterDashboardApplications(
+      applications,
+      {
+        ...DEFAULT_DASHBOARD_FILTERS,
+        period: { kind: "days", days: 20 },
+      },
+      { referenceDate: new Date("2026-02-15") },
+    );
+
+    expect(filtered.map((entry) => entry.company)).toEqual(["Gamma"]);
+  });
+
   it("filters by search query", () => {
     const filtered = filterDashboardApplications(applications, {
       ...DEFAULT_DASHBOARD_FILTERS,
-      searchQuery: "beta",
+      searchQuery: "gamma",
     });
 
     expect(filtered).toHaveLength(1);
-    expect(filtered[0]?.company).toBe("Beta");
+    expect(filtered[0]?.company).toBe("Gamma");
   });
 
   it("filters by report presence", () => {
@@ -195,40 +205,13 @@ describe("filterDashboardApplications", () => {
   });
 });
 
-describe("matchesDashboardPeriod", () => {
-  it("includes undated applications only when all time is selected", () => {
-    expect(
-      matchesDashboardPeriod(
-        createApplication(1, { date: "" }),
-        null,
-        new Date("2026-02-15"),
-      ),
-    ).toBe(true);
-    expect(
-      matchesDashboardPeriod(
-        createApplication(1, { date: "" }),
-        12,
-        new Date("2026-02-15"),
-      ),
-    ).toBe(false);
-  });
-});
-
-describe("getDashboardPeriodCutoff", () => {
-  it("returns a date key N weeks before the reference date", () => {
-    expect(getDashboardPeriodCutoff(12, new Date("2026-02-15"))).toBe(
-      "2025-11-23",
-    );
-  });
-});
-
 describe("getDashboardFilterSummaryLine", () => {
   it("builds a readable summary for active filters", () => {
     expect(
       getDashboardFilterSummaryLine(
         {
           ...DEFAULT_DASHBOARD_FILTERS,
-          periodWeeks: 12,
+          period: { kind: "days", days: 4 },
           scoreFilters: ["high"],
           statusFilters: ["Applied"],
         },
@@ -239,7 +222,7 @@ describe("getDashboardFilterSummaryLine", () => {
         },
       ),
     ).toBe(
-      "Showing 1 of 3 applications · period: 12 weeks · status: Applied · score: High (4+)",
+      "Showing 1 of 3 applications · period: Last 4 days · status: Applied · score: High (4+)",
     );
   });
 });
@@ -251,6 +234,12 @@ describe("hasActiveDashboardFilters", () => {
       hasActiveDashboardFilters({
         ...DEFAULT_DASHBOARD_FILTERS,
         scoreFilters: ["high"],
+      }),
+    ).toBe(true);
+    expect(
+      hasActiveDashboardFilters({
+        ...DEFAULT_DASHBOARD_FILTERS,
+        period: { kind: "days", days: 4 },
       }),
     ).toBe(true);
     expect(
