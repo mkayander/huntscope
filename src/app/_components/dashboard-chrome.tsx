@@ -17,7 +17,7 @@ export function DashboardChrome({ className }: DashboardChromeProps) {
   return (
     <div
       className={cn(
-        "sticky top-0 z-40 w-full border-b border-white/10 bg-[#0b0c1c]/80 backdrop-blur-md",
+        "w-full border-b border-white/10 bg-[#0b0c1c]/80 backdrop-blur-md",
         className,
       )}
     >

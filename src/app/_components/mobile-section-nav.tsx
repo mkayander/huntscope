@@ -1,16 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { useDashboardSections } from "~/app/_components/dashboard-section-nav";
+import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { cn } from "~/lib/utils";
 
 export function MobileSectionNav() {
   const { sections, activeSectionId, scrollToSection } = useDashboardSections();
 
-  const navigableSections = useMemo(
-    () => sections.filter((section) => section.id !== "dashboard-repository"),
-    [sections],
+  const navigableSections = sections.filter(
+    (section) => section.id !== DASHBOARD_SECTION_IDS.repository,
   );
 
   if (navigableSections.length < 2) {
@@ -20,9 +18,9 @@ export function MobileSectionNav() {
   return (
     <nav
       aria-label="Dashboard sections"
-      className="sticky top-[3.25rem] z-30 -mx-4 border-b border-white/10 bg-[#0b0c1c]/85 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 xl:hidden"
+      className="border-b border-white/10 bg-[#0b0c1c]/85 px-4 py-2 backdrop-blur-md sm:px-6 lg:px-8 xl:hidden"
     >
-      <div className="flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+      <div className="mx-auto flex max-w-screen-2xl [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
         {navigableSections.map((section) => {
           const isActive = section.id === activeSectionId;
 

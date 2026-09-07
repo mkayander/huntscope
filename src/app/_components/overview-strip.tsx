@@ -66,7 +66,7 @@ export function OverviewStrip({
         </span>
       </div>
 
-      <dl className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Applications"
           value={String(analytics.total)}
@@ -100,7 +100,7 @@ export function OverviewStrip({
           hint={`${analytics.scoreBands.high} high · ${analytics.scoreBands.medium} medium · ${analytics.scoreBands.low} low`}
           onClick={() => scrollTo(DASHBOARD_SECTION_IDS.funnel)}
         />
-      </dl>
+      </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <button
@@ -203,8 +203,8 @@ function MetricCard({
 }) {
   const content = (
     <>
-      <dt className="text-xs tracking-wide text-white/50 uppercase">{label}</dt>
-      <dd className="mt-1 text-2xl font-semibold text-white">{value}</dd>
+      <p className="text-xs tracking-wide text-white/50 uppercase">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
       {hint ? <p className="mt-1 text-xs text-white/45">{hint}</p> : null}
     </>
   );

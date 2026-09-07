@@ -18,6 +18,7 @@ import {
   type TrackerTableQuery,
 } from "~/lib/career-ops/tracker-table";
 import { sortStatuses } from "~/lib/career-ops/status-meta";
+import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 const SCORE_FILTER_OPTIONS: {
@@ -88,7 +89,7 @@ export function TrackerTableToolbar({
               Search
             </Label>
             <span className="hidden text-[10px] tracking-wide text-white/35 uppercase sm:inline">
-              ⌘K
+              {getSearchShortcutLabel()}
             </span>
           </div>
           <Input

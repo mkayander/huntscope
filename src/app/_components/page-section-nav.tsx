@@ -22,7 +22,7 @@ export function PageSectionNav() {
     <aside
       aria-hidden={!showNav}
       className={cn(
-        "sticky top-[4.75rem] hidden shrink-0 self-start pt-1 xl:block",
+        "sticky top-[var(--dashboard-header-height,4.75rem)] hidden shrink-0 self-start pt-1 xl:block",
         NAV_WIDTH_CLASS,
       )}
     >

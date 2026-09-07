@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
@@ -13,12 +14,27 @@ import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { parseReportMarkdown } from "~/lib/career-ops/parse-report";
 
 export function ArtifactPreviewSheet() {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { activeArtifact, closeArtifact } = useArtifactViewer();
   const { activeSource } = useCareerOpsDataSource();
   const { data, isLoading, error } = useRepoFile(
     activeSource,
     activeArtifact?.path ?? null,
   );
+
+  useEffect(() => {
+    if (!activeArtifact) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [activeArtifact]);
 
   if (!activeArtifact) {
     return null;
@@ -46,11 +62,14 @@ export function ArtifactPreviewSheet() {
       <button
         type="button"
         aria-label="Close preview"
-        className="absolute inset-0 cursor-default"
+        className="absolute inset-0 cursor-pointer"
         onClick={closeArtifact}
       />
 
-      <div className="relative flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl">
+      <div
+        className="relative flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
           <div className="min-w-0">
             <p className="text-xs tracking-wide text-white/45 uppercase">
@@ -64,6 +83,7 @@ export function ArtifactPreviewSheet() {
             </p>
           </div>
           <Button
+            ref={closeButtonRef}
             type="button"
             variant="brandSecondary"
             size="pillSm"

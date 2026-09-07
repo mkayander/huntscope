@@ -114,7 +114,10 @@ export function DashboardSection({
       id={id}
       data-dashboard-section={id}
       aria-label={label}
-      className={cn("scroll-mt-36 xl:scroll-mt-28", className)}
+      className={cn(
+        "scroll-mt-[calc(var(--dashboard-header-height,4.75rem)+1rem)]",
+        className,
+      )}
     >
       {children}
     </section>

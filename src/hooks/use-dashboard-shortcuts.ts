@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { resolveDashboardShortcutAction } from "~/lib/dashboard/shortcut-actions";
+
 type UseDashboardShortcutsOptions = {
   artifactOpen: boolean;
   onCloseArtifact: () => void;
@@ -14,30 +16,27 @@ export function useDashboardShortcuts({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target;
+      const action = resolveDashboardShortcutAction(
+        {
+          key: event.key,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+          target: {
+            tagName: target instanceof HTMLElement ? target.tagName : "",
+            isContentEditable:
+              target instanceof HTMLElement ? target.isContentEditable : false,
+          },
+          preventDefault: () => event.preventDefault(),
+        },
+        artifactOpen,
+      );
 
-      if (
-        target instanceof HTMLElement &&
-        (target.isContentEditable ||
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT")
-      ) {
-        if (event.key === "Escape" && artifactOpen) {
-          event.preventDefault();
-          onCloseArtifact();
-        }
-
-        return;
-      }
-
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
+      if (action === "focus-search") {
         document.getElementById("tracker-search")?.focus();
         return;
       }
 
-      if (event.key === "Escape" && artifactOpen) {
-        event.preventDefault();
+      if (action === "close-artifact") {
         onCloseArtifact();
       }
     };

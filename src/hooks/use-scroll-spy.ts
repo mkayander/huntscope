@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { readDashboardHeaderScrollOffset } from "~/lib/dashboard/header-height";
 import { DASHBOARD_SECTION_SCROLL_OFFSET } from "~/lib/dashboard/sections";
 
 type UseScrollSpyOptions = {
@@ -11,9 +12,32 @@ type UseScrollSpyOptions = {
 
 export function useScrollSpy({
   sectionIds,
-  offset = DASHBOARD_SECTION_SCROLL_OFFSET,
+  offset: offsetOverride,
 }: UseScrollSpyOptions) {
-  const [activeId, setActiveId] = useState<string | null>(sectionIds[0] ?? null);
+  const [activeId, setActiveId] = useState<string | null>(
+    sectionIds[0] ?? null,
+  );
+  const [offset, setOffset] = useState(
+    offsetOverride ?? DASHBOARD_SECTION_SCROLL_OFFSET,
+  );
+
+  useEffect(() => {
+    if (offsetOverride != null) {
+      setOffset(offsetOverride);
+      return;
+    }
+
+    const updateOffset = () => {
+      setOffset(readDashboardHeaderScrollOffset());
+    };
+
+    updateOffset();
+    window.addEventListener("resize", updateOffset);
+
+    return () => {
+      window.removeEventListener("resize", updateOffset);
+    };
+  }, [offsetOverride]);
 
   useEffect(() => {
     if (sectionIds.length === 0) {
