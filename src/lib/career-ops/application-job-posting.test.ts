@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -6,7 +9,10 @@ import {
   getRoleDisplayLabel,
   resolveJobPostingUrl,
 } from "~/lib/career-ops/application-job-posting";
-import type { ApplicationEntry } from "~/lib/career-ops/types";
+import { getApplicationReportRef } from "~/lib/career-ops/application-reports";
+import { parseApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
+import { parseReportMarkdown } from "~/lib/career-ops/parse-report";
+import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
 const application: ApplicationEntry = {
   num: 1,
@@ -19,6 +25,14 @@ const application: ApplicationEntry = {
   report: "reports/001-acme-2026-01-15.md",
   notes: "",
 };
+
+const reportFiles: RepoDataFile[] = [
+  {
+    path: "reports/001-acme-2026-01-15.md",
+    name: "001-acme-2026-01-15.md",
+    type: "file",
+  },
+];
 
 describe("getRoleDisplayLabel", () => {
   it("returns the markdown label when the role is a link", () => {
@@ -88,5 +102,30 @@ describe("resolveJobPostingUrl", () => {
 
   it("returns null when no url is available", () => {
     expect(resolveJobPostingUrl(application, null)).toBeNull();
+  });
+});
+
+describe("fixture report metadata", () => {
+  it("resolves posting urls from linked evaluation reports", () => {
+    const applications = parseApplicationsMarkdown(
+      readFileSync(
+        join(process.cwd(), "fixtures/sample-career-repo/data/applications.md"),
+        "utf8",
+      ),
+    );
+    const acme = applications.find((entry) => entry.company === "Acme Corp");
+
+    expect(acme).toBeDefined();
+
+    const reportRef = getApplicationReportRef(acme!, reportFiles);
+    const reportContent = readFileSync(
+      join(process.cwd(), "fixtures/sample-career-repo", reportRef!.path),
+      "utf8",
+    );
+
+    expect(
+      resolveJobPostingUrl(acme!, parseReportMarkdown(reportContent).sourceUrl),
+    ).toBe("https://example.com/jobs/acme-backend");
+    expect(getRoleDisplayLabel(acme!.role)).toBe("Backend Engineer");
   });
 });
