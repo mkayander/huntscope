@@ -125,7 +125,10 @@ export function TrackerPanel({
       return {
         ...current,
         sortColumn: column,
-        sortDirection: column === "num" || column === "date" ? "desc" : "asc",
+        sortDirection:
+          column === "num" || column === "date" || column === "score"
+            ? "desc"
+            : "asc",
       };
     });
   };

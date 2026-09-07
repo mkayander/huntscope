@@ -22,7 +22,7 @@ export type TrackerTableQuery = {
 export const DEFAULT_TRACKER_TABLE_QUERY: TrackerTableQuery = {
   reportFilters: [],
   pdfFilters: [],
-  sortColumn: "num",
+  sortColumn: "score",
   sortDirection: "desc",
 };
 
