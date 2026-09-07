@@ -1,29 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Huntscope">
   <defs>
-    <linearGradient id="hs-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="hs-bg-mask" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#2e026d" />
       <stop offset="100%" stop-color="#15162c" />
     </linearGradient>
-    <radialGradient id="hs-bg-glow" cx="50%" cy="42%" r="58%">
-      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35" />
+    <radialGradient id="hs-bg-glow-mask" cx="50%" cy="42%" r="58%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28" />
       <stop offset="100%" stop-color="#15162c" stop-opacity="0" />
     </radialGradient>
-    <linearGradient id="hs-ring-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="hs-ring-stroke-mask" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#ddd6fe" />
       <stop offset="100%" stop-color="#a78bfa" />
     </linearGradient>
-    <linearGradient id="hs-tab-fill" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="hs-tab-fill-mask" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" />
       <stop offset="100%" stop-color="#c4b5fd" />
     </linearGradient>
-    <filter id="hs-soft-glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
+    <filter id="hs-soft-glow-mask" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
       <feMerge>
         <feMergeNode in="blur" />
         <feMergeNode in="SourceGraphic" />
       </feMerge>
     </filter>
-    <filter id="hs-grid-glow" x="-80%" y="-80%" width="260%" height="260%">
+    <filter id="hs-grid-glow-mask" x="-80%" y="-80%" width="260%" height="260%">
       <feGaussianBlur stdDeviation="3" result="blur" />
       <feMerge>
         <feMergeNode in="blur" />
@@ -32,15 +32,15 @@
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="112" fill="url(#hs-bg)" />
-  <rect width="512" height="512" rx="112" fill="url(#hs-bg-glow)" />
+  <rect width="512" height="512" fill="url(#hs-bg-mask)" />
+  <rect width="512" height="512" fill="url(#hs-bg-glow-mask)" />
 
-  <g transform="translate(256 256)" filter="url(#hs-soft-glow)">
-    <circle r="198" fill="none" stroke="url(#hs-ring-stroke)" stroke-width="10" stroke-linecap="round" />
-    <rect x="-16" y="-228" width="32" height="52" rx="16" fill="url(#hs-tab-fill)" />
-    <rect x="-16" y="176" width="32" height="52" rx="16" fill="url(#hs-tab-fill)" />
-    <rect x="-228" y="-16" width="52" height="32" rx="16" fill="url(#hs-tab-fill)" />
-    <rect x="176" y="-16" width="52" height="32" rx="16" fill="url(#hs-tab-fill)" />
+  <g transform="translate(256 256) scale(0.82)" filter="url(#hs-soft-glow-mask)">
+    <circle r="198" fill="none" stroke="url(#hs-ring-stroke-mask)" stroke-width="10" stroke-linecap="round" />
+    <rect x="-16" y="-228" width="32" height="52" rx="16" fill="url(#hs-tab-fill-mask)" />
+    <rect x="-16" y="176" width="32" height="52" rx="16" fill="url(#hs-tab-fill-mask)" />
+    <rect x="-228" y="-16" width="52" height="32" rx="16" fill="url(#hs-tab-fill-mask)" />
+    <rect x="176" y="-16" width="52" height="32" rx="16" fill="url(#hs-tab-fill-mask)" />
 
     <g>
       <path d="M -10,-132 L 10,-132 L 88,-36 L 88,36 L 10,132 L -10,132 Z" fill="#14082a" stroke="#2a1550" stroke-width="1.5" />
@@ -51,8 +51,7 @@
       <path d="M -10,-132 L 10,-132 L 88,-36 L 88,36 L 10,132 L -10,132 Z" fill="#14082a" stroke="#2a1550" stroke-width="1.5" transform="rotate(300)" />
     </g>
 
-    <g transform="translate(-54 -54)" filter="url(#hs-grid-glow)">
-      <!-- H letter: bright side columns + crossbar, recessed mid top/bottom -->
+    <g transform="translate(-54 -54)" filter="url(#hs-grid-glow-mask)">
       <rect x="0" y="0" width="32" height="32" rx="8" fill="#c4b5fd" />
       <rect x="38" y="0" width="32" height="32" rx="8" fill="#120828" opacity="0.5" />
       <rect x="76" y="0" width="32" height="32" rx="8" fill="#c4b5fd" />
