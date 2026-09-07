@@ -1,7 +1,7 @@
 import type { SVGProps } from "react";
 
 import {
-  getHuntscopeGridCellPosition,
+  getHuntscopeGridCellBounds,
   HUNTSCOPE_GRID,
   HUNTSCOPE_H_GRID,
   HUNTSCOPE_IRIS_BLADE_PATH,
@@ -21,19 +21,20 @@ function HuntscopeGrid({
   scale?: number;
   idPrefix?: string;
 }) {
-  const { cellSize, radius } = HUNTSCOPE_GRID;
-
   return (
     <g filter={`url(#${idPrefix}-grid-glow)`}>
       {HUNTSCOPE_H_GRID.map((cell) => {
-        const { x, y } = getHuntscopeGridCellPosition(cell.col, cell.row);
+        const { x, y, width, height, radius } = getHuntscopeGridCellBounds(
+          cell.col,
+          cell.row,
+        );
         return (
           <rect
             key={`${cell.col}-${cell.row}`}
             x={x * scale}
             y={y * scale}
-            width={cellSize * scale}
-            height={cellSize * scale}
+            width={width * scale}
+            height={height * scale}
             rx={radius * scale}
             fill={cell.fill}
             opacity={cell.opacity}
@@ -188,7 +189,7 @@ function BackgroundDefs({ idPrefix = "hs" }: { idPrefix?: string }) {
   );
 }
 
-const SIMPLE_GRID_SCALE = 2.8 / HUNTSCOPE_GRID.cellSize;
+const SIMPLE_GRID_SCALE = 2.8 / HUNTSCOPE_GRID.sideCellSize;
 const SIMPLE_RETICLE_SCALE = 12.5 / 198;
 
 /** Inline Huntscope reticle mark — matches PWA / favicon artwork. */

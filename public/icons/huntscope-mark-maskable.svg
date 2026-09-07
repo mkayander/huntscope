@@ -51,16 +51,16 @@
       <path d="M -10,-132 L 10,-132 L 88,-36 L 88,36 L 10,132 L -10,132 Z" fill="#14082a" stroke="#2a1550" stroke-width="1.5" transform="rotate(300)" />
     </g>
 
-    <g transform="translate(-54 -54)" filter="url(#hs-grid-glow-mask)">
-      <rect x="0" y="0" width="32" height="32" rx="8" fill="#c4b5fd" />
-      <rect x="38" y="0" width="32" height="32" rx="8" fill="#4c1d95" />
-      <rect x="76" y="0" width="32" height="32" rx="8" fill="#c4b5fd" />
-      <rect x="0" y="38" width="32" height="32" rx="8" fill="#ddd6fe" />
-      <rect x="38" y="38" width="32" height="32" rx="8" fill="#ffffff" />
-      <rect x="76" y="38" width="32" height="32" rx="8" fill="#ddd6fe" />
-      <rect x="0" y="76" width="32" height="32" rx="8" fill="#a78bfa" />
-      <rect x="38" y="76" width="32" height="32" rx="8" fill="#4c1d95" />
-      <rect x="76" y="76" width="32" height="32" rx="8" fill="#a78bfa" />
+    <g transform="translate(-53 -53)" filter="url(#hs-grid-glow-mask)">
+      <rect x="0" y="0" width="28" height="28" rx="7" fill="#c4b5fd" />
+      <rect x="33" y="0" width="40" height="28" rx="8" fill="#4c1d95" />
+      <rect x="78" y="0" width="28" height="28" rx="7" fill="#c4b5fd" />
+      <rect x="0" y="33" width="28" height="40" rx="8" fill="#ddd6fe" />
+      <rect x="33" y="33" width="40" height="40" rx="8" fill="#ffffff" />
+      <rect x="78" y="33" width="28" height="40" rx="8" fill="#ddd6fe" />
+      <rect x="0" y="78" width="28" height="28" rx="7" fill="#a78bfa" />
+      <rect x="33" y="78" width="40" height="28" rx="8" fill="#4c1d95" />
+      <rect x="78" y="78" width="28" height="28" rx="7" fill="#a78bfa" />
     </g>
   </g>
 </svg>

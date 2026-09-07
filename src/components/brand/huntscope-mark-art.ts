@@ -19,25 +19,61 @@ export const HUNTSCOPE_H_GRID: HuntscopeGridCell[] = [
 ];
 
 export const HUNTSCOPE_GRID = {
-  cellSize: 32,
-  gap: 6,
-  radius: 8,
+  sideCellSize: 28,
+  centerCellSize: 40,
+  gap: 5,
+  sideRadius: 7,
+  centerRadius: 8,
 } as const;
 
-export function getHuntscopeGridOrigin(totalCells = 3) {
-  const span =
-    totalCells * HUNTSCOPE_GRID.cellSize +
-    (totalCells - 1) * HUNTSCOPE_GRID.gap;
-  return -span / 2;
+const COL_WIDTHS = [
+  HUNTSCOPE_GRID.sideCellSize,
+  HUNTSCOPE_GRID.centerCellSize,
+  HUNTSCOPE_GRID.sideCellSize,
+] as const;
+
+const ROW_HEIGHTS = [
+  HUNTSCOPE_GRID.sideCellSize,
+  HUNTSCOPE_GRID.centerCellSize,
+  HUNTSCOPE_GRID.sideCellSize,
+] as const;
+
+export function getHuntscopeGridSpan() {
+  const { gap } = HUNTSCOPE_GRID;
+  const width =
+    COL_WIDTHS.reduce((sum, size) => sum + size, 0) +
+    gap * (COL_WIDTHS.length - 1);
+  const height =
+    ROW_HEIGHTS.reduce((sum, size) => sum + size, 0) +
+    gap * (ROW_HEIGHTS.length - 1);
+
+  return { width, height };
 }
 
-export function getHuntscopeGridCellPosition(col: number, row: number) {
-  const origin = getHuntscopeGridOrigin();
-  const step = HUNTSCOPE_GRID.cellSize + HUNTSCOPE_GRID.gap;
-  return {
-    x: origin + col * step,
-    y: origin + row * step,
-  };
+export function getHuntscopeGridOrigin() {
+  const { width, height } = getHuntscopeGridSpan();
+  return { x: -width / 2, y: -height / 2 };
+}
+
+export function getHuntscopeGridCellBounds(col: number, row: number) {
+  const { gap, sideRadius, centerRadius } = HUNTSCOPE_GRID;
+  const { x: originX, y: originY } = getHuntscopeGridOrigin();
+
+  let x = originX;
+  for (let c = 0; c < col; c++) {
+    x += COL_WIDTHS[c]! + gap;
+  }
+
+  let y = originY;
+  for (let r = 0; r < row; r++) {
+    y += ROW_HEIGHTS[r]! + gap;
+  }
+
+  const width = COL_WIDTHS[col]!;
+  const height = ROW_HEIGHTS[row]!;
+  const radius = col === 1 || row === 1 ? centerRadius : sideRadius;
+
+  return { x, y, width, height, radius };
 }
 
 export const HUNTSCOPE_IRIS_BLADE_PATH =
