@@ -4,7 +4,6 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "~/components/ui/button";
-import { ACTIVITY_LEVEL_CLASS_NAMES } from "~/lib/career-ops/activity-levels";
 import {
   buildApplicationDateCounts,
   getApplicationDateActivityLevels,
