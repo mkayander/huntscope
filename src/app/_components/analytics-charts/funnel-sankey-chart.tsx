@@ -112,7 +112,7 @@ export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
       .select(svgElement)
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("role", "img")
-      .attr("aria-label", "Application funnel sankey chart");
+      .attr("aria-label", "Evaluation pipeline funnel sankey chart");
 
     svg.selectAll("*").remove();
 

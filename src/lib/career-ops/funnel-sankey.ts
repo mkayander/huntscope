@@ -12,6 +12,13 @@ const STATUS_COLORS: Record<string, string> = {
   SKIP: "#71717a",
 };
 
+const FLOW_NODE_IDS = new Set([
+  "evaluations",
+  "applied-flow",
+  "responded-flow",
+  "interview-flow",
+]);
+
 function getStatusColor(status: string): string {
   return STATUS_COLORS[status] ?? "#c4b5fd";
 }
@@ -88,6 +95,47 @@ function pushLink(
   }
 }
 
+export function validateFunnelSankeyFlow(
+  links: FunnelSankeyLink[],
+  total: number,
+): boolean {
+  const incoming = new Map<string, number>();
+  const outgoing = new Map<string, number>();
+
+  for (const link of links) {
+    outgoing.set(link.source, (outgoing.get(link.source) ?? 0) + link.value);
+    incoming.set(link.target, (incoming.get(link.target) ?? 0) + link.value);
+  }
+
+  if ((outgoing.get(ROOT_NODE_ID) ?? 0) !== total) {
+    return false;
+  }
+
+  const nodeIds = new Set([...incoming.keys(), ...outgoing.keys()]);
+
+  for (const nodeId of nodeIds) {
+    if (nodeId === ROOT_NODE_ID) {
+      continue;
+    }
+
+    const inflow = incoming.get(nodeId) ?? 0;
+    const outflow = outgoing.get(nodeId) ?? 0;
+
+    if (FLOW_NODE_IDS.has(nodeId)) {
+      if (inflow !== outflow || inflow <= 0) {
+        return false;
+      }
+      continue;
+    }
+
+    if (outflow !== 0 || inflow <= 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function buildFunnelSankeyData(
   applications: ApplicationEntry[],
 ): FunnelSankeyData | null {
@@ -117,12 +165,8 @@ export function buildFunnelSankeyData(
   }
 
   const appliedFlowCount =
-    appliedCount +
-    discardedCount +
-    rejectedCount +
-    respondedCount +
-    interviewCount +
-    offerCount;
+    appliedCount + rejectedCount + respondedCount + interviewCount + offerCount;
+  const appliedStageCount = appliedFlowCount + unknownCount;
   const respondedFlowCount = respondedCount + interviewCount + offerCount;
   const interviewFlowCount = interviewCount + offerCount;
 
@@ -139,20 +183,17 @@ export function buildFunnelSankeyData(
   pushLink(
     links,
     ROOT_NODE_ID,
+    "discarded",
+    discardedCount,
+    getStatusColor("Discarded"),
+  );
+  pushLink(
+    links,
+    ROOT_NODE_ID,
     APPLIED_FLOW_NODE_ID,
-    appliedFlowCount,
+    appliedStageCount,
     getStatusColor("Applied"),
   );
-
-  if (unknownCount > 0) {
-    pushLink(
-      links,
-      ROOT_NODE_ID,
-      "other",
-      unknownCount,
-      getStatusColor("Discarded"),
-    );
-  }
 
   pushLink(
     links,
@@ -164,17 +205,19 @@ export function buildFunnelSankeyData(
   pushLink(
     links,
     APPLIED_FLOW_NODE_ID,
-    "discarded",
-    discardedCount,
-    getStatusColor("Discarded"),
-  );
-  pushLink(
-    links,
-    APPLIED_FLOW_NODE_ID,
     "rejected",
     rejectedCount,
     getStatusColor("Rejected"),
   );
+  if (unknownCount > 0) {
+    pushLink(
+      links,
+      APPLIED_FLOW_NODE_ID,
+      "other",
+      unknownCount,
+      getStatusColor("Discarded"),
+    );
+  }
   pushLink(
     links,
     APPLIED_FLOW_NODE_ID,
@@ -213,7 +256,7 @@ export function buildFunnelSankeyData(
     getStatusColor("Offer"),
   );
 
-  if (links.length === 0) {
+  if (links.length === 0 || !validateFunnelSankeyFlow(links, total)) {
     return null;
   }
 
@@ -235,24 +278,28 @@ export function buildFunnelSankeyData(
   if (nodeIds.has("skip")) {
     nodes.push(createNode("skip", "Skipped", getStatusColor("SKIP")));
   }
+  if (nodeIds.has("discarded")) {
+    nodes.push(
+      createNode("discarded", "Discarded", getStatusColor("Discarded")),
+    );
+  }
   if (nodeIds.has(APPLIED_FLOW_NODE_ID)) {
     nodes.push(
       createNode(APPLIED_FLOW_NODE_ID, "Applied", getStatusColor("Applied")),
     );
   }
   if (nodeIds.has("applied")) {
-    nodes.push(createNode("applied", "Applied", getStatusColor("Applied")));
-  }
-  if (nodeIds.has("discarded")) {
     nodes.push(
-      createNode("discarded", "Discarded", getStatusColor("Discarded")),
+      createNode("applied", "Awaiting response", getStatusColor("Applied")),
     );
   }
   if (nodeIds.has("rejected")) {
     nodes.push(createNode("rejected", "Rejected", getStatusColor("Rejected")));
   }
   if (nodeIds.has("other")) {
-    nodes.push(createNode("other", "Other", getStatusColor("Discarded")));
+    nodes.push(
+      createNode("other", "Other status", getStatusColor("Discarded")),
+    );
   }
   if (nodeIds.has(RESPONDED_FLOW_NODE_ID)) {
     nodes.push(
@@ -264,9 +311,7 @@ export function buildFunnelSankeyData(
     );
   }
   if (nodeIds.has("responded")) {
-    nodes.push(
-      createNode("responded", "Responded", getStatusColor("Responded")),
-    );
+    nodes.push(createNode("responded", "Active", getStatusColor("Responded")));
   }
   if (nodeIds.has(INTERVIEW_FLOW_NODE_ID)) {
     nodes.push(
@@ -279,19 +324,11 @@ export function buildFunnelSankeyData(
   }
   if (nodeIds.has("interview")) {
     nodes.push(
-      createNode("interview", "Interview", getStatusColor("Interview")),
+      createNode("interview", "In progress", getStatusColor("Interview")),
     );
   }
   if (nodeIds.has("offer")) {
     nodes.push(createNode("offer", "Offer", getStatusColor("Offer")));
-  }
-
-  const rootOutgoingTotal = links
-    .filter((link) => link.source === ROOT_NODE_ID)
-    .reduce((sum, link) => sum + link.value, 0);
-
-  if (rootOutgoingTotal !== total) {
-    return null;
   }
 
   return { nodes, links };
