@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { FeedbackRegion } from "~/app/_components/feedback-region";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
@@ -11,13 +12,17 @@ import {
   PanelButtonSkeleton,
 } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
+import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { useHomeShell } from "~/hooks/use-home-shell";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { authClient } from "~/lib/auth-client";
+import { performSignOut } from "~/lib/auth/sign-out";
 import { useGitHubInstallStatus } from "~/hooks/use-github-install-status";
 
 export function AuthButton() {
   const hasMounted = useHasMounted();
+  const queryClient = useQueryClient();
+  const { activeSource, hasGitHubSource } = useCareerOpsDataSource();
   const { isSignedIn: initialIsSignedIn, userLabel: initialUserLabel } =
     useHomeShell();
   const { data: session, isPending } = authClient.useSession();
@@ -44,7 +49,9 @@ export function AuthButton() {
           ? "Redirecting to GitHub"
           : "Sign in with GitHub";
 
-  const isBusy = isPending || isSigningIn || isSigningOut;
+  const isAuthActionBusy = isSigningIn || isSigningOut;
+  const isBusy =
+    isAuthActionBusy || (isPending && !isAuthenticated && !initialIsSignedIn);
 
   const feedbackErrorTitle = signOutError
     ? "Could not sign out"
@@ -86,13 +93,15 @@ export function AuthButton() {
           if (isAuthenticated) {
             setSignOutError(null);
             setIsSigningOut(true);
-            void authClient
-              .signOut()
-              .then(({ error }) => {
-                if (error) {
-                  setSignOutError(
-                    error.message ?? "Sign-out failed. Try again.",
-                  );
+            void performSignOut({
+              queryClient,
+              clearGitHubInstallStatus,
+              clearGitHubCache:
+                activeSource?.kind === "github" || hasGitHubSource,
+            })
+              .then((result) => {
+                if (!result.ok) {
+                  setSignOutError(result.errorMessage);
                 }
               })
               .catch(() => {

@@ -3,8 +3,7 @@
 import { ActionButtonRow } from "~/app/_components/action-button-row";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { DataPreview } from "~/app/_components/data-preview";
-import { GitHubInstallLink } from "~/app/_components/github-install-link";
-import { GitHubInstallStatusBanner } from "~/app/_components/github-install-status-banner";
+import { GitHubInstallButton } from "~/app/_components/github-install-button";
 import {
   GitHubInstallationHealthCheckError,
   useGitHubInstallationHealthCheck,
@@ -12,6 +11,7 @@ import {
 import {
   PanelDescriptionSlot,
   PanelPrimaryActionSlot,
+  StableButtonLabel,
 } from "~/app/_components/panel-content-slots";
 import {
   PanelButtonSkeleton,
@@ -44,8 +44,6 @@ function GitHubRepoConnected() {
 
   return (
     <>
-      <GitHubInstallStatusBanner />
-
       {connection.repositories.length > 1 ? (
         <p className="text-center text-sm text-amber-200">
           Multiple repositories were selected during install. Huntscope
@@ -75,9 +73,14 @@ function GitHubRepoConnected() {
       ) : null}
 
       <ActionButtonRow centered>
-        <Button asChild variant="brandSecondary" size="pill">
-          <GitHubInstallLink>Change repository</GitHubInstallLink>
-        </Button>
+        <GitHubInstallButton
+          variant="brandSecondary"
+          size="pill"
+          loadingLabel="Opening GitHub…"
+          labelPlaceholder="Opening GitHub…"
+        >
+          Change repository
+        </GitHubInstallButton>
         <Button
           type="button"
           variant="brandSecondary"
@@ -85,14 +88,10 @@ function GitHubRepoConnected() {
           disabled={disconnect.isPending}
           onClick={() => disconnect.mutate()}
         >
-          {disconnect.isPending ? (
-            <>
-              <ButtonLoadingIcon isLoading />
-              Disconnecting…
-            </>
-          ) : (
-            "Disconnect"
-          )}
+          <ButtonLoadingIcon isLoading={disconnect.isPending} />
+          <StableButtonLabel placeholder="Disconnecting…">
+            {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
+          </StableButtonLabel>
         </Button>
       </ActionButtonRow>
     </>
@@ -124,7 +123,6 @@ function GitHubRepoSignedOut({
 function GitHubRepoSignedInIdle() {
   return (
     <>
-      <GitHubInstallStatusBanner />
       <PanelDescriptionSlot variant="landing">
         <p className="text-sm text-white/70">
           Install the Huntscope GitHub App on one selected repository. Huntscope
@@ -132,14 +130,13 @@ function GitHubRepoSignedInIdle() {
         </p>
       </PanelDescriptionSlot>
       <PanelPrimaryActionSlot centered>
-        <Button
-          asChild
+        <GitHubInstallButton
           variant="brand"
           size="cta"
           className={LANDING_CTA_BUTTON_CLASS}
         >
-          <GitHubInstallLink>Connect GitHub repository</GitHubInstallLink>
-        </Button>
+          Connect GitHub repository
+        </GitHubInstallButton>
       </PanelPrimaryActionSlot>
     </>
   );
@@ -185,7 +182,6 @@ function GitHubRepoSignedIn() {
   return (
     <>
       <GitHubInstallationHealthCheckError message={errorMessage} />
-      <GitHubInstallStatusBanner />
       <GitHubRepoSignedInIdle />
     </>
   );

@@ -5,8 +5,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { FeedbackRegion } from "~/app/_components/feedback-region";
-import { GitHubInstallLink } from "~/app/_components/github-install-link";
-import { GitHubInstallStatusBanner } from "~/app/_components/github-install-status-banner";
+import { GitHubInstallButton } from "~/app/_components/github-install-button";
+import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import {
   GitHubInstallationHealthCheckError,
   useGitHubInstallationHealthCheck,
@@ -14,7 +14,6 @@ import {
 import { PanelButtonSkeleton } from "~/app/_components/panel-loading-skeleton";
 import { Button } from "~/components/ui/button";
 import { GlowPanel } from "~/components/ui/glow-panel";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
   Select,
@@ -26,6 +25,7 @@ import {
 import { Skeleton } from "~/components/ui/skeleton";
 import {
   usePersistSelectedRepo,
+  useRepoDataQuery,
   useSelectedRepoQuery,
 } from "~/hooks/use-career-ops-repo";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
@@ -34,7 +34,6 @@ import { useHasMounted } from "~/hooks/use-has-mounted";
 import { toGitHubDataSource } from "~/lib/career-ops/data-source";
 import { toSelectedRepo } from "~/lib/career-ops/selected-repo";
 import type { GitHubRepoSummary } from "~/lib/career-ops/types";
-import { filterRepos, hasActiveRepoFilter } from "~/lib/career-ops/repo-list";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import {
   githubListReposQueryOptions,
@@ -66,11 +65,6 @@ function RepoSelectorLoadingContent() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Skeleton className="h-4 w-36 bg-white/10" />
-          <Skeleton className="h-10 w-full bg-white/10" />
-          <Skeleton className="h-3 w-40 bg-white/10" />
-        </div>
         <div className="flex flex-col gap-2">
           <Skeleton className="h-4 w-24 bg-white/10" />
           <Skeleton className="h-10 w-full bg-white/10" />
@@ -99,7 +93,6 @@ function RepoSelectorNoConnectionContent() {
   return (
     <div className="flex flex-col gap-4">
       <GitHubInstallationHealthCheckError message={errorMessage} />
-      <GitHubInstallStatusBanner />
       <div className="flex flex-col gap-1.5">
         <h2 className="text-xl font-semibold text-white">
           Connect a repository
@@ -109,9 +102,13 @@ function RepoSelectorNoConnectionContent() {
           career-ops data.
         </p>
       </div>
-      <Button asChild variant="brandSecondary" size="pill" className="w-fit">
-        <GitHubInstallLink>Connect GitHub repository</GitHubInstallLink>
-      </Button>
+      <GitHubInstallButton
+        variant="brandSecondary"
+        size="pill"
+        className="w-fit"
+      >
+        Connect GitHub repository
+      </GitHubInstallButton>
     </div>
   );
 }
@@ -120,7 +117,6 @@ export function RepoSelector() {
   const hasMounted = useHasMounted();
   const { isSignedIn: initialIsSignedIn } = useHomeShell();
   const [selectionError, setSelectionError] = useState<string | null>(null);
-  const [repoFilterQuery, setRepoFilterQuery] = useState("");
   const utils = api.useUtils();
 
   const connectionQuery = api.github.getConnection.useQuery(undefined, {
@@ -135,6 +131,7 @@ export function RepoSelector() {
     ),
   );
   const selectedRepoQuery = useSelectedRepoQuery();
+  const repoDataQuery = useRepoDataQuery(selectedRepoQuery.data);
   const { selectRepo, persistRepo } = usePersistSelectedRepo();
   const { setActiveSource } = useCareerOpsDataSource();
 
@@ -143,24 +140,20 @@ export function RepoSelector() {
 
   const activeFullName = selectedRepo?.fullName ?? "";
   const isRepoChosen = activeFullName.length > 0;
-  const filteredRepos = useMemo(
-    () =>
-      filterRepos(repos, repoFilterQuery, {
-        alwaysIncludeFullName: activeFullName,
-      }),
-    [activeFullName, repoFilterQuery, repos],
-  );
-  const isRepoFilterActive = hasActiveRepoFilter(repoFilterQuery);
   const isRepoListRateLimited =
     reposQuery.error != null && isGitHubRateLimitTrpcError(reposQuery.error);
 
+  const isReloading = repoDataQuery.isRefetching && !selectRepo.isPending;
+
   const feedbackHint = selectRepo.isPending
     ? "Saving repository selection and loading data…"
-    : isRepoListRateLimited
-      ? "Showing cached repositories while GitHub rate limit resets."
-      : !isRepoChosen
-        ? "Choose a career-ops repository to load your dashboard."
-        : null;
+    : isReloading
+      ? "Reloading repository data…"
+      : isRepoListRateLimited
+        ? "Showing cached repositories while GitHub rate limit resets."
+        : !isRepoChosen
+          ? "Choose a career-ops repository to load your dashboard."
+          : null;
 
   const feedbackErrorTitle = selectRepo.error
     ? "Could not save repository selection"
@@ -306,59 +299,29 @@ export function RepoSelector() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5 text-left">
-                <Label htmlFor="repo-filter" className="text-white/80">
-                  Filter repositories
-                </Label>
-                <Input
-                  id="repo-filter"
-                  value={repoFilterQuery}
-                  onChange={(event) => {
-                    setRepoFilterQuery(event.target.value);
-                  }}
-                  placeholder="Search by owner, name, or description…"
-                  className="border-white/15 bg-[#15162c] text-white placeholder:text-white/40"
-                />
-                <p className="text-xs text-white/50" id="repo-filter-results">
-                  {isRepoFilterActive
-                    ? `Showing ${filteredRepos.length} of ${repos.length} repositories`
-                    : `${repos.length} repositories`}
-                </p>
-              </div>
-
               <div className="flex flex-col gap-2 text-left">
                 <Label htmlFor="repo-select" className="text-white/80">
                   Repository
                 </Label>
-                {filteredRepos.length === 0 ? (
-                  <p className="rounded-lg border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-sm text-amber-100">
-                    No repositories match &ldquo;{repoFilterQuery.trim()}
-                    &rdquo;. Try a different search.
-                  </p>
-                ) : (
-                  <Select
-                    value={activeFullName || EMPTY_REPO_VALUE}
-                    onValueChange={handleRepoChange}
-                  >
-                    <SelectTrigger
-                      id="repo-select"
-                      className="w-full border-white/15 bg-[#15162c]"
-                      aria-describedby="repo-filter-results"
-                    >
-                      <SelectValue placeholder="Select a repository…" />
-                    </SelectTrigger>
-                    <SelectContent className="border-white/15 bg-[#15162c] text-white">
-                      <SelectItem value={EMPTY_REPO_VALUE}>
-                        Select a repository…
+                <Select
+                  variant="dashboard"
+                  value={activeFullName || EMPTY_REPO_VALUE}
+                  onValueChange={handleRepoChange}
+                >
+                  <SelectTrigger id="repo-select" className="w-full">
+                    <SelectValue placeholder="Select a repository…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={EMPTY_REPO_VALUE}>
+                      Select a repository…
+                    </SelectItem>
+                    {repos.map((repo) => (
+                      <SelectItem key={repo.id} value={repo.fullName}>
+                        {formatRepoOption(repo)}
                       </SelectItem>
-                      {filteredRepos.map((repo) => (
-                        <SelectItem key={repo.id} value={repo.fullName}>
-                          {formatRepoOption(repo)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -368,18 +331,27 @@ export function RepoSelector() {
                   type="button"
                   variant="brandSecondary"
                   size="pill"
-                  disabled={!selectedRepo || selectRepo.isPending}
+                  disabled={
+                    !selectedRepo || selectRepo.isPending || isReloading
+                  }
                   onClick={handleReload}
                 >
-                  {selectRepo.isPending ? (
-                    <ButtonLoadingIcon isLoading />
-                  ) : null}
-                  Reload data
+                  <ButtonLoadingIcon
+                    isLoading={selectRepo.isPending || isReloading}
+                  />
+                  <StableButtonLabel placeholder="Reload data">
+                    Reload data
+                  </StableButtonLabel>
                 </Button>
 
-                <Button asChild variant="outline" size="pill">
-                  <GitHubInstallLink>Change installation</GitHubInstallLink>
-                </Button>
+                <GitHubInstallButton
+                  variant="outline"
+                  size="pill"
+                  loadingLabel="Opening GitHub…"
+                  labelPlaceholder="Opening GitHub…"
+                >
+                  Change installation
+                </GitHubInstallButton>
 
                 <p className="min-w-[12rem] text-sm text-white/70">
                   {selectedRepo ? (

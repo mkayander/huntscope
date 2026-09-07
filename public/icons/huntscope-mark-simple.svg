@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Huntscope">
+  <defs>
+    <linearGradient id="hs-bg-sm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2e026d" />
+      <stop offset="100%" stop-color="#15162c" />
+    </linearGradient>
+    <linearGradient id="hs-ring-sm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ddd6fe" />
+      <stop offset="100%" stop-color="#a78bfa" />
+    </linearGradient>
+    <linearGradient id="hs-tab-sm" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#c4b5fd" />
+    </linearGradient>
+  </defs>
+
+  <rect width="32" height="32" rx="7" fill="url(#hs-bg-sm)" />
+
+  <g transform="translate(16 16)">
+    <circle r="12.5" fill="none" stroke="url(#hs-ring-sm)" stroke-width="1.6" />
+    <rect x="-1.2" y="-14.8" width="2.4" height="3.2" rx="1.2" fill="url(#hs-tab-sm)" />
+    <rect x="-1.2" y="11.6" width="2.4" height="3.2" rx="1.2" fill="url(#hs-tab-sm)" />
+    <rect x="-14.8" y="-1.2" width="3.2" height="2.4" rx="1.2" fill="url(#hs-tab-sm)" />
+    <rect x="11.6" y="-1.2" width="3.2" height="2.4" rx="1.2" fill="url(#hs-tab-sm)" />
+
+    <g transform="translate(-5.3 -5.3)">
+      <!-- H letter -->
+      <rect x="0" y="0" width="2.8" height="2.8" rx="0.7" fill="#c4b5fd" />
+      <rect x="3.3" y="0" width="4" height="2.8" rx="0.8" fill="#4c1d95" />
+      <rect x="7.8" y="0" width="2.8" height="2.8" rx="0.7" fill="#c4b5fd" />
+      <rect x="0" y="3.3" width="2.8" height="4" rx="0.8" fill="#ddd6fe" />
+      <rect x="3.3" y="3.3" width="4" height="4" rx="0.8" fill="#ffffff" />
+      <rect x="7.8" y="3.3" width="2.8" height="4" rx="0.8" fill="#ddd6fe" />
+      <rect x="0" y="7.8" width="2.8" height="2.8" rx="0.7" fill="#a78bfa" />
+      <rect x="3.3" y="7.8" width="4" height="2.8" rx="0.8" fill="#4c1d95" />
+      <rect x="7.8" y="7.8" width="2.8" height="2.8" rx="0.7" fill="#a78bfa" />
+    </g>
+  </g>
+</svg>
