@@ -6,7 +6,9 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
 import {
+  DASHBOARD_PDF_FILTER_OPTIONS,
   DASHBOARD_PERIOD_OPTIONS,
+  DASHBOARD_REPORT_FILTER_OPTIONS,
   DASHBOARD_SCORE_FILTER_OPTIONS,
   DEFAULT_DASHBOARD_FILTERS,
   formatDashboardFilterSummary,
@@ -20,19 +22,19 @@ import {
 } from "~/lib/career-ops/status-meta";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
-type DashboardFiltersBarProps = {
+type DashboardFiltersFormProps = {
   applications: ApplicationEntry[];
   filters: DashboardFilters;
   resultCount: number;
   onFiltersChange: (filters: DashboardFilters) => void;
 };
 
-export function DashboardFiltersBar({
+export function DashboardFiltersForm({
   applications,
   filters,
   resultCount,
   onFiltersChange,
-}: DashboardFiltersBarProps) {
+}: DashboardFiltersFormProps) {
   const statusOptions = sortStatuses(
     countApplicationsByStatus(applications),
   ).map((status) => ({
@@ -48,10 +50,18 @@ export function DashboardFiltersBar({
     filters.scoreFilters,
     DASHBOARD_SCORE_FILTER_OPTIONS,
   );
+  const reportSummary = formatDashboardFilterSummary(
+    filters.reportFilters,
+    DASHBOARD_REPORT_FILTER_OPTIONS,
+  );
+  const pdfSummary = formatDashboardFilterSummary(
+    filters.pdfFilters,
+    DASHBOARD_PDF_FILTER_OPTIONS,
+  );
 
   return (
-    <div className="mt-6 flex flex-col gap-4">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {DASHBOARD_PERIOD_OPTIONS.map((option) => (
             <Button
@@ -76,7 +86,7 @@ export function DashboardFiltersBar({
           type="button"
           variant="brandSecondary"
           size="pill"
-          className="w-full xl:w-auto"
+          className="w-full sm:w-auto"
           disabled={!hasActiveDashboardFilters(filters)}
           onClick={() => onFiltersChange(DEFAULT_DASHBOARD_FILTERS)}
         >
@@ -84,8 +94,8 @@ export function DashboardFiltersBar({
         </Button>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(9rem,1fr))] lg:items-end">
-        <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-1.5 sm:col-span-2">
           <div className="flex items-baseline justify-between gap-2">
             <Label htmlFor="dashboard-search" className="text-white/80">
               Search
@@ -126,6 +136,28 @@ export function DashboardFiltersBar({
             onFiltersChange({ ...filters, scoreFilters });
           }}
         />
+
+        <FilterMultiSelect
+          id="dashboard-report-filter"
+          label="Report"
+          options={DASHBOARD_REPORT_FILTER_OPTIONS}
+          selected={filters.reportFilters}
+          placeholder="All reports"
+          onChange={(reportFilters) => {
+            onFiltersChange({ ...filters, reportFilters });
+          }}
+        />
+
+        <FilterMultiSelect
+          id="dashboard-pdf-filter"
+          label="PDF"
+          options={DASHBOARD_PDF_FILTER_OPTIONS}
+          selected={filters.pdfFilters}
+          placeholder="All PDFs"
+          onChange={(pdfFilters) => {
+            onFiltersChange({ ...filters, pdfFilters });
+          }}
+        />
       </div>
 
       <p className="text-sm text-white/50">
@@ -133,6 +165,8 @@ export function DashboardFiltersBar({
         {` · period: ${getDashboardPeriodLabel(filters.periodWeeks)}`}
         {statusSummary ? ` · status: ${statusSummary}` : ""}
         {scoreSummary ? ` · score: ${scoreSummary}` : ""}
+        {reportSummary ? ` · report: ${reportSummary}` : ""}
+        {pdfSummary ? ` · pdf: ${pdfSummary}` : ""}
       </p>
     </div>
   );

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 
 import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { AnalyticsChartsPanel } from "~/app/_components/analytics-charts-panel";
-import { DashboardFiltersBar } from "~/app/_components/dashboard-filters-bar";
+import { DashboardFiltersControl } from "~/app/_components/dashboard-filters-control";
 import { DataFilesPanel } from "~/app/_components/data-files-panel";
 import { OutputFilesPanel } from "~/app/_components/output-files-panel";
 import { DashboardSection } from "~/app/_components/dashboard-section-nav";
@@ -78,9 +78,14 @@ function RepoDataContent({
   const filteredApplications = useMemo(
     () =>
       parsed
-        ? filterDashboardApplications(parsed.applications, dashboardFilters)
+        ? filterDashboardApplications(parsed.applications, dashboardFilters, {
+            repoFiles: {
+              reportFiles: raw?.reportFiles ?? [],
+              outputFiles: raw?.outputFiles ?? [],
+            },
+          })
         : [],
-    [dashboardFilters, parsed],
+    [dashboardFilters, parsed, raw?.outputFiles, raw?.reportFiles],
   );
   const filteredAnalytics = useMemo(
     () => computeApplicationAnalytics(filteredApplications),
@@ -157,13 +162,14 @@ function RepoDataContent({
           dashboardFilters={dashboardFilters}
           onDashboardFiltersChange={setDashboardFilters}
         />
-        <DashboardFiltersBar
-          applications={parsed.applications}
-          filters={dashboardFilters}
-          resultCount={filteredApplications.length}
-          onFiltersChange={setDashboardFilters}
-        />
       </DashboardSection>
+
+      <DashboardFiltersControl
+        applications={parsed.applications}
+        filters={dashboardFilters}
+        resultCount={filteredApplications.length}
+        onFiltersChange={setDashboardFilters}
+      />
 
       {showAnalytics ? (
         <DashboardSection
