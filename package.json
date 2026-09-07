@@ -18,7 +18,8 @@
   "scripts": {
     "prepare": "husky",
     "build": "next build",
-    "check": "eslint . && tsc --noEmit",
+    "check": "eslint . && tsc --noEmit && pnpm check:cursors",
+    "check:cursors": "vitest run src/lib/dom/verify-interaction-cursors.test.ts",
     "dev": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",

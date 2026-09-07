@@ -31,7 +31,7 @@ export function ArtifactLinkButton({
     return (
       <button
         type="button"
-        className={className ?? cn("block truncate", clickableLinkClassName)}
+        className={cn("block truncate", clickableLinkClassName, className)}
         onClick={() =>
           openArtifact({
             path,
@@ -55,7 +55,7 @@ export function ArtifactLinkButton({
       href={artifact.href}
       target="_blank"
       rel="noreferrer"
-      className={className ?? cn("block truncate", clickableLinkClassName)}
+      className={cn("block truncate", clickableLinkClassName, className)}
     >
       {artifact.label}
     </a>

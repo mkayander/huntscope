@@ -1,5 +1,16 @@
 import { cn } from "~/lib/utils";
 
+/** Class names / tokens that signal an element is intentionally clickable. */
+export const interactionCursorMarkers = [
+  "cursor-pointer",
+  "cursor-interactive",
+  "clickableSurfaceClassName",
+  "clickableCardClassName",
+  "clickableRowClassName",
+  "clickablePillClassName",
+  "clickableLinkClassName",
+] as const;
+
 export const focusRingClassName =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-0";
 

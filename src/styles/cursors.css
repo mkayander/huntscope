@@ -4,7 +4,12 @@
   [role="button"]:not([aria-disabled="true"]),
   [role="tab"]:not([aria-disabled="true"]),
   [role="menuitem"]:not([aria-disabled="true"]),
-  [role="option"]:not([aria-disabled="true"]) {
+  [role="option"]:not([aria-disabled="true"]),
+  [role="combobox"]:not([aria-disabled="true"]),
+  [data-slot="select-trigger"]:not(:disabled),
+  [data-slot="select-item"]:not([data-disabled]),
+  [data-slot="select-scroll-up-button"]:not(:disabled),
+  [data-slot="select-scroll-down-button"]:not(:disabled) {
     cursor: pointer;
   }
 
