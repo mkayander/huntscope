@@ -2,12 +2,15 @@
 
 import { useEffect, useRef } from "react";
 
+import Link from "next/link";
+
 import { AuthButton } from "~/app/_components/auth-button";
 import { MobileSectionNav } from "~/app/_components/mobile-section-nav";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { getDataSourceLabel } from "~/lib/career-ops/data-source";
 import { setDashboardHeaderHeight } from "~/lib/dashboard/header-height";
 import { DASHBOARD_SHELL_CLASS } from "~/lib/dashboard/shell";
+import { LANDING_PATH } from "~/lib/routes";
 import { cn } from "~/lib/utils";
 
 type DashboardHeaderProps = {
@@ -50,9 +53,12 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
       <div className={DASHBOARD_SHELL_CLASS}>
         <div className="flex min-h-11 items-center justify-between gap-3 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
-            <p className="shrink-0 text-base leading-none font-bold tracking-tight text-white">
+            <Link
+              href={LANDING_PATH}
+              className="shrink-0 text-base leading-none font-bold tracking-tight text-white transition-colors hover:text-violet-200"
+            >
               Hunt<span className="text-[hsl(280,100%,70%)]">scope</span>
-            </p>
+            </Link>
             {sourceLabel ? (
               <>
                 <span aria-hidden className="text-white/25">

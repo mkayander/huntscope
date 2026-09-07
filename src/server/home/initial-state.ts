@@ -12,6 +12,5 @@ export async function getHomeInitialState(
   return {
     isSignedIn,
     userLabel: session?.user?.name ?? session?.user?.email ?? null,
-    showDashboard: isSignedIn,
   };
 }

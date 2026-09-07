@@ -1,25 +1,23 @@
 import { headers } from "next/headers";
 
 import { AppShell } from "~/app/_components/app-shell";
-import { LandingPage } from "~/app/_components/landing-page";
+import { DashboardPage } from "~/app/_components/dashboard-page";
 import { getSession } from "~/server/auth/session";
 import { getHomeInitialState } from "~/server/home/initial-state";
 import { prefetchGitHubSessionData } from "~/server/home/prefetch-github-session-data";
-import { isGitHubConfigured } from "~/server/github/config";
 import { HydrateClient } from "~/trpc/server";
 
-export default async function Home() {
+export default async function DashboardRoute() {
   const requestHeaders = await headers();
   const session = await getSession(requestHeaders);
   const initialState = await getHomeInitialState(requestHeaders);
-  const githubConfigured = isGitHubConfigured();
 
   await prefetchGitHubSessionData(session);
 
   return (
     <HydrateClient>
       <AppShell initialState={initialState}>
-        <LandingPage githubConfigured={githubConfigured} />
+        <DashboardPage />
       </AppShell>
     </HydrateClient>
   );

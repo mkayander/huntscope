@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
+import { ApplicationRoleLink } from "~/app/_components/application-role-link";
 import { ScoreBadge } from "~/app/_components/score-badge";
 import { createDefaultTrackerQuery } from "~/app/_components/tracker-table-toolbar";
 import { TrackerVirtualTable } from "~/app/_components/tracker-virtual-table";
@@ -32,6 +33,10 @@ import {
 } from "~/lib/career-ops/tracker-table";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 import { useLocalRepoMutations } from "~/hooks/use-local-repo-mutations";
+import {
+  getReportSourceUrlForApplication,
+  useReportSourceUrlMap,
+} from "~/hooks/use-report-source-url-map";
 
 type TrackerView = "table" | "board";
 
@@ -64,6 +69,12 @@ export function TrackerPanel({
   const sortedApplications = useMemo(
     () => queryTrackerApplications(applications, tableQuery),
     [applications, tableQuery],
+  );
+
+  const reportSourceUrlByPath = useReportSourceUrlMap(
+    sortedApplications,
+    reportFiles,
+    dataSource,
   );
 
   const groupedApplications = useMemo(
@@ -173,7 +184,7 @@ export function TrackerPanel({
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             reportFiles={reportFiles}
-            outputFiles={outputFiles}
+            reportSourceUrlByPath={reportSourceUrlByPath}
             tableQuery={tableQuery}
             statusOptions={statusOptions}
             canEditStatus={canWrite}
@@ -190,6 +201,7 @@ export function TrackerPanel({
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             reportFiles={reportFiles}
+            reportSourceUrlByPath={reportSourceUrlByPath}
             outputFiles={outputFiles}
           />
         )}
@@ -204,6 +216,7 @@ function TrackerBoard({
   dataSource,
   defaultBranch,
   reportFiles,
+  reportSourceUrlByPath,
   outputFiles,
 }: {
   statuses: string[];
@@ -211,6 +224,7 @@ function TrackerBoard({
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   reportFiles: RepoDataFile[];
+  reportSourceUrlByPath: ReadonlyMap<string, string | null>;
   outputFiles: RepoDataFile[];
 }) {
   return (
@@ -246,9 +260,16 @@ function TrackerBoard({
                           <p className="truncate font-medium text-white">
                             {entry.company}
                           </p>
-                          <p className="mt-1 truncate text-sm text-white/70">
-                            {entry.role}
-                          </p>
+                          <div className="mt-1 text-sm text-white/70">
+                            <ApplicationRoleLink
+                              application={entry}
+                              reportSourceUrl={getReportSourceUrlForApplication(
+                                entry,
+                                reportFiles,
+                                reportSourceUrlByPath,
+                              )}
+                            />
+                          </div>
                         </div>
                         <ScoreBadge score={entry.score} />
                       </div>

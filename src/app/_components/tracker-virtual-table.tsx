@@ -3,9 +3,10 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef } from "react";
 
-import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
+import { ApplicationRoleLink } from "~/app/_components/application-role-link";
 import { ScoreBadge } from "~/app/_components/score-badge";
+import { getReportSourceUrlForApplication } from "~/hooks/use-report-source-url-map";
 import {
   TrackerSortableHeader,
   TrackerStaticHeader,
@@ -23,17 +24,17 @@ const ROW_HEIGHT = 56;
 
 /** Shared column template for header + virtualized rows (inline style avoids Tailwind/HMR grid drift). */
 const TRACKER_GRID_TEMPLATE =
-  "2.5rem 6rem minmax(5rem,7.5rem) minmax(8rem,1fr) 4.5rem minmax(5.5rem,6rem) minmax(5.75rem,7.25rem) minmax(5.75rem,7.25rem) minmax(8rem,1.5fr)";
+  "2.5rem 6rem minmax(5rem,7.5rem) minmax(8rem,1fr) 4.5rem minmax(5.5rem,6rem) minmax(5.75rem,7.25rem) minmax(8rem,1.5fr)";
 
 /** Prevents columns from squashing/overlapping on narrow viewports; table scrolls horizontally instead. */
-const TRACKER_TABLE_MIN_WIDTH_CLASS = "min-w-[58rem]";
+const TRACKER_TABLE_MIN_WIDTH_CLASS = "min-w-[52rem]";
 
 type TrackerVirtualTableProps = {
   applications: ApplicationEntry[];
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   reportFiles: RepoDataFile[];
-  outputFiles: RepoDataFile[];
+  reportSourceUrlByPath: ReadonlyMap<string, string | null>;
   tableQuery: TrackerTableQuery;
   statusOptions: string[];
   canEditStatus: boolean;
@@ -47,7 +48,7 @@ export function TrackerVirtualTable({
   dataSource,
   defaultBranch,
   reportFiles,
-  outputFiles,
+  reportSourceUrlByPath,
   tableQuery,
   statusOptions,
   canEditStatus,
@@ -135,7 +136,6 @@ export function TrackerVirtualTable({
                 onSort={onSort}
                 className="px-2 py-2"
               />
-              <TrackerStaticHeader as="div" label="PDF" className="px-2 py-2" />
               <TrackerStaticHeader
                 as="div"
                 label="Report"
@@ -188,12 +188,15 @@ export function TrackerVirtualTable({
                   >
                     {entry.company}
                   </div>
-                  <div
-                    className="flex items-center truncate px-2 py-2"
-                    title={entry.role}
-                    role="cell"
-                  >
-                    {entry.role}
+                  <div className="flex items-center px-2 py-2" role="cell">
+                    <ApplicationRoleLink
+                      application={entry}
+                      reportSourceUrl={getReportSourceUrlForApplication(
+                        entry,
+                        reportFiles,
+                        reportSourceUrlByPath,
+                      )}
+                    />
                   </div>
                   <div className="flex items-center px-2 py-2" role="cell">
                     <ScoreBadge score={entry.score} />
@@ -211,15 +214,6 @@ export function TrackerVirtualTable({
                         {entry.status}
                       </span>
                     )}
-                  </div>
-                  <div className="flex items-center px-2 py-2" role="cell">
-                    <ApplicationPdfButton
-                      application={entry}
-                      dataSource={dataSource}
-                      defaultBranch={defaultBranch}
-                      outputFiles={outputFiles}
-                      compact
-                    />
                   </div>
                   <div className="flex items-center px-2 py-2" role="cell">
                     <ApplicationReportButton

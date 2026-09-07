@@ -42,7 +42,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     file_handlers: [
       {
-        action: "/",
+        action: "/dashboard",
         accept: {
           "text/markdown": [".md", ".markdown"],
           "text/plain": [".md", ".txt"],

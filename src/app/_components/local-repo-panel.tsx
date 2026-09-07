@@ -3,6 +3,7 @@
 import { ActionButtonRow } from "~/app/_components/action-button-row";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { InstallPwaButton } from "~/app/_components/install-pwa-button";
+import { OpenDashboardButton } from "~/app/_components/open-dashboard-button";
 import { DataPreview } from "~/app/_components/data-preview";
 import {
   PanelDescriptionSlot,
@@ -73,6 +74,9 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
               preview={state.preview.preview}
               sourceLabel="local disk"
             />
+            <PanelPrimaryActionSlot centered>
+              <OpenDashboardButton />
+            </PanelPrimaryActionSlot>
           </>
         ) : (
           <p className="text-sm text-white/60">

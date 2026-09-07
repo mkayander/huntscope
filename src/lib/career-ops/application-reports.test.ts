@@ -5,6 +5,7 @@ import {
   getApplicationReportRef,
   getEffectiveReportValue,
   inferReportFileForApplication,
+  resolveApplicationReportFetchRef,
 } from "~/lib/career-ops/application-reports";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
@@ -42,16 +43,29 @@ describe("inferReportFileForApplication", () => {
 });
 
 describe("getEffectiveReportValue", () => {
-  it("returns the resolved repo path for linked reports", () => {
+  it("returns the linked path when that report exists in the repo", () => {
     expect(
       getEffectiveReportValue(
+        {
+          ...application,
+          num: 1,
+          report: "[report](reports/001-acme-2026-01-15.md)",
+        },
+        reportFiles,
+      ),
+    ).toBe("reports/001-acme-2026-01-15.md");
+  });
+
+  it("falls back to inferred reports when the linked path is missing", () => {
+    expect(
+      resolveApplicationReportFetchRef(
         {
           ...application,
           report: "[report](reports/002-example-2026-02-03.md)",
         },
         reportFiles,
-      ),
-    ).toBe("reports/002-example-2026-02-03.md");
+      )?.path,
+    ).toBe("reports/002-extended-demo.md");
   });
 
   it("returns null for linked values that do not resolve to a path", () => {

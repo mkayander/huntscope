@@ -73,6 +73,75 @@ describe("sortApplications", () => {
       sortApplications(entries, "score", "asc").map((entry) => entry.score),
     ).toEqual(["2.0", "4.5", "—"]);
   });
+
+  it("uses most recent date as a tie-breaker when the primary column matches", () => {
+    const entries: ApplicationEntry[] = [
+      {
+        ...applications[0]!,
+        num: 1,
+        date: "2025-01-01",
+        company: "Acme",
+        status: "Applied",
+        score: "4.0",
+      },
+      {
+        ...applications[1]!,
+        num: 2,
+        date: "2025-01-03",
+        company: "Acme",
+        status: "Applied",
+        score: "4.0",
+      },
+      {
+        ...applications[2]!,
+        num: 3,
+        date: "2025-01-02",
+        company: "Beta",
+        status: "Applied",
+        score: "4.0",
+      },
+    ];
+
+    expect(
+      sortApplications(entries, "company", "asc").map((entry) => entry.num),
+    ).toEqual([2, 1, 3]);
+    expect(
+      sortApplications(entries, "status", "asc").map((entry) => entry.num),
+    ).toEqual([2, 3, 1]);
+    expect(
+      sortApplications(entries, "score", "desc").map((entry) => entry.num),
+    ).toEqual([2, 3, 1]);
+  });
+
+  it("breaks date ties by application number", () => {
+    const entries: ApplicationEntry[] = [
+      { ...applications[0]!, num: 1, date: "2025-01-15" },
+      { ...applications[1]!, num: 2, date: "2025-01-15" },
+    ];
+
+    expect(
+      sortApplications(entries, "date", "desc").map((entry) => entry.num),
+    ).toEqual([2, 1]);
+  });
+
+  it("sorts markdown role labels instead of raw markdown", () => {
+    const entries: ApplicationEntry[] = [
+      {
+        ...applications[0]!,
+        num: 1,
+        role: "[Zebra Engineer](https://example.com/z)",
+      },
+      {
+        ...applications[1]!,
+        num: 2,
+        role: "Alpha Engineer",
+      },
+    ];
+
+    expect(
+      sortApplications(entries, "role", "asc").map((entry) => entry.num),
+    ).toEqual([2, 1]);
+  });
 });
 
 describe("queryTrackerApplications", () => {
