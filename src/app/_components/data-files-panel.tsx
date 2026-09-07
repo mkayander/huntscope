@@ -7,7 +7,6 @@ import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import type { RepoDataFile } from "~/lib/career-ops/types";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
-import { ArtifactLinkButton } from "~/app/_components/artifact-link-button";
 
 type DataFilesPanelProps = {
   dataSource: CareerOpsDataSource;
@@ -71,52 +70,6 @@ export function DataFilesPanel({
             </li>
           );
         })}
-      </ul>
-    </GlowPanel>
-  );
-}
-
-type OutputFilesPanelProps = {
-  dataSource: CareerOpsDataSource;
-  defaultBranch: string | null;
-  outputFiles: RepoDataFile[];
-};
-
-export function OutputFilesPanel({
-  dataSource,
-  defaultBranch,
-  outputFiles,
-}: OutputFilesPanelProps) {
-  const files = outputFiles.filter((file) => file.type === "file");
-
-  if (files.length === 0) {
-    return null;
-  }
-
-  return (
-    <GlowPanel accent={DASHBOARD_SECTION_IDS.outputs}>
-      <div>
-        <h3 className="text-lg font-semibold text-white">Generated PDFs</h3>
-        <p className="mt-1 text-sm text-white/60">
-          Tailored CVs and outputs from `output/`.
-        </p>
-      </div>
-
-      <ul className="mt-4 space-y-2">
-        {files.map((file) => (
-          <li
-            key={file.path}
-            className="flex items-center justify-between gap-3"
-          >
-            <span className="truncate text-sm text-white/85">{file.name}</span>
-            <ArtifactLinkButton
-              dataSource={dataSource}
-              defaultBranch={defaultBranch}
-              value={file.path}
-              className="shrink-0 text-xs font-medium text-violet-300 hover:text-violet-200"
-            />
-          </li>
-        ))}
       </ul>
     </GlowPanel>
   );

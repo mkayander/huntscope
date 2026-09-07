@@ -4,10 +4,8 @@ import { useState } from "react";
 
 import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { AnalyticsChartsPanel } from "~/app/_components/analytics-charts-panel";
-import {
-  DataFilesPanel,
-  OutputFilesPanel,
-} from "~/app/_components/data-files-panel";
+import { DataFilesPanel } from "~/app/_components/data-files-panel";
+import { OutputFilesPanel } from "~/app/_components/output-files-panel";
 import { DashboardSection } from "~/app/_components/dashboard-section-nav";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { FunnelPanel } from "~/app/_components/funnel-panel";
@@ -240,6 +238,7 @@ function RepoDataContent({
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
           outputFiles={raw.outputFiles}
+          applications={parsed.applications}
         />
       </DashboardSection>
 
