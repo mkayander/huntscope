@@ -11,14 +11,16 @@ import {
 } from "~/app/_components/dashboard-section-nav";
 import { PageSectionNav } from "~/app/_components/page-section-nav";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import { DASHBOARD_SHELL_CLASS } from "~/lib/dashboard/shell";
 import { ArtifactViewerProvider } from "~/hooks/use-artifact-viewer";
+import { cn } from "~/lib/utils";
 
 export function Dashboard() {
   return (
     <ArtifactViewerProvider>
       <DashboardSectionProvider>
         <DashboardHeader />
-        <div className="mx-auto flex w-full max-w-screen-2xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+        <div className={cn(DASHBOARD_SHELL_CLASS, "flex flex-col py-6")}>
           <DashboardShortcuts />
           <div className="flex w-full min-w-0 items-start gap-5">
             <div className="flex min-w-0 flex-1 flex-col items-stretch gap-6">

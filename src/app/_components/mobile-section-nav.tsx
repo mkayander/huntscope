@@ -18,9 +18,14 @@ export function MobileSectionNav() {
   return (
     <nav
       aria-label="Dashboard sections"
-      className="border-b border-white/10 bg-[#0b0c1c]/85 px-4 py-2 backdrop-blur-md sm:px-6 lg:px-8 xl:hidden"
+      className="border-t border-white/10 py-2 xl:hidden"
     >
-      <div className="mx-auto flex max-w-screen-2xl [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+      <div
+        className={cn(
+          "flex [scrollbar-width:none] gap-2 overflow-x-auto pb-0.5",
+          "[&::-webkit-scrollbar]:hidden",
+        )}
+      >
         {navigableSections.map((section) => {
           const isActive = section.id === activeSectionId;
 

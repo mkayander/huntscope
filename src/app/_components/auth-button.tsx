@@ -101,8 +101,9 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-4",
-        isCompact ? "w-auto items-end" : "w-full max-w-md items-center",
+        isCompact
+          ? "relative flex shrink-0 items-center gap-2"
+          : "flex w-full max-w-md flex-col items-center gap-4",
       )}
     >
       {isAuthenticated && !isCompact ? (
@@ -115,7 +116,7 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
       ) : null}
 
       {isAuthenticated && isCompact ? (
-        <p className="max-w-[12rem] truncate text-right text-xs text-white/60">
+        <p className="hidden max-w-[10rem] truncate text-right text-xs text-white/60 sm:block">
           {displayUserLabel}
         </p>
       ) : null}
@@ -181,10 +182,21 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
         </StableButtonLabel>
       </Button>
 
-      <FeedbackRegion
-        errorTitle={feedbackErrorTitle}
-        errorMessage={feedbackErrorMessage}
-      />
+      {isCompact && feedbackErrorMessage ? (
+        <FeedbackRegion
+          reserveSpace={false}
+          errorTitle={feedbackErrorTitle}
+          errorMessage={feedbackErrorMessage}
+          className="absolute top-full right-0 z-50 mt-2 w-72"
+        />
+      ) : null}
+
+      {!isCompact ? (
+        <FeedbackRegion
+          errorTitle={feedbackErrorTitle}
+          errorMessage={feedbackErrorMessage}
+        />
+      ) : null}
     </div>
   );
 }
