@@ -4,25 +4,26 @@ import { parseScore } from "~/lib/career-ops/score";
 import { normalizeStatus } from "~/lib/career-ops/status-meta";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
-export type TrackerSortColumn = "num" | "date" | "company" | "role" | "score" | "status";
+export type TrackerSortColumn =
+  "num" | "date" | "company" | "role" | "score" | "status";
 export type TrackerSortDirection = "asc" | "desc";
-export type TrackerScoreFilter = "all" | "high" | "medium" | "low" | "unknown";
-export type TrackerReportFilter = "all" | "with" | "without";
+export type TrackerScoreFilterValue = "high" | "medium" | "low" | "unknown";
+export type TrackerReportFilterValue = "with" | "without";
 
 export type TrackerTableQuery = {
   searchQuery: string;
-  statusFilter: string | null;
-  scoreFilter: TrackerScoreFilter;
-  reportFilter: TrackerReportFilter;
+  statusFilters: string[];
+  scoreFilters: TrackerScoreFilterValue[];
+  reportFilters: TrackerReportFilterValue[];
   sortColumn: TrackerSortColumn;
   sortDirection: TrackerSortDirection;
 };
 
 export const DEFAULT_TRACKER_TABLE_QUERY: TrackerTableQuery = {
   searchQuery: "",
-  statusFilter: null,
-  scoreFilter: "all",
-  reportFilter: "all",
+  statusFilters: [],
+  scoreFilters: [],
+  reportFilters: [],
   sortColumn: "num",
   sortDirection: "desc",
 };
@@ -31,13 +32,13 @@ function hasReportValue(value: string): boolean {
   return value.trim().length > 0 && value.trim() !== "—";
 }
 
-function matchesScoreFilter(score: string, scoreFilter: TrackerScoreFilter): boolean {
-  if (scoreFilter === "all") {
-    return true;
-  }
-
+function matchesScoreValue(
+  score: string,
+  filter: TrackerScoreFilterValue,
+): boolean {
   const parsed = parseScore(score);
-  if (scoreFilter === "unknown") {
+
+  if (filter === "unknown") {
     return parsed === null;
   }
 
@@ -45,24 +46,45 @@ function matchesScoreFilter(score: string, scoreFilter: TrackerScoreFilter): boo
     return false;
   }
 
-  if (scoreFilter === "high") {
+  if (filter === "high") {
     return parsed >= 4;
   }
 
-  if (scoreFilter === "medium") {
+  if (filter === "medium") {
     return parsed >= 3 && parsed < 4;
   }
 
   return parsed < 3;
 }
 
-function matchesReportFilter(report: string, reportFilter: TrackerReportFilter): boolean {
-  if (reportFilter === "all") {
+function matchesReportValue(
+  report: string,
+  filter: TrackerReportFilterValue,
+): boolean {
+  const hasReport = hasReportValue(report);
+  return filter === "with" ? hasReport : !hasReport;
+}
+
+function matchesScoreFilters(
+  score: string,
+  scoreFilters: TrackerScoreFilterValue[],
+): boolean {
+  if (scoreFilters.length === 0) {
     return true;
   }
 
-  const hasReport = hasReportValue(report);
-  return reportFilter === "with" ? hasReport : !hasReport;
+  return scoreFilters.some((filter) => matchesScoreValue(score, filter));
+}
+
+function matchesReportFilters(
+  report: string,
+  reportFilters: TrackerReportFilterValue[],
+): boolean {
+  if (reportFilters.length === 0) {
+    return true;
+  }
+
+  return reportFilters.some((filter) => matchesReportValue(report, filter));
 }
 
 function compareDates(left: string, right: string): number {
@@ -91,6 +113,30 @@ function compareDates(left: string, right: string): number {
   return left.localeCompare(right, undefined, { sensitivity: "base" });
 }
 
+function compareScores(
+  left: string,
+  right: string,
+  direction: TrackerSortDirection,
+): number {
+  const leftScore = parseScore(left);
+  const rightScore = parseScore(right);
+
+  if (leftScore === null && rightScore === null) {
+    return 0;
+  }
+
+  // Unscored entries always sort last.
+  if (leftScore === null) {
+    return 1;
+  }
+
+  if (rightScore === null) {
+    return -1;
+  }
+
+  return direction === "asc" ? leftScore - rightScore : rightScore - leftScore;
+}
+
 function compareEntries(
   left: ApplicationEntry,
   right: ApplicationEntry,
@@ -102,27 +148,15 @@ function compareEntries(
     case "date":
       return compareDates(left.date, right.date);
     case "company":
-      return left.company.localeCompare(right.company, undefined, { sensitivity: "base" });
+      return left.company.localeCompare(right.company, undefined, {
+        sensitivity: "base",
+      });
     case "role":
-      return left.role.localeCompare(right.role, undefined, { sensitivity: "base" });
-    case "score": {
-      const leftScore = parseScore(left.score);
-      const rightScore = parseScore(right.score);
-
-      if (leftScore === null && rightScore === null) {
-        return 0;
-      }
-
-      if (leftScore === null) {
-        return 1;
-      }
-
-      if (rightScore === null) {
-        return -1;
-      }
-
-      return leftScore - rightScore;
-    }
+      return left.role.localeCompare(right.role, undefined, {
+        sensitivity: "base",
+      });
+    case "score":
+      return compareScores(left.score, right.score, "asc");
     case "status":
       return normalizeStatus(left.status).localeCompare(
         normalizeStatus(right.status),
@@ -139,7 +173,15 @@ export function sortApplications(
   column: TrackerSortColumn,
   direction: TrackerSortDirection,
 ): ApplicationEntry[] {
-  const sorted = [...applications].sort((left, right) => compareEntries(left, right, column));
+  if (column === "score") {
+    return [...applications].sort((left, right) =>
+      compareScores(left.score, right.score, direction),
+    );
+  }
+
+  const sorted = [...applications].sort((left, right) =>
+    compareEntries(left, right, column),
+  );
   return direction === "asc" ? sorted : sorted.reverse();
 }
 
@@ -148,12 +190,12 @@ export function queryTrackerApplications(
   query: TrackerTableQuery,
 ): ApplicationEntry[] {
   const filtered = filterApplications(applications, {
-    statusFilter: query.statusFilter,
+    statusFilters: query.statusFilters,
     searchQuery: query.searchQuery,
   }).filter(
     (application) =>
-      matchesScoreFilter(application.score, query.scoreFilter) &&
-      matchesReportFilter(application.report, query.reportFilter),
+      matchesScoreFilters(application.score, query.scoreFilters) &&
+      matchesReportFilters(application.report, query.reportFilters),
   );
 
   return sortApplications(filtered, query.sortColumn, query.sortDirection);
@@ -162,12 +204,28 @@ export function queryTrackerApplications(
 export function hasActiveTrackerFilters(query: TrackerTableQuery): boolean {
   return (
     query.searchQuery.trim().length > 0 ||
-    query.statusFilter !== null ||
-    query.scoreFilter !== "all" ||
-    query.reportFilter !== "all" ||
+    query.statusFilters.length > 0 ||
+    query.scoreFilters.length > 0 ||
+    query.reportFilters.length > 0 ||
     query.sortColumn !== DEFAULT_TRACKER_TABLE_QUERY.sortColumn ||
     query.sortDirection !== DEFAULT_TRACKER_TABLE_QUERY.sortDirection
   );
+}
+
+export function formatTrackerFilterSummary(
+  values: string[],
+  options: { value: string; label: string }[],
+): string {
+  if (values.length === 0) {
+    return "";
+  }
+
+  return values
+    .map(
+      (value) =>
+        options.find((option) => option.value === value)?.label ?? value,
+    )
+    .join(", ");
 }
 
 export function getTrackerSortLabel(

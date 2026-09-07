@@ -22,6 +22,8 @@ import { HomeShellProvider, useHomeShell } from "~/hooks/use-home-shell";
 
 import { useHasMounted } from "~/hooks/use-has-mounted";
 
+import { usePageShellTheme } from "~/hooks/use-page-shell-theme";
+
 import type { HomeInitialState } from "~/lib/home/initial-state";
 
 import { authClient } from "~/lib/auth-client";
@@ -63,6 +65,8 @@ function HomeContentFallback({
 
   initialState,
 }: HomeContentProps) {
+  usePageShellTheme(initialState.showDashboard ? "dashboard" : "landing");
+
   if (initialState.showDashboard) {
     return (
       <main className="relative isolate flex min-h-screen flex-col items-center text-white">
@@ -120,6 +124,8 @@ function HomeContentBody({
   const showDashboard = hasMounted
     ? canShowDashboard || isSignedIn
     : initialShowDashboard;
+
+  usePageShellTheme(showDashboard ? "dashboard" : "landing");
 
   if (!showDashboard) {
     return (

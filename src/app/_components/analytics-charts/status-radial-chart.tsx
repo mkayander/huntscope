@@ -10,12 +10,16 @@ import {
 import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import type { StatusChartDatum } from "~/lib/career-ops/chart-data";
+import {
+  isStatusHighlighted,
+  toggleStatusFilter,
+} from "~/lib/career-ops/status-filters";
 import { cn } from "~/lib/utils";
 
 type StatusRadialChartProps = {
   data: StatusChartDatum[];
-  activeStatusFilter: string | null;
-  onStatusFilterChange: (status: string | null) => void;
+  activeStatusFilters: string[];
+  onStatusFiltersChange: (statuses: string[]) => void;
 };
 
 type ArcDatum = StatusChartDatum & {
@@ -27,8 +31,8 @@ type ArcDatum = StatusChartDatum & {
 
 export function StatusRadialChart({
   data,
-  activeStatusFilter,
-  onStatusFilterChange,
+  activeStatusFilters,
+  onStatusFiltersChange,
 }: StatusRadialChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const { containerRef, width, height } = useChartSize({
@@ -98,7 +102,7 @@ export function StatusRadialChart({
       .join("path")
       .attr("fill", (datum) => getStatusColor(datum.status))
       .attr("opacity", (datum) =>
-        activeStatusFilter && datum.status !== activeStatusFilter ? 0.25 : 0.9,
+        isStatusHighlighted(activeStatusFilters, datum.status) ? 0.9 : 0.25,
       )
       .attr("stroke", "#0f1023")
       .attr("stroke-width", 1.5)
@@ -122,8 +126,8 @@ export function StatusRadialChart({
       });
 
     arcs.on("click", (_, datum) => {
-      onStatusFilterChange(
-        activeStatusFilter === datum.status ? null : datum.status,
+      onStatusFiltersChange(
+        toggleStatusFilter(activeStatusFilters, datum.status),
       );
     });
 
@@ -171,7 +175,7 @@ export function StatusRadialChart({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [activeStatusFilter, data, height, onStatusFilterChange, width]);
+  }, [activeStatusFilters, data, height, onStatusFiltersChange, width]);
 
   if (data.length === 0) {
     return (

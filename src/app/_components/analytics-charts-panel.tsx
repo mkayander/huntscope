@@ -19,20 +19,32 @@ import type { ApplicationEntry } from "~/lib/career-ops/types";
 type AnalyticsChartsPanelProps = {
   applications: ApplicationEntry[];
   statusCounts: Record<string, number>;
-  activeStatusFilter: string | null;
-  onStatusFilterChange: (status: string | null) => void;
+  activeStatusFilters: string[];
+  onStatusFiltersChange: (statuses: string[]) => void;
 };
 
 export function AnalyticsChartsPanel({
   applications,
   statusCounts,
-  activeStatusFilter,
-  onStatusFilterChange,
+  activeStatusFilters,
+  onStatusFiltersChange,
 }: AnalyticsChartsPanelProps) {
-  const statusData = useMemo(() => buildStatusChartData(statusCounts), [statusCounts]);
-  const scatterData = useMemo(() => buildScoreScatterData(applications), [applications]);
-  const timelineData = useMemo(() => buildTimelineData(applications), [applications]);
-  const histogramData = useMemo(() => buildScoreHistogramData(applications), [applications]);
+  const statusData = useMemo(
+    () => buildStatusChartData(statusCounts),
+    [statusCounts],
+  );
+  const scatterData = useMemo(
+    () => buildScoreScatterData(applications),
+    [applications],
+  );
+  const timelineData = useMemo(
+    () => buildTimelineData(applications),
+    [applications],
+  );
+  const histogramData = useMemo(
+    () => buildScoreHistogramData(applications),
+    [applications],
+  );
 
   const hasChartData =
     statusData.length > 0 ||
@@ -49,7 +61,8 @@ export function AnalyticsChartsPanel({
       <div>
         <h3 className="text-lg font-semibold text-white">Analytics insights</h3>
         <p className="mt-1 text-sm text-white/60">
-          Interactive D3 views of your search data — click chart elements to filter the tracker.
+          Interactive D3 views of your search data — click chart elements to
+          filter the tracker.
         </p>
       </div>
 
@@ -57,15 +70,15 @@ export function AnalyticsChartsPanel({
         <div className="xl:col-span-2">
           <ScoreScatterChart
             data={scatterData}
-            activeStatusFilter={activeStatusFilter}
-            onStatusFilterChange={onStatusFilterChange}
+            activeStatusFilters={activeStatusFilters}
+            onStatusFiltersChange={onStatusFiltersChange}
           />
         </div>
 
         <StatusRadialChart
           data={statusData}
-          activeStatusFilter={activeStatusFilter}
-          onStatusFilterChange={onStatusFilterChange}
+          activeStatusFilters={activeStatusFilters}
+          onStatusFiltersChange={onStatusFiltersChange}
         />
 
         <ApplicationPaceChart data={timelineData} />

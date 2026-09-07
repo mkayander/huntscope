@@ -1,16 +1,36 @@
 :root {
   --scrollbar-size: 10px;
-  --scrollbar-track: oklch(1 0 0 / 6%);
+  --scrollbar-track: transparent;
   --scrollbar-thumb: oklch(0.62 0.24 295 / 42%);
   --scrollbar-thumb-hover: oklch(0.68 0.22 295 / 68%);
   --scrollbar-thumb-active: oklch(0.72 0.2 295 / 82%);
+  /* Fallback; layout sets the composited landing stack via inline style. */
+  --page-shell-background: linear-gradient(180deg, #2e026d 0%, #15162c 100%);
+}
+
+@layer utilities {
+  /* Span the visual viewport so backgrounds reach under a classic scrollbar. */
+  .fixed-viewport-bleed {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+  }
 }
 
 @layer base {
   html {
     color-scheme: dark;
-    width: 100%;
-    scrollbar-gutter: stable;
+    min-height: 100%;
+    background-color: var(--background);
+    background-image: var(--page-shell-background);
+    background-attachment: fixed;
+    background-size: cover;
+  }
+
+  html[data-page-shell="dashboard"] {
+    background-image: none;
   }
 
   /*
@@ -32,7 +52,7 @@
   html,
   body {
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   html::-webkit-scrollbar {
@@ -41,8 +61,7 @@
   }
 
   html::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
-    border-radius: 999px;
+    background: transparent;
   }
 
   html::-webkit-scrollbar-thumb {

@@ -89,8 +89,14 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
             disabled={isRefreshing}
             onClick={() => void refresh()}
           >
-            <ButtonLoadingIcon isLoading={isRefreshing} />
-            <span>{isRefreshing ? "Refreshing…" : "Refresh"}</span>
+            {isRefreshing ? (
+              <>
+                <ButtonLoadingIcon isLoading />
+                Refreshing…
+              </>
+            ) : (
+              "Refresh"
+            )}
           </Button>
           <Button
             type="button"

@@ -1,6 +1,9 @@
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { formatAverageScore, parseScore } from "~/lib/career-ops/score";
-import { normalizeStatus, TERMINAL_STATUSES } from "~/lib/career-ops/status-meta";
+import {
+  normalizeStatus,
+  TERMINAL_STATUSES,
+} from "~/lib/career-ops/status-meta";
 
 export type ScoreBands = {
   high: number;
@@ -75,16 +78,20 @@ export function computeApplicationAnalytics(
 export function filterApplications(
   applications: ApplicationEntry[],
   options: {
-    statusFilter: string | null;
+    statusFilters?: string[];
+    statusFilter?: string | null;
     searchQuery: string;
   },
 ): ApplicationEntry[] {
   const query = options.searchQuery.trim().toLowerCase();
+  const statusFilters =
+    options.statusFilters ??
+    (options.statusFilter ? [options.statusFilter] : []);
 
   return applications.filter((application) => {
     if (
-      options.statusFilter &&
-      normalizeStatus(application.status) !== options.statusFilter
+      statusFilters.length > 0 &&
+      !statusFilters.includes(normalizeStatus(application.status))
     ) {
       return false;
     }

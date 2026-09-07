@@ -7,18 +7,18 @@ type ButtonLoadingIconProps = {
   className?: string;
 };
 
-/** Reserves icon space so button width stays stable while loading. */
+/** Spinner for async buttons; omitted when idle so label text stays centered. */
 export function ButtonLoadingIcon({
   isLoading,
   className,
 }: ButtonLoadingIconProps) {
+  if (!isLoading) {
+    return null;
+  }
+
   return (
     <Loader2
-      className={cn(
-        "size-4 shrink-0 animate-spin",
-        !isLoading && "invisible",
-        className,
-      )}
+      className={cn("size-4 shrink-0 animate-spin", className)}
       aria-hidden="true"
     />
   );
