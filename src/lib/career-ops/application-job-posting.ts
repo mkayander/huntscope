@@ -42,7 +42,7 @@ function getJobPostingUrlFromNotes(notes: string): string | null {
     return markdownMatch[2].trim();
   }
 
-  return null;
+  return extractHttpUrl(trimmed);
 }
 
 export function getRoleDisplayLabel(role: string): string {

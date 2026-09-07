@@ -96,3 +96,38 @@ export function getApplicationReportRef(
     source: "inferred",
   };
 }
+
+function reportFileExistsAtPath(
+  reportFiles: readonly RepoDataFile[],
+  path: string,
+): boolean {
+  return reportFiles.some((file) => file.type === "file" && file.path === path);
+}
+
+export function resolveApplicationReportFetchRef(
+  application: ApplicationEntry,
+  reportFiles: readonly RepoDataFile[] = [],
+): ApplicationReportRef | null {
+  const reportRef = getApplicationReportRef(application, reportFiles);
+
+  if (
+    !reportRef ||
+    reportRef.source !== "linked" ||
+    reportFiles.length === 0 ||
+    reportFileExistsAtPath(reportFiles, reportRef.path)
+  ) {
+    return reportRef;
+  }
+
+  const inferred = inferReportFileForApplication(application, reportFiles);
+  if (!inferred) {
+    return reportRef;
+  }
+
+  return {
+    value: inferred.path,
+    path: inferred.path,
+    label: inferred.name.replace(/\.md$/i, ""),
+    source: "inferred",
+  };
+}

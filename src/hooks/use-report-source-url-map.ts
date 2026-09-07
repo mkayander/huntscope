@@ -3,7 +3,10 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { getApplicationReportRef } from "~/lib/career-ops/application-reports";
+import {
+  getApplicationReportRef,
+  resolveApplicationReportFetchRef,
+} from "~/lib/career-ops/application-reports";
 import {
   getInlineJobPostingUrl,
   isHttpUrl,
@@ -55,7 +58,10 @@ export function useReportSourceUrlMap(
         continue;
       }
 
-      const reportRef = getApplicationReportRef(application, reportFiles);
+      const reportRef = resolveApplicationReportFetchRef(
+        application,
+        reportFiles,
+      );
       if (reportRef?.path) {
         unique.add(reportRef.path);
       }
@@ -120,7 +126,7 @@ export function getReportSourceUrlForApplication(
   reportFiles: readonly RepoDataFile[],
   reportSourceUrlByPath: ReadonlyMap<string, string | null>,
 ): string | null {
-  const reportRef = getApplicationReportRef(application, reportFiles);
+  const reportRef = resolveApplicationReportFetchRef(application, reportFiles);
   if (!reportRef?.path) {
     return null;
   }

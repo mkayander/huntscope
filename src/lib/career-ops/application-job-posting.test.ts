@@ -9,7 +9,10 @@ import {
   getRoleDisplayLabel,
   resolveJobPostingUrl,
 } from "~/lib/career-ops/application-job-posting";
-import { getApplicationReportRef } from "~/lib/career-ops/application-reports";
+import {
+  getApplicationReportRef,
+  resolveApplicationReportFetchRef,
+} from "~/lib/career-ops/application-reports";
 import { parseApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
 import { parseReportMarkdown } from "~/lib/career-ops/parse-report";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
@@ -30,6 +33,11 @@ const reportFiles: RepoDataFile[] = [
   {
     path: "reports/001-acme-2026-01-15.md",
     name: "001-acme-2026-01-15.md",
+    type: "file",
+  },
+  {
+    path: "reports/002-extended-demo.md",
+    name: "002-extended-demo.md",
     type: "file",
   },
 ];
@@ -76,13 +84,13 @@ describe("getInlineJobPostingUrl", () => {
     ).toBe("https://example.com/jobs/acme-backend");
   });
 
-  it("ignores incidental urls in notes prose", () => {
+  it("reads posting urls embedded in notes prose", () => {
     expect(
       getInlineJobPostingUrl({
         ...application,
         notes: "Strong fit — https://example.com/jobs/acme-backend follow up",
       }),
-    ).toBeNull();
+    ).toBe("https://example.com/jobs/acme-backend");
   });
 });
 
@@ -157,5 +165,34 @@ describe("fixture report metadata", () => {
       resolveJobPostingUrl(acme!, parseReportMarkdown(reportContent).sourceUrl),
     ).toBe("https://example.com/jobs/acme-backend");
     expect(getRoleDisplayLabel(acme!.role)).toBe("Backend Engineer");
+  });
+
+  it("falls back to inferred reports when linked paths are stale", () => {
+    const applications = parseApplicationsMarkdown(
+      readFileSync(
+        join(process.cwd(), "fixtures/sample-career-repo/data/applications.md"),
+        "utf8",
+      ),
+    );
+    const example = applications.find(
+      (entry) => entry.company === "Example Inc",
+    );
+
+    expect(example).toBeDefined();
+
+    const reportRef = resolveApplicationReportFetchRef(example!, reportFiles);
+    expect(reportRef?.path).toBe("reports/002-extended-demo.md");
+
+    const reportContent = readFileSync(
+      join(process.cwd(), "fixtures/sample-career-repo", reportRef!.path),
+      "utf8",
+    );
+
+    expect(
+      resolveJobPostingUrl(
+        example!,
+        parseReportMarkdown(reportContent).sourceUrl,
+      ),
+    ).toBe("https://example.com/jobs/techcorp-fullstack");
   });
 });
