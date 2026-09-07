@@ -9,6 +9,7 @@ import {
 import { toggleStatusFilter } from "~/lib/career-ops/status-filters";
 import { useDashboardSections } from "~/app/_components/dashboard-section-nav";
 import { Button } from "~/components/ui/button";
+import { clickableCardClassName } from "~/components/ui/interaction";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
@@ -108,7 +109,8 @@ export function OverviewStrip({
           onClick={() => scrollTo(DASHBOARD_SECTION_IDS.reports)}
           className={cn(
             glassCardSurfaceClassName,
-            "rounded-xl p-4 text-left transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:outline-none",
+            clickableCardClassName,
+            "rounded-xl p-4 text-left",
           )}
         >
           <div className="flex items-center justify-between gap-3">
@@ -223,7 +225,8 @@ function MetricCard({
       onClick={onClick}
       className={cn(
         glassCardSurfaceClassName,
-        "rounded-xl px-4 py-3 text-left transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:outline-none",
+        clickableCardClassName,
+        "rounded-xl px-4 py-3 text-left",
       )}
     >
       {content}

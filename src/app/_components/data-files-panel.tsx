@@ -1,6 +1,8 @@
 "use client";
 
+import { clickablePillClassName } from "~/components/ui/interaction";
 import { GlowPanel } from "~/components/ui/glow-panel";
+import { cn } from "~/lib/utils";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import type { RepoDataFile } from "~/lib/career-ops/types";
@@ -42,7 +44,10 @@ export function DataFilesPanel({
               <li key={file.path}>
                 <button
                   type="button"
-                  className="rounded-full bg-black/30 px-3 py-1 text-xs text-white/80 transition hover:bg-violet-500/15 hover:text-violet-100"
+                  className={cn(
+                    clickablePillClassName,
+                    "rounded-full bg-black/30 px-3 py-1 text-xs text-white/80",
+                  )}
                   onClick={() =>
                     openArtifact({
                       path: file.path,

@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 
 import { ArtifactLinkButton } from "~/app/_components/artifact-link-button";
+import { clickableRowClassName } from "~/components/ui/interaction";
 import { GlowPanel } from "~/components/ui/glow-panel";
+import { cn } from "~/lib/utils";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { sortReportFilesByName } from "~/lib/career-ops/parse-report";
@@ -53,7 +55,10 @@ export function ReportsPanel({
           <li key={file.path}>
             <button
               type="button"
-              className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-left transition hover:border-violet-400/30 hover:bg-violet-500/5"
+              className={cn(
+                clickableRowClassName,
+                "flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-left hover:border-violet-400/30 hover:bg-violet-500/5",
+              )}
               onClick={() =>
                 openArtifact({
                   path: file.path,

@@ -3,9 +3,11 @@
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 
 import { FilterMultiSelect } from "~/app/_components/filter-multi-select";
+import { clickableSurfaceClassName } from "~/components/ui/interaction";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
   formatTrackerFilterSummary,
@@ -223,7 +225,10 @@ export function TrackerSortableHeader({
       <button
         type="button"
         onClick={() => onSort(column)}
-        className="inline-flex w-full cursor-pointer items-center gap-1 rounded-md px-0 py-1 text-left font-medium text-white/60 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+        className={cn(
+          clickableSurfaceClassName,
+          "inline-flex w-full items-center gap-1 rounded-md px-0 py-1 text-left font-medium text-white/60 hover:text-white",
+        )}
       >
         <span>{label}</span>
         {isActive ? (

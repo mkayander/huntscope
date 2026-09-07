@@ -1,6 +1,7 @@
 "use client";
 
 import { useDashboardSections } from "~/app/_components/dashboard-section-nav";
+import { clickablePillClassName } from "~/components/ui/interaction";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { cn } from "~/lib/utils";
 
@@ -36,10 +37,11 @@ export function MobileSectionNav() {
               onClick={() => scrollToSection(section.id)}
               aria-current={isActive ? "true" : undefined}
               className={cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:outline-none",
+                clickablePillClassName,
+                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium",
                 isActive
                   ? "bg-violet-500/20 text-violet-100 ring-1 ring-violet-400/40"
-                  : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white",
+                  : "bg-white/5 text-white/70 hover:text-white",
               )}
             >
               {section.label}

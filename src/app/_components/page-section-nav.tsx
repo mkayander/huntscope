@@ -1,6 +1,7 @@
 "use client";
 
 import { useDashboardSections } from "~/app/_components/dashboard-section-nav";
+import { clickableSurfaceClassName } from "~/components/ui/interaction";
 import { cn } from "~/lib/utils";
 
 const TRACK_WIDTH_CLASS = "w-3";
@@ -57,7 +58,10 @@ export function PageSectionNav() {
                     aria-current={isActive ? "true" : undefined}
                     aria-label={section.label}
                     title={section.label}
-                    className="group flex w-full cursor-pointer items-center justify-end gap-2 rounded-md py-2 pr-0 text-right transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:outline-none"
+                    className={cn(
+                      clickableSurfaceClassName,
+                      "group flex w-full items-center justify-end gap-2 rounded-md py-2 pr-0 text-right hover:bg-white/5",
+                    )}
                   >
                     <span
                       className={cn(

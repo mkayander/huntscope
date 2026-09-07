@@ -7,6 +7,7 @@ import rehypeSanitize from "rehype-sanitize";
 
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { Button } from "~/components/ui/button";
+import { clickableLinkClassName } from "~/components/ui/interaction";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
 import type { ArtifactPreviewRequest } from "~/hooks/use-artifact-viewer";
@@ -110,7 +111,7 @@ export function ArtifactPreviewSheet() {
 
       <aside
         className={cn(
-          "absolute inset-y-0 right-0 flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl motion-reduce:animate-none",
+          "cursor-surface absolute inset-y-0 right-0 flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl motion-reduce:animate-none",
           isClosing
             ? "animate-out fade-out-0 slide-out-to-right duration-300"
             : "animate-in fade-in-0 slide-in-from-right duration-300",
@@ -205,7 +206,7 @@ function Metric({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-violet-300 underline-offset-2 hover:underline"
+            className={clickableLinkClassName}
           >
             {value}
           </a>
