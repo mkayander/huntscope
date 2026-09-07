@@ -14,6 +14,7 @@ import {
 } from "~/lib/career-ops/dashboard-filters";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
+import { useLocale } from "~/lib/i18n/locale-context";
 import { cn } from "~/lib/utils";
 
 type FunnelPanelProps = {
@@ -27,6 +28,7 @@ export function FunnelPanel({
   totalApplications,
   dashboardFilters,
 }: FunnelPanelProps) {
+  const locale = useLocale();
   const metrics = computeFunnelMetrics(applications);
   const sankeyData = useMemo(
     () => buildFunnelSankeyData(applications),
@@ -36,6 +38,7 @@ export function FunnelPanel({
     ? getDashboardFilterSummaryLine(dashboardFilters, {
         resultCount: applications.length,
         totalCount: totalApplications,
+        locale,
       })
     : null;
 

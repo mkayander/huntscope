@@ -31,6 +31,7 @@ type DashboardPeriodCalendarProps = {
   period: DashboardPeriod;
   onPeriodChange: (period: DashboardPeriod) => void;
   onRangeComplete?: () => void;
+  onDraftChange?: (isDrafting: boolean) => void;
 };
 
 export function DashboardPeriodCalendar({
@@ -38,6 +39,7 @@ export function DashboardPeriodCalendar({
   period,
   onPeriodChange,
   onRangeComplete,
+  onDraftChange,
 }: DashboardPeriodCalendarProps) {
   const locale = useLocale();
   const today = useMemo(() => new Date(), []);
@@ -48,9 +50,16 @@ export function DashboardPeriodCalendar({
   }));
   const [rangeAnchor, setRangeAnchor] = useState<string | null>(null);
 
+  const committedRange =
+    period.kind === "range"
+      ? normalizeDashboardDateRange(period.start, period.end)
+      : null;
+
   useEffect(() => {
+    setRangeAnchor(null);
+    onDraftChange?.(false);
+
     if (period.kind !== "range") {
-      setRangeAnchor(null);
       return;
     }
 
@@ -61,7 +70,7 @@ export function DashboardPeriodCalendar({
         month: startDate.getMonth(),
       });
     }
-  }, [period]);
+  }, [onDraftChange, period]);
 
   const activityCounts = useMemo(
     () => buildApplicationDateCounts(applications),
@@ -77,13 +86,9 @@ export function DashboardPeriodCalendar({
   );
   const weekdayLabels = getWeekdayLabels(locale);
 
-  const selectedRange =
-    period.kind === "range"
-      ? normalizeDashboardDateRange(period.start, period.end)
-      : null;
-  const pendingRangeStart = rangeAnchor ?? selectedRange?.start ?? null;
-  const pendingRangeEnd =
-    rangeAnchor != null ? null : (selectedRange?.end ?? null);
+  const selectionStart = rangeAnchor ?? committedRange?.start ?? null;
+  const selectionEnd =
+    rangeAnchor != null ? rangeAnchor : (committedRange?.end ?? null);
 
   const monthLabel = new Date(
     visibleMonth.year,
@@ -104,20 +109,21 @@ export function DashboardPeriodCalendar({
   const handleDayClick = (dateKey: string) => {
     if (!rangeAnchor) {
       setRangeAnchor(dateKey);
-      onPeriodChange({ kind: "range", start: dateKey, end: dateKey });
+      onDraftChange?.(true);
       return;
     }
 
     const range = normalizeDashboardDateRange(rangeAnchor, dateKey);
     setRangeAnchor(null);
+    onDraftChange?.(false);
     onPeriodChange({ kind: "range", ...range });
     onRangeComplete?.();
   };
 
-  const rangeHint = selectedRange
-    ? `${selectedRange.start} – ${selectedRange.end}`
-    : rangeAnchor
-      ? "Select end date"
+  const rangeHint = rangeAnchor
+    ? "Select end date"
+    : committedRange
+      ? `${committedRange.start} – ${committedRange.end}`
       : "Select start date";
 
   return (
@@ -157,16 +163,12 @@ export function DashboardPeriodCalendar({
           const count = activityCounts.get(day.dateKey) ?? 0;
           const level = activityLevels.get(day.dateKey) ?? 0;
           const isToday = day.dateKey === todayKey;
-          const isSelectedStart =
-            pendingRangeStart === day.dateKey ||
-            selectedRange?.start === day.dateKey;
-          const isSelectedEnd =
-            pendingRangeEnd === day.dateKey ||
-            selectedRange?.end === day.dateKey;
+          const isSelectedStart = selectionStart === day.dateKey;
+          const isSelectedEnd = selectionEnd === day.dateKey;
           const inSelectedRange = isDateKeyInRange(
             day.dateKey,
-            pendingRangeStart,
-            pendingRangeEnd ?? pendingRangeStart,
+            selectionStart,
+            selectionEnd,
           );
           const isRangeEndpoint = isSelectedStart || isSelectedEnd;
           const dayNumber = dateKeyToDate(day.dateKey)?.getDate() ?? "";

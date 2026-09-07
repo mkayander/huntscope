@@ -86,6 +86,23 @@ describe("filterDashboardApplications", () => {
     expect(filtered.map((entry) => entry.company)).toEqual(["Gamma"]);
   });
 
+  it("filters by explicit date range", () => {
+    const filtered = filterDashboardApplications(
+      applications,
+      {
+        ...DEFAULT_DASHBOARD_FILTERS,
+        period: {
+          kind: "range",
+          start: "2026-01-01",
+          end: "2026-01-15",
+        },
+      },
+      { referenceDate: new Date("2026-02-15") },
+    );
+
+    expect(filtered.map((entry) => entry.company)).toEqual(["Acme"]);
+  });
+
   it("filters by search query", () => {
     const filtered = filterDashboardApplications(applications, {
       ...DEFAULT_DASHBOARD_FILTERS,

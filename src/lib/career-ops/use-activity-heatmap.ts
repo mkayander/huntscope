@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { ActivityHeatmap, ActivityHeatmapPeriod } from "~/lib/career-ops/activity-heatmap";
+import type { ActivityHeatmap } from "~/lib/career-ops/activity-heatmap";
+import { getActivityHeatmapWindow } from "~/lib/career-ops/dashboard-period";
+import type { DashboardPeriod } from "~/lib/career-ops/dashboard-period";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { useLocale } from "~/lib/i18n/locale-context";
 import { buildHeatmapInWorker } from "~/lib/career-ops/worker-client";
@@ -15,9 +17,10 @@ type UseActivityHeatmapResult = {
 
 export function useActivityHeatmap(
   applications: ApplicationEntry[],
-  periodWeeks: ActivityHeatmapPeriod,
+  period: DashboardPeriod,
 ): UseActivityHeatmapResult {
   const locale = useLocale();
+  const window = useMemo(() => getActivityHeatmapWindow(period), [period]);
   const [heatmap, setHeatmap] = useState<ActivityHeatmap | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +30,7 @@ export function useActivityHeatmap(
     setIsLoading(true);
     setError(null);
 
-    void buildHeatmapInWorker(applications, periodWeeks, locale)
+    void buildHeatmapInWorker(applications, window, locale)
       .then((result) => {
         if (cancelled) {
           return;
@@ -53,7 +56,7 @@ export function useActivityHeatmap(
     return () => {
       cancelled = true;
     };
-  }, [applications, locale, periodWeeks]);
+  }, [applications, locale, window.endDateKey, window.startDateKey]);
 
   return {
     heatmap,

@@ -4,6 +4,7 @@ import {
   buildApplicationDateCounts,
   DEFAULT_DASHBOARD_PERIOD,
   getActivityHeatmapPeriodWeeks,
+  getActivityHeatmapWindow,
   getCalendarMonthDays,
   getDashboardPeriodLabel,
   getDashboardPeriodStartKey,
@@ -12,6 +13,7 @@ import {
   matchesDashboardPeriodPreset,
   normalizeDashboardDateRange,
   normalizeDashboardPeriodDays,
+  parseDashboardPeriodDaysInput,
 } from "~/lib/career-ops/dashboard-period";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
@@ -127,6 +129,36 @@ describe("buildApplicationDateCounts", () => {
   });
 });
 
+describe("getActivityHeatmapWindow", () => {
+  it("aligns custom day periods to the exact rolling window", () => {
+    expect(
+      getActivityHeatmapWindow(
+        { kind: "days", days: 4 },
+        new Date("2026-02-15"),
+      ),
+    ).toEqual({
+      startDateKey: "2026-02-08",
+      endDateKey: "2026-02-15",
+    });
+  });
+
+  it("aligns explicit ranges to week boundaries", () => {
+    expect(
+      getActivityHeatmapWindow(
+        {
+          kind: "range",
+          start: "2026-02-03",
+          end: "2026-02-10",
+        },
+        new Date("2026-02-15"),
+      ),
+    ).toEqual({
+      startDateKey: "2026-02-01",
+      endDateKey: "2026-02-10",
+    });
+  });
+});
+
 describe("getActivityHeatmapPeriodWeeks", () => {
   it("maps short custom periods to smaller heatmap windows", () => {
     expect(getActivityHeatmapPeriodWeeks({ kind: "days", days: 4 })).toBe(12);
@@ -146,6 +178,20 @@ describe("normalizeDashboardPeriodDays", () => {
   it("clamps custom day counts", () => {
     expect(normalizeDashboardPeriodDays(0)).toBe(1);
     expect(normalizeDashboardPeriodDays(999)).toBe(365);
+  });
+});
+
+describe("parseDashboardPeriodDaysInput", () => {
+  it("accepts valid day counts", () => {
+    expect(parseDashboardPeriodDaysInput("4")).toBe(4);
+    expect(parseDashboardPeriodDaysInput("365")).toBe(365);
+  });
+
+  it("rejects invalid day counts", () => {
+    expect(parseDashboardPeriodDaysInput("")).toBeNull();
+    expect(parseDashboardPeriodDaysInput("abc")).toBeNull();
+    expect(parseDashboardPeriodDaysInput("0")).toBeNull();
+    expect(parseDashboardPeriodDaysInput("366")).toBeNull();
   });
 });
 

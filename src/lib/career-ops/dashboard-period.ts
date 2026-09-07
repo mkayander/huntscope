@@ -1,5 +1,5 @@
 import { countToActivityLevel } from "~/lib/career-ops/activity-levels";
-import type { ActivityHeatmapPeriod } from "~/lib/career-ops/activity-heatmap";
+import type { ActivityHeatmapWindow } from "~/lib/career-ops/activity-heatmap";
 import {
   dateKeyToDate,
   parseApplicationDate,
@@ -72,6 +72,25 @@ export function normalizeDashboardPeriodDays(days: number): number {
   }
 
   return Math.min(365, Math.max(1, Math.round(days)));
+}
+
+export function parseDashboardPeriodDaysInput(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  const rounded = Math.round(parsed);
+  if (rounded < 1 || rounded > 365) {
+    return null;
+  }
+
+  return rounded;
 }
 
 export function isDashboardPeriodEqual(
@@ -197,19 +216,55 @@ export function getDashboardPeriodLabel(
   }
 }
 
-export function getActivityHeatmapPeriodWeeks(
+export function getActivityHeatmapWindow(
   period: DashboardPeriod,
-): ActivityHeatmapPeriod {
-  if (period.kind === "weeks") {
-    return period.weeks;
+  referenceDate = new Date(),
+): ActivityHeatmapWindow {
+  const endDateKey =
+    getDashboardPeriodEndKey(period, referenceDate) ??
+    toDateKey(startOfDay(referenceDate));
+
+  if (period.kind === "all") {
+    const endDate = startOfDay(referenceDate);
+    const alignedStart = getSundayWeekStart(endDate);
+    alignedStart.setDate(alignedStart.getDate() - (52 - 1) * 7);
+    return {
+      startDateKey: toDateKey(alignedStart),
+      endDateKey,
+    };
   }
 
-  const dayCount =
-    period.kind === "days"
-      ? period.days
-      : period.kind === "range"
-        ? countInclusiveDays(period.start, period.end)
-        : 52 * 7;
+  const startDateKey = getDashboardPeriodStartKey(period, referenceDate);
+  if (!startDateKey) {
+    return getActivityHeatmapWindow(DEFAULT_DASHBOARD_PERIOD, referenceDate);
+  }
+
+  const startDate = dateKeyToDate(startDateKey);
+  if (!startDate) {
+    return {
+      startDateKey,
+      endDateKey,
+    };
+  }
+
+  return {
+    startDateKey: toDateKey(getSundayWeekStart(startDate)),
+    endDateKey,
+  };
+}
+
+function getSundayWeekStart(date: Date): Date {
+  const normalized = startOfDay(date);
+  normalized.setDate(normalized.getDate() - normalized.getDay());
+  return normalized;
+}
+
+/** @deprecated Use getActivityHeatmapWindow instead. */
+export function getActivityHeatmapPeriodWeeks(
+  period: DashboardPeriod,
+): 12 | 26 | 52 {
+  const window = getActivityHeatmapWindow(period);
+  const dayCount = countInclusiveDays(window.startDateKey, window.endDateKey);
 
   if (dayCount <= 12 * 7) {
     return 12;

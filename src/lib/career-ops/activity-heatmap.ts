@@ -2,10 +2,22 @@ import {
   countToActivityLevel,
   type ActivityLevel,
 } from "~/lib/career-ops/activity-levels";
-import { parseApplicationDate, toDateKey } from "~/lib/career-ops/dates";
+import {
+  dateKeyToDate,
+  parseApplicationDate,
+  toDateKey,
+} from "~/lib/career-ops/dates";
 import { formatMonthLabel } from "~/lib/i18n/date-format";
 
 export type { ActivityLevel } from "~/lib/career-ops/activity-levels";
+
+/** @deprecated Prefer ActivityHeatmapWindow for exact dashboard period alignment. */
+export type ActivityHeatmapPeriod = 12 | 26 | 52;
+
+export type ActivityHeatmapWindow = {
+  startDateKey: string;
+  endDateKey: string;
+};
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -29,15 +41,13 @@ export type ActivityDay = {
   level: ActivityLevel;
 };
 
-export type ActivityHeatmapPeriod = 12 | 26 | 52;
-
 export type ActivityHeatmap = {
   weeks: (ActivityDay | null)[][];
   monthLabels: { label: string; weekIndex: number }[];
   totalActivities: number;
   activeDays: number;
   maxCount: number;
-  periodWeeks: ActivityHeatmapPeriod;
+  weekCount: number;
   startDate: string;
   endDate: string;
   datedApplications: number;
@@ -48,22 +58,38 @@ function countToLevel(count: number, maxCount: number): ActivityLevel {
   return countToActivityLevel(count, maxCount);
 }
 
-export function computeActivityHeatmap(
+export function computeActivityHeatmapForWindow(
   dateKeys: string[],
-  periodWeeks: ActivityHeatmapPeriod,
-  endDate = new Date(),
+  window: ActivityHeatmapWindow,
   locale?: string,
 ): ActivityHeatmap {
-  const countsByDate = new Map<string, number>();
+  const startDate = dateKeyToDate(window.startDateKey);
+  const endDate = dateKeyToDate(window.endDateKey);
+  if (!startDate || !endDate) {
+    return {
+      weeks: [],
+      monthLabels: [],
+      totalActivities: 0,
+      activeDays: 0,
+      maxCount: 0,
+      weekCount: 0,
+      startDate: window.startDateKey,
+      endDate: window.endDateKey,
+      datedApplications: dateKeys.length,
+      undatedApplications: 0,
+    };
+  }
 
+  const countsByDate = new Map<string, number>();
   for (const dateKey of dateKeys) {
+    if (dateKey < window.startDateKey || dateKey > window.endDateKey) {
+      continue;
+    }
+
     countsByDate.set(dateKey, (countsByDate.get(dateKey) ?? 0) + 1);
   }
 
-  const end = startOfDay(endDate);
-  const currentWeekSunday = getSundayWeekStart(end);
-  const alignedStart = addDays(currentWeekSunday, -(periodWeeks - 1) * 7);
-
+  const alignedStart = getSundayWeekStart(startDate);
   const weeks: (ActivityDay | null)[][] = [];
   const monthLabels: { label: string; weekIndex: number }[] = [];
   let lastMonth = "";
@@ -71,8 +97,11 @@ export function computeActivityHeatmap(
   let activeDays = 0;
   let maxCount = 0;
 
-  for (let weekIndex = 0; weekIndex < periodWeeks; weekIndex += 1) {
-    const weekStart = addDays(alignedStart, weekIndex * 7);
+  for (
+    let weekStart = alignedStart, weekIndex = 0;
+    weekStart <= endDate;
+    weekStart = addDays(weekStart, 7), weekIndex += 1
+  ) {
     const week: (ActivityDay | null)[] = [];
     const monthLabel = formatMonthLabel(weekStart, locale);
 
@@ -83,7 +112,7 @@ export function computeActivityHeatmap(
 
     for (let dayOffset = 0; dayOffset < 7; dayOffset += 1) {
       const day = addDays(weekStart, dayOffset);
-      if (day > end) {
+      if (day > endDate) {
         week.push(null);
         continue;
       }
@@ -122,17 +151,38 @@ export function computeActivityHeatmap(
     totalActivities,
     activeDays,
     maxCount,
-    periodWeeks,
-    startDate: toDateKey(alignedStart),
-    endDate: toDateKey(end),
+    weekCount: weeks.length,
+    startDate: window.startDateKey,
+    endDate: window.endDateKey,
     datedApplications: dateKeys.length,
     undatedApplications: 0,
   };
 }
 
+/** @deprecated Use computeActivityHeatmapForWindow instead. */
+export function computeActivityHeatmap(
+  dateKeys: string[],
+  periodWeeks: ActivityHeatmapPeriod,
+  endDate = new Date(),
+  locale?: string,
+): ActivityHeatmap {
+  const end = startOfDay(endDate);
+  const currentWeekSunday = getSundayWeekStart(end);
+  const alignedStart = addDays(currentWeekSunday, -(periodWeeks - 1) * 7);
+
+  return computeActivityHeatmapForWindow(
+    dateKeys,
+    {
+      startDateKey: toDateKey(alignedStart),
+      endDateKey: toDateKey(end),
+    },
+    locale,
+  );
+}
+
 export function buildHeatmapFromApplications(
   applications: { date: string }[],
-  periodWeeks: ActivityHeatmapPeriod,
+  window: ActivityHeatmapWindow,
   locale?: string,
 ): ActivityHeatmap {
   const parsedDates: string[] = [];
@@ -147,12 +197,7 @@ export function buildHeatmapFromApplications(
     }
   }
 
-  const heatmap = computeActivityHeatmap(
-    parsedDates,
-    periodWeeks,
-    new Date(),
-    locale,
-  );
+  const heatmap = computeActivityHeatmapForWindow(parsedDates, window, locale);
   return {
     ...heatmap,
     undatedApplications,

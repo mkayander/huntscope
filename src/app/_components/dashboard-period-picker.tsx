@@ -17,7 +17,7 @@ import {
   getDashboardPeriodLabel,
   isDashboardPeriodCustom,
   isDashboardPeriodEqual,
-  normalizeDashboardPeriodDays,
+  parseDashboardPeriodDaysInput,
   type DashboardPeriod,
 } from "~/lib/career-ops/dashboard-period";
 import { useLocale } from "~/lib/i18n/locale-context";
@@ -30,6 +30,14 @@ type DashboardPeriodPickerProps = {
   onPeriodChange: (period: DashboardPeriod) => void;
 };
 
+function getDefaultCustomDaysInput(period: DashboardPeriod): string {
+  if (period.kind === "days") {
+    return String(period.days);
+  }
+
+  return "7";
+}
+
 export function DashboardPeriodPicker({
   applications,
   period,
@@ -38,8 +46,10 @@ export function DashboardPeriodPicker({
   const locale = useLocale();
   const [customOpen, setCustomOpen] = useState(false);
   const [customDaysInput, setCustomDaysInput] = useState(() =>
-    period.kind === "days" ? String(period.days) : "7",
+    getDefaultCustomDaysInput(period),
   );
+  const [customDaysError, setCustomDaysError] = useState<string | null>(null);
+  const [isDraftingRange, setIsDraftingRange] = useState(false);
   const isCustom = isDashboardPeriodCustom(period);
   const customLabel = isCustom
     ? getDashboardPeriodLabel(period, locale)
@@ -53,11 +63,32 @@ export function DashboardPeriodPicker({
 
   const selectPreset = (nextPeriod: DashboardPeriod) => {
     setCustomOpen(false);
+    setCustomDaysError(null);
+    setIsDraftingRange(false);
     onPeriodChange(nextPeriod);
   };
 
+  const handleCustomOpenChange = (open: boolean) => {
+    if (!open && isDraftingRange) {
+      setIsDraftingRange(false);
+    }
+
+    if (open) {
+      setCustomDaysInput(getDefaultCustomDaysInput(period));
+      setCustomDaysError(null);
+    }
+
+    setCustomOpen(open);
+  };
+
   const handleCustomDaysApply = () => {
-    const days = normalizeDashboardPeriodDays(Number(customDaysInput));
+    const days = parseDashboardPeriodDaysInput(customDaysInput);
+    if (days == null) {
+      setCustomDaysError("Enter a whole number from 1 to 365.");
+      return;
+    }
+
+    setCustomDaysError(null);
     setCustomDaysInput(String(days));
     onPeriodChange({ kind: "days", days });
     setCustomOpen(false);
@@ -83,7 +114,11 @@ export function DashboardPeriodPicker({
           </Button>
         ))}
 
-        <Popover open={customOpen} onOpenChange={setCustomOpen} modal={false}>
+        <Popover
+          open={customOpen}
+          onOpenChange={handleCustomOpenChange}
+          modal={false}
+        >
           <PopoverTrigger asChild>
             <Button
               type="button"
@@ -106,6 +141,9 @@ export function DashboardPeriodPicker({
             align="start"
             sideOffset={8}
             className="w-[min(calc(100vw-2rem),18.5rem)] border-white/10 bg-[#0d0e1f] p-0 shadow-xl shadow-black/40"
+            onEscapeKeyDown={(event) => {
+              event.stopPropagation();
+            }}
           >
             <div className="border-b border-white/8 px-3 py-2.5">
               <p className="text-xs font-medium text-white/70">Custom period</p>
@@ -116,13 +154,17 @@ export function DashboardPeriodPicker({
                   min={1}
                   max={365}
                   value={customDaysInput}
-                  onChange={(event) => setCustomDaysInput(event.target.value)}
+                  onChange={(event) => {
+                    setCustomDaysInput(event.target.value);
+                    setCustomDaysError(null);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       handleCustomDaysApply();
                     }
                   }}
                   aria-label="Last number of days"
+                  aria-invalid={customDaysError != null}
                   className="h-8 border-white/10 bg-[#15162c] text-sm text-white placeholder:text-white/40"
                 />
                 <Button
@@ -135,9 +177,15 @@ export function DashboardPeriodPicker({
                   Apply
                 </Button>
               </div>
-              <p className="mt-1.5 text-[11px] text-white/40">
-                Rolling window ending today, or pick a range below.
-              </p>
+              {customDaysError ? (
+                <p className="mt-1.5 text-[11px] text-red-300/90">
+                  {customDaysError}
+                </p>
+              ) : (
+                <p className="mt-1.5 text-[11px] text-white/40">
+                  Rolling window ending today, or pick a range below.
+                </p>
+              )}
             </div>
 
             <DashboardPeriodCalendar
@@ -145,6 +193,7 @@ export function DashboardPeriodPicker({
               period={period}
               onPeriodChange={onPeriodChange}
               onRangeComplete={() => setCustomOpen(false)}
+              onDraftChange={setIsDraftingRange}
             />
           </PopoverContent>
         </Popover>

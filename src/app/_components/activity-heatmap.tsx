@@ -9,7 +9,8 @@ import {
   ACTIVITY_LEVEL_CLASS_NAMES,
   type ActivityLevel,
 } from "~/lib/career-ops/activity-levels";
-import { type ActivityHeatmapPeriod } from "~/lib/career-ops/activity-heatmap";
+import { getDashboardPeriodLabel } from "~/lib/career-ops/dashboard-period";
+import type { DashboardPeriod } from "~/lib/career-ops/dashboard-period";
 import { useActivityHeatmap } from "~/lib/career-ops/use-activity-heatmap";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { formatDisplayDate, getWeekdayLabels } from "~/lib/i18n/date-format";
@@ -17,14 +18,15 @@ import { useLocale } from "~/lib/i18n/locale-context";
 
 type ActivityHeatmapProps = {
   applications: ApplicationEntry[];
-  periodWeeks: ActivityHeatmapPeriod;
+  period: DashboardPeriod;
 };
 
 export function ActivityHeatmapPanel({
   applications,
-  periodWeeks,
+  period,
 }: ActivityHeatmapProps) {
   const locale = useLocale();
+  const periodLabel = getDashboardPeriodLabel(period, locale);
   const dayLabels = getWeekdayLabels(locale);
   const [hoveredDay, setHoveredDay] = useState<{
     date: string;
@@ -32,7 +34,7 @@ export function ActivityHeatmapPanel({
   } | null>(null);
   const { heatmap, isLoading, error } = useActivityHeatmap(
     applications,
-    periodWeeks,
+    period,
   );
 
   const summaryLabel =
@@ -41,7 +43,7 @@ export function ActivityHeatmapPanel({
         ? `No activity on ${formatDisplayDate(hoveredDay.date, locale)}`
         : `${hoveredDay.count} evaluation${hoveredDay.count === 1 ? "" : "s"} on ${formatDisplayDate(hoveredDay.date, locale)}`
       : heatmap
-        ? `${heatmap.totalActivities} evaluation${heatmap.totalActivities === 1 ? "" : "s"} in the last ${periodLabel(periodWeeks)}`
+        ? `${heatmap.totalActivities} evaluation${heatmap.totalActivities === 1 ? "" : "s"} · ${periodLabel}`
         : isLoading
           ? "Building activity heat map…"
           : "No activity data available";
@@ -52,8 +54,8 @@ export function ActivityHeatmapPanel({
         <div>
           <h3 className="text-lg font-semibold text-white">Search activity</h3>
           <p className="mt-1 text-sm text-white/60">
-            GitHub-style heat map of evaluations added to your tracker over
-            time. Period follows the dashboard filter above.
+            GitHub-style heat map of evaluations in the current dashboard
+            period.
           </p>
         </div>
       </div>
@@ -165,16 +167,4 @@ export function ActivityHeatmapPanel({
       ) : null}
     </GlowPanel>
   );
-}
-
-function periodLabel(periodWeeks: ActivityHeatmapPeriod): string {
-  if (periodWeeks === 12) {
-    return "12 weeks";
-  }
-
-  if (periodWeeks === 26) {
-    return "6 months";
-  }
-
-  return "year";
 }

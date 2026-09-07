@@ -88,9 +88,18 @@ export function DashboardFiltersControl({
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        handleClose();
+      if (event.key !== "Escape") {
+        return;
       }
+
+      if (
+        event.target instanceof Element &&
+        event.target.closest('[data-slot="popover-content"]')
+      ) {
+        return;
+      }
+
+      handleClose();
     };
 
     window.addEventListener("keydown", handleKeyDown);
