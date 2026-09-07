@@ -275,6 +275,47 @@ export function getDashboardPeriodLabel(
   );
 }
 
+export function getDashboardFilterSummaryLine(
+  filters: DashboardFilters,
+  options: {
+    resultCount: number;
+    totalCount: number;
+    statusOptions?: { value: string; label: string }[];
+  },
+): string {
+  const statusSummary = formatDashboardFilterSummary(
+    filters.statusFilters,
+    options.statusOptions ??
+      filters.statusFilters.map((status) => ({
+        value: status,
+        label: status,
+      })),
+  );
+  const scoreSummary = formatDashboardFilterSummary(
+    filters.scoreFilters,
+    DASHBOARD_SCORE_FILTER_OPTIONS,
+  );
+  const reportSummary = formatDashboardFilterSummary(
+    filters.reportFilters,
+    DASHBOARD_REPORT_FILTER_OPTIONS,
+  );
+  const pdfSummary = formatDashboardFilterSummary(
+    filters.pdfFilters,
+    DASHBOARD_PDF_FILTER_OPTIONS,
+  );
+
+  return [
+    `Showing ${options.resultCount} of ${options.totalCount} applications`,
+    `period: ${getDashboardPeriodLabel(filters.periodWeeks)}`,
+    statusSummary ? `status: ${statusSummary}` : "",
+    scoreSummary ? `score: ${scoreSummary}` : "",
+    reportSummary ? `report: ${reportSummary}` : "",
+    pdfSummary ? `pdf: ${pdfSummary}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export const DASHBOARD_FILTERS_OPEN_EVENT = "dashboard:open-filters";
 
 export function openDashboardFilters(): void {

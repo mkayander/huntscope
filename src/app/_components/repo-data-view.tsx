@@ -145,7 +145,7 @@ function RepoDataContent({
   );
 
   return (
-    <section className="flex w-full max-w-screen-2xl min-w-0 flex-col gap-6">
+    <section className="flex w-full max-w-screen-2xl min-w-0 flex-col gap-6 pb-24">
       <DashboardSection
         id={DASHBOARD_SECTION_IDS.overview}
         label="Overview"
@@ -161,6 +161,7 @@ function RepoDataContent({
           hasPipelineSection={parsed.pipeline != null}
           dashboardFilters={dashboardFilters}
           onDashboardFiltersChange={setDashboardFilters}
+          totalApplications={parsed.applications.length}
         />
       </DashboardSection>
 

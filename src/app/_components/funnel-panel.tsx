@@ -8,7 +8,7 @@ import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { computeFunnelMetrics } from "~/lib/career-ops/funnel";
 import { buildFunnelSankeyData } from "~/lib/career-ops/funnel-sankey";
 import {
-  getDashboardPeriodLabel,
+  getDashboardFilterSummaryLine,
   hasActiveDashboardFilters,
   type DashboardFilters,
 } from "~/lib/career-ops/dashboard-filters";
@@ -33,7 +33,10 @@ export function FunnelPanel({
     [applications],
   );
   const filterSummary = hasActiveDashboardFilters(dashboardFilters)
-    ? `Filtered view: ${applications.length} of ${totalApplications} applications · ${getDashboardPeriodLabel(dashboardFilters.periodWeeks)}`
+    ? getDashboardFilterSummaryLine(dashboardFilters, {
+        resultCount: applications.length,
+        totalCount: totalApplications,
+      })
     : null;
 
   if (totalApplications === 0) {

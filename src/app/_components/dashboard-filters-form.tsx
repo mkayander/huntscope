@@ -11,8 +11,7 @@ import {
   DASHBOARD_REPORT_FILTER_OPTIONS,
   DASHBOARD_SCORE_FILTER_OPTIONS,
   DEFAULT_DASHBOARD_FILTERS,
-  formatDashboardFilterSummary,
-  getDashboardPeriodLabel,
+  getDashboardFilterSummaryLine,
   hasActiveDashboardFilters,
   type DashboardFilters,
 } from "~/lib/career-ops/dashboard-filters";
@@ -42,22 +41,11 @@ export function DashboardFiltersForm({
     label: status,
   }));
 
-  const statusSummary = formatDashboardFilterSummary(
-    filters.statusFilters,
+  const summaryLine = getDashboardFilterSummaryLine(filters, {
+    resultCount,
+    totalCount: applications.length,
     statusOptions,
-  );
-  const scoreSummary = formatDashboardFilterSummary(
-    filters.scoreFilters,
-    DASHBOARD_SCORE_FILTER_OPTIONS,
-  );
-  const reportSummary = formatDashboardFilterSummary(
-    filters.reportFilters,
-    DASHBOARD_REPORT_FILTER_OPTIONS,
-  );
-  const pdfSummary = formatDashboardFilterSummary(
-    filters.pdfFilters,
-    DASHBOARD_PDF_FILTER_OPTIONS,
-  );
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -160,14 +148,7 @@ export function DashboardFiltersForm({
         />
       </div>
 
-      <p className="text-sm text-white/50">
-        Showing {resultCount} of {applications.length} applications
-        {` · period: ${getDashboardPeriodLabel(filters.periodWeeks)}`}
-        {statusSummary ? ` · status: ${statusSummary}` : ""}
-        {scoreSummary ? ` · score: ${scoreSummary}` : ""}
-        {reportSummary ? ` · report: ${reportSummary}` : ""}
-        {pdfSummary ? ` · pdf: ${pdfSummary}` : ""}
-      </p>
+      <p className="text-sm text-white/50">{summaryLine}</p>
     </div>
   );
 }

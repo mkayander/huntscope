@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_DASHBOARD_FILTERS,
   filterDashboardApplications,
+  getDashboardFilterSummaryLine,
   getDashboardPeriodCutoff,
   hasActiveDashboardFilters,
   matchesDashboardPeriod,
@@ -182,6 +183,16 @@ describe("filterDashboardApplications", () => {
       "Gamma",
     ]);
   });
+
+  it("searches across company and role fields", () => {
+    const results = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
+      searchQuery: "gamma",
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.company).toBe("Gamma");
+  });
 });
 
 describe("matchesDashboardPeriod", () => {
@@ -207,6 +218,28 @@ describe("getDashboardPeriodCutoff", () => {
   it("returns a date key N weeks before the reference date", () => {
     expect(getDashboardPeriodCutoff(12, new Date("2026-02-15"))).toBe(
       "2025-11-23",
+    );
+  });
+});
+
+describe("getDashboardFilterSummaryLine", () => {
+  it("builds a readable summary for active filters", () => {
+    expect(
+      getDashboardFilterSummaryLine(
+        {
+          ...DEFAULT_DASHBOARD_FILTERS,
+          periodWeeks: 12,
+          scoreFilters: ["high"],
+          statusFilters: ["Applied"],
+        },
+        {
+          resultCount: 1,
+          totalCount: 3,
+          statusOptions: [{ value: "Applied", label: "Applied" }],
+        },
+      ),
+    ).toBe(
+      "Showing 1 of 3 applications · period: 12 weeks · status: Applied · score: High (4+)",
     );
   });
 });

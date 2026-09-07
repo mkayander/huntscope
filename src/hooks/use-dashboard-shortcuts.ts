@@ -34,9 +34,6 @@ export function useDashboardShortcuts({
 
       if (action === "focus-search") {
         openDashboardFilters();
-        window.requestAnimationFrame(() => {
-          document.getElementById("dashboard-search")?.focus();
-        });
         return;
       }
 

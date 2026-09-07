@@ -11,8 +11,6 @@ import { useBodyScrollLock } from "~/hooks/use-body-scroll-lock";
 import {
   countActiveDashboardFilters,
   DASHBOARD_FILTERS_OPEN_EVENT,
-  getDashboardPeriodLabel,
-  hasActiveDashboardFilters,
   type DashboardFilters,
 } from "~/lib/career-ops/dashboard-filters";
 import { cn } from "~/lib/utils";
@@ -35,13 +33,8 @@ export function DashboardFiltersControl({
 }: DashboardFiltersControlProps) {
   const [open, setOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [focusSearchOnOpen, setFocusSearchOnOpen] = useState(false);
   const activeFilterCount = countActiveDashboardFilters(filters);
-
-  const focusSearchInput = useCallback(() => {
-    window.requestAnimationFrame(() => {
-      document.getElementById("dashboard-search")?.focus();
-    });
-  }, []);
 
   const handleClose = useCallback(() => {
     if (isClosing) {
@@ -52,25 +45,39 @@ export function DashboardFiltersControl({
     window.setTimeout(() => {
       setOpen(false);
       setIsClosing(false);
+      setFocusSearchOnOpen(false);
     }, PANEL_ANIMATION_MS);
   }, [isClosing]);
 
-  const handleOpen = useCallback(() => {
+  const handleOpen = useCallback((options?: { focusSearch?: boolean }) => {
     setOpen(true);
     setIsClosing(false);
+    setFocusSearchOnOpen(options?.focusSearch ?? false);
   }, []);
 
   useEffect(() => {
     const handleOpenEvent = () => {
-      handleOpen();
-      focusSearchInput();
+      handleOpen({ focusSearch: true });
     };
 
     window.addEventListener(DASHBOARD_FILTERS_OPEN_EVENT, handleOpenEvent);
     return () => {
       window.removeEventListener(DASHBOARD_FILTERS_OPEN_EVENT, handleOpenEvent);
     };
-  }, [focusSearchInput, handleOpen]);
+  }, [handleOpen]);
+
+  useEffect(() => {
+    if (!open || isClosing || !focusSearchOnOpen) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("dashboard-search")?.focus();
+      setFocusSearchOnOpen(false);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusSearchOnOpen, isClosing, open]);
 
   useEffect(() => {
     if (!open || isClosing) {
@@ -178,13 +185,6 @@ export function DashboardFiltersControl({
                 onFiltersChange={onFiltersChange}
               />
             </div>
-
-            {hasActiveDashboardFilters(filters) ? (
-              <div className="border-t border-white/10 px-4 py-3 text-xs text-white/45 sm:px-5">
-                {resultCount} of {applications.length} applications ·{" "}
-                {getDashboardPeriodLabel(filters.periodWeeks)}
-              </div>
-            ) : null}
           </aside>
         </div>
       ) : null}

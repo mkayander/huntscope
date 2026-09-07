@@ -2,6 +2,12 @@
 
 import type { ApplicationAnalytics } from "~/lib/career-ops/analytics";
 import type { DashboardFilters } from "~/lib/career-ops/dashboard-filters";
+import {
+  DEFAULT_DASHBOARD_FILTERS,
+  getDashboardFilterSummaryLine,
+  hasActiveDashboardFilters,
+  openDashboardFilters,
+} from "~/lib/career-ops/dashboard-filters";
 import type { PipelineSummary } from "~/lib/career-ops/types";
 import {
   getStatusChipClassName,
@@ -14,6 +20,7 @@ import { clickableCardClassName } from "~/components/ui/interaction";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
 import { cn } from "~/lib/utils";
 
 type OverviewStripProps = {
@@ -26,6 +33,7 @@ type OverviewStripProps = {
   hasPipelineSection: boolean;
   dashboardFilters: DashboardFilters;
   onDashboardFiltersChange: (filters: DashboardFilters) => void;
+  totalApplications: number;
 };
 
 export function OverviewStrip({
@@ -38,9 +46,21 @@ export function OverviewStrip({
   hasPipelineSection,
   dashboardFilters,
   onDashboardFiltersChange,
+  totalApplications,
 }: OverviewStripProps) {
   const { scrollToSection } = useDashboardSections();
   const statuses = sortStatuses(analytics.statusCounts);
+  const filtersActive = hasActiveDashboardFilters(dashboardFilters);
+  const filterSummary = filtersActive
+    ? getDashboardFilterSummaryLine(dashboardFilters, {
+        resultCount: analytics.total,
+        totalCount: totalApplications,
+        statusOptions: statuses.map((status) => ({
+          value: status,
+          label: status,
+        })),
+      })
+    : null;
 
   const scrollTo = (sectionId: string) => {
     scrollToSection(sectionId);
@@ -53,7 +73,8 @@ export function OverviewStrip({
           <h2 className="text-2xl font-semibold text-white">{repoFullName}</h2>
           <p className="mt-1 text-sm text-white/60">
             Command-center snapshot — counts, funnel, and recent activity from
-            your repo.
+            your repo. Use the Filters button or {getSearchShortcutLabel()} to
+            scope the dashboard.
           </p>
         </div>
         <span
@@ -67,6 +88,37 @@ export function OverviewStrip({
           {canEditLocally ? "Local editing" : "Read-only"}
         </span>
       </div>
+
+      {filtersActive && filterSummary ? (
+        <div
+          className={cn(
+            glassCardSurfaceClassName,
+            "mt-4 flex flex-col gap-3 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+          )}
+        >
+          <p className="text-sm text-white/60">{filterSummary}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="brandSecondary"
+              size="pillSm"
+              onClick={openDashboardFilters}
+            >
+              Edit filters
+            </Button>
+            <Button
+              type="button"
+              variant="brandSecondary"
+              size="pillSm"
+              onClick={() =>
+                onDashboardFiltersChange(DEFAULT_DASHBOARD_FILTERS)
+              }
+            >
+              Reset
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  DEFAULT_DASHBOARD_FILTERS,
-  filterDashboardApplications,
-} from "~/lib/career-ops/dashboard-filters";
-import {
   DEFAULT_TRACKER_TABLE_QUERY,
   queryTrackerApplications,
   sortApplications,
@@ -101,17 +97,5 @@ describe("queryTrackerApplications", () => {
     );
 
     expect(results.map((entry) => entry.score)).toEqual(["4.5", "3.5", "2.0"]);
-  });
-});
-
-describe("filterDashboardApplications with tracker data", () => {
-  it("searches across company and role fields", () => {
-    const results = filterDashboardApplications(applications, {
-      ...DEFAULT_DASHBOARD_FILTERS,
-      searchQuery: "designer",
-    });
-
-    expect(results).toHaveLength(1);
-    expect(results[0]?.company).toBe("Beta");
   });
 });
