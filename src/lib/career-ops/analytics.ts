@@ -1,6 +1,7 @@
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { formatAverageScore, parseScore } from "~/lib/career-ops/score";
 import {
+  countApplicationsByStatus,
   normalizeStatus,
   TERMINAL_STATUSES,
 } from "~/lib/career-ops/status-meta";
@@ -25,7 +26,7 @@ export type ApplicationAnalytics = {
 export function computeApplicationAnalytics(
   applications: ApplicationEntry[],
 ): ApplicationAnalytics {
-  const statusCounts: Record<string, number> = {};
+  const statusCounts = countApplicationsByStatus(applications);
   const scoreBands: ScoreBands = {
     high: 0,
     medium: 0,
@@ -38,7 +39,6 @@ export function computeApplicationAnalytics(
 
   for (const application of applications) {
     const status = normalizeStatus(application.status);
-    statusCounts[status] = (statusCounts[status] ?? 0) + 1;
 
     if (!TERMINAL_STATUSES.has(status)) {
       activeCount += 1;

@@ -1,6 +1,13 @@
 "use client";
 
 import type { ApplicationAnalytics } from "~/lib/career-ops/analytics";
+import type { DashboardFilters } from "~/lib/career-ops/dashboard-filters";
+import {
+  DEFAULT_DASHBOARD_FILTERS,
+  getDashboardFilterSummaryLine,
+  hasActiveDashboardFilters,
+  openDashboardFilters,
+} from "~/lib/career-ops/dashboard-filters";
 import type { PipelineSummary } from "~/lib/career-ops/types";
 import {
   getStatusChipClassName,
@@ -13,6 +20,8 @@ import { clickableCardClassName } from "~/components/ui/interaction";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
+import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
+import { useLocale } from "~/lib/i18n/locale-context";
 import { cn } from "~/lib/utils";
 
 type OverviewStripProps = {
@@ -23,8 +32,9 @@ type OverviewStripProps = {
   canEditLocally: boolean;
   hasAnalyticsSection: boolean;
   hasPipelineSection: boolean;
-  activeStatusFilters: string[];
-  onStatusFiltersChange: (statuses: string[]) => void;
+  dashboardFilters: DashboardFilters;
+  onDashboardFiltersChange: (filters: DashboardFilters) => void;
+  totalApplications: number;
 };
 
 export function OverviewStrip({
@@ -35,11 +45,25 @@ export function OverviewStrip({
   canEditLocally,
   hasAnalyticsSection,
   hasPipelineSection,
-  activeStatusFilters,
-  onStatusFiltersChange,
+  dashboardFilters,
+  onDashboardFiltersChange,
+  totalApplications,
 }: OverviewStripProps) {
+  const locale = useLocale();
   const { scrollToSection } = useDashboardSections();
   const statuses = sortStatuses(analytics.statusCounts);
+  const filtersActive = hasActiveDashboardFilters(dashboardFilters);
+  const filterSummary = filtersActive
+    ? getDashboardFilterSummaryLine(dashboardFilters, {
+        resultCount: analytics.total,
+        totalCount: totalApplications,
+        statusOptions: statuses.map((status) => ({
+          value: status,
+          label: status,
+        })),
+        locale,
+      })
+    : null;
 
   const scrollTo = (sectionId: string) => {
     scrollToSection(sectionId);
@@ -52,7 +76,8 @@ export function OverviewStrip({
           <h2 className="text-2xl font-semibold text-white">{repoFullName}</h2>
           <p className="mt-1 text-sm text-white/60">
             Command-center snapshot — counts, funnel, and recent activity from
-            your repo.
+            your repo. Use the Filters button or {getSearchShortcutLabel()} to
+            scope the dashboard.
           </p>
         </div>
         <span
@@ -66,6 +91,37 @@ export function OverviewStrip({
           {canEditLocally ? "Local editing" : "Read-only"}
         </span>
       </div>
+
+      {filtersActive && filterSummary ? (
+        <div
+          className={cn(
+            glassCardSurfaceClassName,
+            "mt-4 flex flex-col gap-3 rounded-xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+          )}
+        >
+          <p className="text-sm text-white/60">{filterSummary}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="brandSecondary"
+              size="pillSm"
+              onClick={openDashboardFilters}
+            >
+              Edit filters
+            </Button>
+            <Button
+              type="button"
+              variant="brandSecondary"
+              size="pillSm"
+              onClick={() =>
+                onDashboardFiltersChange(DEFAULT_DASHBOARD_FILTERS)
+              }
+            >
+              Reset
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
@@ -163,9 +219,14 @@ export function OverviewStrip({
               variant="chip"
               className={getStatusChipClassName(
                 "All",
-                activeStatusFilters.length === 0,
+                dashboardFilters.statusFilters.length === 0,
               )}
-              onClick={() => onStatusFiltersChange([])}
+              onClick={() =>
+                onDashboardFiltersChange({
+                  ...dashboardFilters,
+                  statusFilters: [],
+                })
+              }
             >
               All {analytics.total}
             </Button>
@@ -176,12 +237,16 @@ export function OverviewStrip({
                 variant="chip"
                 className={getStatusChipClassName(
                   status,
-                  activeStatusFilters.includes(status),
+                  dashboardFilters.statusFilters.includes(status),
                 )}
                 onClick={() =>
-                  onStatusFiltersChange(
-                    toggleStatusFilter(activeStatusFilters, status),
-                  )
+                  onDashboardFiltersChange({
+                    ...dashboardFilters,
+                    statusFilters: toggleStatusFilter(
+                      dashboardFilters.statusFilters,
+                      status,
+                    ),
+                  })
                 }
               >
                 {status} {analytics.statusCounts[status]}

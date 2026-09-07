@@ -7,6 +7,10 @@ import { ReportMarkdown } from "~/app/_components/report-markdown";
 import { ReportPreviewMeta } from "~/app/_components/report-preview-meta";
 import { Button } from "~/components/ui/button";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
+import {
+  animatedExitClassName,
+  useAnimatedPresence,
+} from "~/hooks/use-animated-presence";
 import { useBodyScrollLock } from "~/hooks/use-body-scroll-lock";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
 import type { ArtifactPreviewRequest } from "~/hooks/use-artifact-viewer";
@@ -23,11 +27,20 @@ export function ArtifactPreviewSheet() {
   const { activeSource } = useCareerOpsDataSource();
   const [displayedArtifact, setDisplayedArtifact] =
     useState<ArtifactPreviewRequest | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
+  const isOpen = activeArtifact != null;
+  const { isRendered, isClosing } = useAnimatedPresence(isOpen, {
+    durationMs: DRAWER_ANIMATION_MS,
+  });
   const { data, isLoading, error } = useRepoFile(
     activeSource,
     displayedArtifact?.path ?? null,
   );
+
+  useEffect(() => {
+    if (activeArtifact) {
+      setDisplayedArtifact(activeArtifact);
+    }
+  }, [activeArtifact]);
 
   const handleClose = useCallback(() => {
     if (isClosing || !displayedArtifact) {
@@ -37,39 +50,17 @@ export function ArtifactPreviewSheet() {
     closeArtifact();
   }, [closeArtifact, displayedArtifact, isClosing]);
 
-  useEffect(() => {
-    if (activeArtifact) {
-      setDisplayedArtifact(activeArtifact);
-      setIsClosing(false);
-      return;
-    }
-
-    if (!displayedArtifact) {
-      return;
-    }
-
-    setIsClosing(true);
-    const timer = window.setTimeout(() => {
-      setDisplayedArtifact(null);
-      setIsClosing(false);
-    }, DRAWER_ANIMATION_MS);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [activeArtifact, displayedArtifact]);
-
-  useBodyScrollLock(Boolean(displayedArtifact));
+  useBodyScrollLock(isRendered);
 
   useEffect(() => {
-    if (!displayedArtifact || isClosing) {
+    if (!isRendered || isClosing) {
       return;
     }
 
     closeButtonRef.current?.focus();
-  }, [displayedArtifact, isClosing]);
+  }, [isClosing, isRendered]);
 
-  if (!displayedArtifact) {
+  if (!isRendered || !displayedArtifact) {
     return null;
   }
 
@@ -105,20 +96,23 @@ export function ArtifactPreviewSheet() {
         type="button"
         aria-label="Close preview"
         className={cn(
-          "absolute inset-0 cursor-pointer bg-black/60 backdrop-blur-sm motion-reduce:animate-none",
+          "absolute inset-0 cursor-pointer bg-black/60 backdrop-blur-sm",
           isClosing
-            ? "animate-out fade-out-0 duration-200"
-            : "animate-in fade-in-0 duration-200",
+            ? cn(animatedExitClassName, "animate-out fade-out-0 duration-300")
+            : "animate-in fade-in-0 duration-300 motion-reduce:animate-none",
         )}
         onClick={handleClose}
       />
 
       <aside
         className={cn(
-          "cursor-surface absolute inset-y-0 right-0 flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl motion-reduce:animate-none",
+          "cursor-surface absolute inset-y-0 right-0 flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl",
           isClosing
-            ? "animate-out fade-out-0 slide-out-to-right duration-300"
-            : "animate-in fade-in-0 slide-in-from-right duration-300",
+            ? cn(
+                animatedExitClassName,
+                "animate-out fade-out-0 slide-out-to-right duration-300",
+              )
+            : "animate-in fade-in-0 slide-in-from-right duration-300 motion-reduce:animate-none",
         )}
         onMouseDown={(event) => event.stopPropagation()}
       >

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { resolveDashboardShortcutAction } from "~/lib/dashboard/shortcut-actions";
+import { openDashboardFilters } from "~/lib/career-ops/dashboard-filters";
 
 type UseDashboardShortcutsOptions = {
   artifactOpen: boolean;
@@ -32,7 +33,7 @@ export function useDashboardShortcuts({
       );
 
       if (action === "focus-search") {
-        document.getElementById("tracker-search")?.focus();
+        openDashboardFilters();
         return;
       }
 

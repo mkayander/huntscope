@@ -1,143 +1,21 @@
-import { filterApplications } from "~/lib/career-ops/analytics";
-import { applicationHasPdf } from "~/lib/career-ops/application-pdfs";
-import { applicationHasReport } from "~/lib/career-ops/application-reports";
 import { parseApplicationDate } from "~/lib/career-ops/dates";
 import { parseScore } from "~/lib/career-ops/score";
 import { normalizeStatus } from "~/lib/career-ops/status-meta";
-import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
+import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 export type TrackerSortColumn =
   "num" | "date" | "company" | "role" | "score" | "status";
 export type TrackerSortDirection = "asc" | "desc";
-export type TrackerScoreFilterValue = "high" | "medium" | "low" | "unknown";
-export type TrackerReportFilterValue = "with" | "without";
-export type TrackerPdfFilterValue = "with" | "without";
 
 export type TrackerTableQuery = {
-  searchQuery: string;
-  statusFilters: string[];
-  scoreFilters: TrackerScoreFilterValue[];
-  reportFilters: TrackerReportFilterValue[];
-  pdfFilters: TrackerPdfFilterValue[];
   sortColumn: TrackerSortColumn;
   sortDirection: TrackerSortDirection;
 };
 
 export const DEFAULT_TRACKER_TABLE_QUERY: TrackerTableQuery = {
-  searchQuery: "",
-  statusFilters: [],
-  scoreFilters: [],
-  reportFilters: [],
-  pdfFilters: [],
-  sortColumn: "num",
+  sortColumn: "score",
   sortDirection: "desc",
 };
-
-export type TrackerRepoFiles = {
-  reportFiles: readonly RepoDataFile[];
-  outputFiles: readonly RepoDataFile[];
-};
-
-const EMPTY_TRACKER_REPO_FILES: TrackerRepoFiles = {
-  reportFiles: [],
-  outputFiles: [],
-};
-
-function hasReportValue(
-  application: ApplicationEntry,
-  reportFiles: readonly RepoDataFile[],
-): boolean {
-  return applicationHasReport(application, reportFiles);
-}
-
-function matchesScoreValue(
-  score: string,
-  filter: TrackerScoreFilterValue,
-): boolean {
-  const parsed = parseScore(score);
-
-  if (filter === "unknown") {
-    return parsed === null;
-  }
-
-  if (parsed === null) {
-    return false;
-  }
-
-  if (filter === "high") {
-    return parsed >= 4;
-  }
-
-  if (filter === "medium") {
-    return parsed >= 3 && parsed < 4;
-  }
-
-  return parsed < 3;
-}
-
-function hasPdfValue(
-  application: ApplicationEntry,
-  outputFiles: readonly RepoDataFile[],
-): boolean {
-  return applicationHasPdf(application, outputFiles);
-}
-
-function matchesPdfValue(
-  application: ApplicationEntry,
-  filter: TrackerPdfFilterValue,
-  outputFiles: readonly RepoDataFile[],
-): boolean {
-  const hasPdf = hasPdfValue(application, outputFiles);
-  return filter === "with" ? hasPdf : !hasPdf;
-}
-
-function matchesPdfFilters(
-  application: ApplicationEntry,
-  pdfFilters: TrackerPdfFilterValue[],
-  outputFiles: readonly RepoDataFile[],
-): boolean {
-  if (pdfFilters.length === 0) {
-    return true;
-  }
-
-  return pdfFilters.some((filter) =>
-    matchesPdfValue(application, filter, outputFiles),
-  );
-}
-
-function matchesReportValue(
-  application: ApplicationEntry,
-  filter: TrackerReportFilterValue,
-  reportFiles: readonly RepoDataFile[],
-): boolean {
-  const hasReport = hasReportValue(application, reportFiles);
-  return filter === "with" ? hasReport : !hasReport;
-}
-
-function matchesScoreFilters(
-  score: string,
-  scoreFilters: TrackerScoreFilterValue[],
-): boolean {
-  if (scoreFilters.length === 0) {
-    return true;
-  }
-
-  return scoreFilters.some((filter) => matchesScoreValue(score, filter));
-}
-
-function matchesReportFilters(
-  application: ApplicationEntry,
-  reportFilters: TrackerReportFilterValue[],
-  reportFiles: readonly RepoDataFile[],
-): boolean {
-  if (reportFilters.length === 0) {
-    return true;
-  }
-
-  return reportFilters.some((filter) =>
-    matchesReportValue(application, filter, reportFiles),
-  );
-}
 
 function compareDates(left: string, right: string): number {
   const leftKey = parseApplicationDate(left);
@@ -177,7 +55,6 @@ function compareScores(
     return 0;
   }
 
-  // Unscored entries always sort last.
   if (leftScore === null) {
     return 1;
   }
@@ -240,49 +117,15 @@ export function sortApplications(
 export function queryTrackerApplications(
   applications: ApplicationEntry[],
   query: TrackerTableQuery,
-  repoFiles: TrackerRepoFiles = EMPTY_TRACKER_REPO_FILES,
 ): ApplicationEntry[] {
-  const { reportFiles, outputFiles } = repoFiles;
-
-  const filtered = filterApplications(applications, {
-    statusFilters: query.statusFilters,
-    searchQuery: query.searchQuery,
-  }).filter(
-    (application) =>
-      matchesScoreFilters(application.score, query.scoreFilters) &&
-      matchesReportFilters(application, query.reportFilters, reportFiles) &&
-      matchesPdfFilters(application, query.pdfFilters, outputFiles),
-  );
-
-  return sortApplications(filtered, query.sortColumn, query.sortDirection);
+  return sortApplications(applications, query.sortColumn, query.sortDirection);
 }
 
-export function hasActiveTrackerFilters(query: TrackerTableQuery): boolean {
+export function hasNonDefaultTrackerSort(query: TrackerTableQuery): boolean {
   return (
-    query.searchQuery.trim().length > 0 ||
-    query.statusFilters.length > 0 ||
-    query.scoreFilters.length > 0 ||
-    query.reportFilters.length > 0 ||
-    query.pdfFilters.length > 0 ||
     query.sortColumn !== DEFAULT_TRACKER_TABLE_QUERY.sortColumn ||
     query.sortDirection !== DEFAULT_TRACKER_TABLE_QUERY.sortDirection
   );
-}
-
-export function formatTrackerFilterSummary(
-  values: string[],
-  options: { value: string; label: string }[],
-): string {
-  if (values.length === 0) {
-    return "";
-  }
-
-  return values
-    .map(
-      (value) =>
-        options.find((option) => option.value === value)?.label ?? value,
-    )
-    .join(", ");
 }
 
 export function getTrackerSortLabel(

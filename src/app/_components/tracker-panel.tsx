@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ScoreBadge } from "~/app/_components/score-badge";
-import {
-  createDefaultTrackerQuery,
-  TrackerTableToolbar,
-} from "~/app/_components/tracker-table-toolbar";
+import { createDefaultTrackerQuery } from "~/app/_components/tracker-table-toolbar";
 import { TrackerVirtualTable } from "~/app/_components/tracker-virtual-table";
 import { ApplicationDate } from "~/components/application-date";
 import { Button } from "~/components/ui/button";
@@ -18,8 +15,8 @@ import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { cn } from "~/lib/utils";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
-import { arraysEqual } from "~/lib/career-ops/status-filters";
 import {
+  countApplicationsByStatus,
   getBoardColumnOrder,
   sortStatuses,
 } from "~/lib/career-ops/status-meta";
@@ -28,7 +25,7 @@ import {
   updateApplicationStatus,
 } from "~/lib/career-ops/serialize-applications";
 import {
-  DEFAULT_TRACKER_TABLE_QUERY,
+  getTrackerSortLabel,
   queryTrackerApplications,
   type TrackerSortColumn,
   type TrackerTableQuery,
@@ -42,48 +39,36 @@ type TrackerPanelProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   applications: ApplicationEntry[];
+  allApplications: ApplicationEntry[];
+  totalApplications: number;
   reportFiles: RepoDataFile[];
   outputFiles: RepoDataFile[];
-  statusFilters: string[];
-  onStatusFiltersChange: (statuses: string[]) => void;
 };
 
 export function TrackerPanel({
   dataSource,
   defaultBranch,
   applications,
+  allApplications,
+  totalApplications,
   reportFiles,
   outputFiles,
-  statusFilters,
-  onStatusFiltersChange,
 }: TrackerPanelProps) {
   const { canWrite, isSaving, writeApplicationsMarkdown } =
     useLocalRepoMutations();
   const [view, setView] = useState<TrackerView>("table");
   const [tableQuery, setTableQuery] = useState<TrackerTableQuery>(() =>
-    createDefaultTrackerQuery(statusFilters),
+    createDefaultTrackerQuery(),
   );
 
-  useEffect(() => {
-    setTableQuery((current) =>
-      arraysEqual(current.statusFilters, statusFilters)
-        ? current
-        : { ...current, statusFilters },
-    );
-  }, [statusFilters]);
-
-  const filteredApplications = useMemo(
-    () =>
-      queryTrackerApplications(applications, tableQuery, {
-        reportFiles,
-        outputFiles,
-      }),
-    [applications, outputFiles, reportFiles, tableQuery],
+  const sortedApplications = useMemo(
+    () => queryTrackerApplications(applications, tableQuery),
+    [applications, tableQuery],
   );
 
   const groupedApplications = useMemo(
-    () => groupApplicationsByStatus(filteredApplications),
-    [filteredApplications],
+    () => groupApplicationsByStatus(sortedApplications),
+    [sortedApplications],
   );
 
   const boardStatuses = useMemo(() => {
@@ -97,37 +82,20 @@ export function TrackerPanel({
     return getBoardColumnOrder(statusCounts);
   }, [groupedApplications]);
 
-  const statusOptions = useMemo(() => {
-    const counts: Record<string, number> = {};
-
-    for (const application of applications) {
-      counts[application.status] = (counts[application.status] ?? 0) + 1;
-    }
-
-    return sortStatuses(counts);
-  }, [applications]);
+  const statusOptions = useMemo(
+    () => sortStatuses(countApplicationsByStatus(applications)),
+    [applications],
+  );
 
   const handleStatusChange = async (applicationNum: number, status: string) => {
     const nextApplications = updateApplicationStatus(
-      applications,
+      allApplications,
       applicationNum,
       status,
     );
     await writeApplicationsMarkdown(
       serializeApplicationsMarkdown(nextApplications),
     );
-  };
-
-  const handleQueryChange = (nextQuery: TrackerTableQuery) => {
-    setTableQuery(nextQuery);
-    if (!arraysEqual(nextQuery.statusFilters, statusFilters)) {
-      onStatusFiltersChange(nextQuery.statusFilters);
-    }
-  };
-
-  const handleClearFilters = () => {
-    setTableQuery(DEFAULT_TRACKER_TABLE_QUERY);
-    onStatusFiltersChange([]);
   };
 
   const handleSort = (column: TrackerSortColumn) => {
@@ -142,7 +110,10 @@ export function TrackerPanel({
       return {
         ...current,
         sortColumn: column,
-        sortDirection: column === "num" || column === "date" ? "desc" : "asc",
+        sortDirection:
+          column === "num" || column === "date" || column === "score"
+            ? "desc"
+            : "asc",
       };
     });
   };
@@ -160,9 +131,9 @@ export function TrackerPanel({
               Application tracker
             </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Open attached PDFs and
-              evaluation reports inline, including auto-matched files from
-              `output/` and `reports/`.
+              Browse and sort applications. Use the global Filters button for
+              search and scoping. Open attached PDFs and evaluation reports
+              inline.
             </p>
           </div>
 
@@ -180,23 +151,25 @@ export function TrackerPanel({
           </div>
         </div>
 
-        <TrackerTableToolbar
-          applications={applications}
-          query={tableQuery}
-          resultCount={filteredApplications.length}
-          onQueryChange={handleQueryChange}
-          onClearFilters={handleClearFilters}
-        />
+        <p className="mt-4 text-sm text-white/50">
+          {applications.length} scoped application
+          {applications.length === 1 ? "" : "s"}
+          {` · sorted by ${getTrackerSortLabel(tableQuery.sortColumn, tableQuery.sortDirection)}`}
+        </p>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {filteredApplications.length === 0 ? (
+        {totalApplications === 0 ? (
           <p className="mt-6 rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm text-white/60">
-            No applications match the current filters.
+            No applications in this repository yet.
+          </p>
+        ) : applications.length === 0 ? (
+          <p className="mt-6 rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm text-white/60">
+            No applications match the current dashboard filters.
           </p>
         ) : view === "table" ? (
           <TrackerVirtualTable
-            applications={filteredApplications}
+            applications={sortedApplications}
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             reportFiles={reportFiles}

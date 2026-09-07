@@ -1,4 +1,7 @@
-import type { ActivityHeatmap, ActivityHeatmapPeriod } from "~/lib/career-ops/activity-heatmap";
+import type {
+  ActivityHeatmap,
+  ActivityHeatmapWindow,
+} from "~/lib/career-ops/activity-heatmap";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import type { ParsedCareerOpsRepoData } from "~/lib/career-ops/parse-repo-data";
 
@@ -16,14 +19,13 @@ export type CareerOpsWorkerHeatmapRequest = {
   id: number;
   payload: {
     applications: ApplicationEntry[];
-    periodWeeks: ActivityHeatmapPeriod;
+    window: ActivityHeatmapWindow;
     locale?: string;
   };
 };
 
 export type CareerOpsWorkerRequest =
-  | CareerOpsWorkerParseRequest
-  | CareerOpsWorkerHeatmapRequest;
+  CareerOpsWorkerParseRequest | CareerOpsWorkerHeatmapRequest;
 
 export type CareerOpsWorkerParseResponse = {
   type: "parse";
