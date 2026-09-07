@@ -7,6 +7,7 @@ import { ReportMarkdown } from "~/app/_components/report-markdown";
 import { ReportPreviewMeta } from "~/app/_components/report-preview-meta";
 import { Button } from "~/components/ui/button";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
+import { useBodyScrollLock } from "~/hooks/use-body-scroll-lock";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
 import type { ArtifactPreviewRequest } from "~/hooks/use-artifact-viewer";
 import { useRepoFile } from "~/hooks/use-repo-file";
@@ -58,18 +59,14 @@ export function ArtifactPreviewSheet() {
     };
   }, [activeArtifact, displayedArtifact]);
 
+  useBodyScrollLock(Boolean(displayedArtifact));
+
   useEffect(() => {
     if (!displayedArtifact || isClosing) {
       return;
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     closeButtonRef.current?.focus();
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
   }, [displayedArtifact, isClosing]);
 
   if (!displayedArtifact) {

@@ -23,6 +23,7 @@
   html {
     color-scheme: dark;
     min-height: 100%;
+    scrollbar-gutter: stable;
     background-color: var(--background);
     background-image: var(--page-shell-background);
     background-attachment: fixed;
@@ -47,6 +48,15 @@
     margin-right: 0 !important;
     padding-right: 0 !important;
     overflow: hidden !important;
+  }
+
+  html:has(body[data-overlay-scroll-locked]) {
+    overflow: hidden;
+  }
+
+  body[data-overlay-scroll-locked] {
+    overflow: hidden !important;
+    overscroll-behavior: none;
   }
 
   html,
