@@ -62,10 +62,13 @@ export function resolveArtifactLink(
   source: CareerOpsDataSource,
   value: string,
   defaultBranch: string | null = "main",
-): { label: string; href: string | null } | null {
+): { label: string; href: string | null; path: string | null } | null {
   const markdownLink = extractMarkdownLink(value);
 
   if (markdownLink) {
+    const path = markdownLink.href.startsWith("http")
+      ? null
+      : markdownLink.href.replace(/^\.\//, "");
     const href = markdownLink.href.startsWith("http")
       ? markdownLink.href
       : resolveDataSourceFileUrl(source, markdownLink.href, defaultBranch);
@@ -73,15 +76,27 @@ export function resolveArtifactLink(
     return {
       label: markdownLink.label,
       href,
+      path,
     };
   }
 
   const trimmed = value.trim();
 
   if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
+    const path = trimmed.replace(/^\.\//, "");
     return {
       label: "Report",
       href: resolveDataSourceFileUrl(source, trimmed, defaultBranch),
+      path,
+    };
+  }
+
+  if (trimmed.toLowerCase().endsWith(".pdf")) {
+    const path = trimmed.replace(/^\.\//, "");
+    return {
+      label: "PDF",
+      href: resolveDataSourceFileUrl(source, trimmed, defaultBranch),
+      path,
     };
   }
 

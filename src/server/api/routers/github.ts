@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   assertRepoInInstallation,
   fetchCareerOpsRepoData,
+  fetchRepoFile,
   listUserRepos,
 } from "~/server/github/client";
 import { throwIfGitHubRateLimited } from "~/server/github/errors";
@@ -216,6 +217,23 @@ export const githubRouter = createTRPCRouter({
 
       try {
         return await fetchCareerOpsRepoData(repo, ctx.session.user.id);
+      } catch (error) {
+        throwIfGitHubRateLimited(error);
+        throw error;
+      }
+    }),
+
+  getRepoFile: protectedProcedure
+    .input(
+      z.object({
+        repo: selectedRepoSchema,
+        path: z.string().min(1),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        await assertRepoInInstallation(ctx.session.user.id, input.repo);
+        return await fetchRepoFile(input.repo, ctx.session.user.id, input.path);
       } catch (error) {
         throwIfGitHubRateLimited(error);
         throw error;

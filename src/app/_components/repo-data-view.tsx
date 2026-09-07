@@ -4,8 +4,11 @@ import { useState } from "react";
 
 import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { AnalyticsChartsPanel } from "~/app/_components/analytics-charts-panel";
+import { DataFilesPanel } from "~/app/_components/data-files-panel";
+import { OutputFilesPanel } from "~/app/_components/output-files-panel";
 import { DashboardSection } from "~/app/_components/dashboard-section-nav";
 import { ErrorAlert } from "~/app/_components/error-alert";
+import { FunnelPanel } from "~/app/_components/funnel-panel";
 import { OverviewStrip } from "~/app/_components/overview-strip";
 import { PipelinePanel } from "~/app/_components/pipeline-panel";
 import { RecentApplications } from "~/app/_components/recent-applications";
@@ -107,6 +110,14 @@ function RepoDataContent({
   }
 
   const sourceLabel = getDataSourceLabel(activeSource);
+  const canEditLocally =
+    activeSource.kind === "local" &&
+    activeSource.directoryHandle != null &&
+    activeSource.fileHandle == null;
+  const showAnalytics = hasAnalyticsChartData(
+    parsed.applications,
+    parsed.analytics.statusCounts,
+  );
 
   return (
     <section className="flex w-full max-w-screen-2xl min-w-0 flex-col gap-6">
@@ -120,15 +131,15 @@ function RepoDataContent({
           analytics={parsed.analytics}
           pipeline={parsed.pipeline}
           reportsCount={raw.reportsCount}
+          canEditLocally={canEditLocally}
+          hasAnalyticsSection={showAnalytics}
+          hasPipelineSection={parsed.pipeline != null}
           activeStatusFilters={statusFilters}
           onStatusFiltersChange={setStatusFilters}
         />
       </DashboardSection>
 
-      {hasAnalyticsChartData(
-        parsed.applications,
-        parsed.analytics.statusCounts,
-      ) ? (
+      {showAnalytics ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.analytics}
           label="Analytics"
@@ -142,6 +153,14 @@ function RepoDataContent({
           />
         </DashboardSection>
       ) : null}
+
+      <DashboardSection
+        id={DASHBOARD_SECTION_IDS.funnel}
+        label="Funnel"
+        order={25}
+      >
+        <FunnelPanel applications={parsed.applications} />
+      </DashboardSection>
 
       <DashboardSection
         id={DASHBOARD_SECTION_IDS.activity}
@@ -169,7 +188,10 @@ function RepoDataContent({
           label="Pipeline"
           order={50}
         >
-          <PipelinePanel pipeline={parsed.pipeline} />
+          <PipelinePanel
+            pipeline={parsed.pipeline}
+            pipelineMarkdown={raw.pipelineMarkdown}
+          />
         </DashboardSection>
       ) : null}
 
@@ -182,8 +204,23 @@ function RepoDataContent({
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
           applications={parsed.applications}
+          reportFiles={raw.reportFiles}
+          outputFiles={raw.outputFiles}
           statusFilters={statusFilters}
           onStatusFiltersChange={setStatusFilters}
+        />
+      </DashboardSection>
+
+      <DashboardSection
+        id={DASHBOARD_SECTION_IDS.outputs}
+        label="Outputs"
+        order={65}
+      >
+        <OutputFilesPanel
+          dataSource={activeSource}
+          defaultBranch={raw.defaultBranch}
+          outputFiles={raw.outputFiles}
+          applications={parsed.applications}
         />
       </DashboardSection>
 
@@ -193,24 +230,7 @@ function RepoDataContent({
           label="Data files"
           order={70}
         >
-          <GlowPanel accent={DASHBOARD_SECTION_IDS.dataFiles}>
-            <details>
-              <summary className="cursor-pointer text-sm font-medium text-white/80">
-                Data files in `data/`
-              </summary>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {raw.dataFiles.map((file) => (
-                  <li
-                    key={file.path}
-                    className="rounded-full bg-black/30 px-3 py-1 text-xs text-white/80"
-                  >
-                    {file.name}
-                    {file.type === "dir" ? "/" : ""}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          </GlowPanel>
+          <DataFilesPanel dataFiles={raw.dataFiles} />
         </DashboardSection>
       ) : null}
     </section>

@@ -41,6 +41,7 @@ describe("resolveArtifactLink", () => {
     ).toEqual({
       label: "Report",
       href: "https://github.com/acme/career-ops/blob/develop/reports/foo.md",
+      path: "reports/foo.md",
     });
   });
 
@@ -54,6 +55,7 @@ describe("resolveArtifactLink", () => {
     ).toEqual({
       label: "Notes",
       href: "https://example.com/report",
+      path: null,
     });
   });
 });

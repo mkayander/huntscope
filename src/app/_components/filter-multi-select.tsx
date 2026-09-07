@@ -2,6 +2,7 @@
 
 import { ChevronDownIcon } from "lucide-react";
 
+import { clickableRowClassName } from "~/components/ui/interaction";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import {
@@ -93,7 +94,12 @@ export function FilterMultiSelect<T extends string>({
 
               return (
                 <li key={option.value}>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/8">
+                  <label
+                    className={cn(
+                      clickableRowClassName,
+                      "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-white/8",
+                    )}
+                  >
                     <input
                       type="checkbox"
                       checked={checked}

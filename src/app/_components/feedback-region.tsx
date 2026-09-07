@@ -6,6 +6,7 @@ type FeedbackRegionProps = {
   errorTitle?: string | null;
   errorMessage?: string | null;
   className?: string;
+  reserveSpace?: boolean;
 };
 
 export function FeedbackRegion({
@@ -13,6 +14,7 @@ export function FeedbackRegion({
   errorTitle,
   errorMessage,
   className,
+  reserveSpace = true,
 }: FeedbackRegionProps) {
   const hasError = Boolean(errorTitle && errorMessage);
   const hasHint = Boolean(hint);
@@ -21,7 +23,10 @@ export function FeedbackRegion({
   return (
     <div
       aria-live="polite"
-      className={cn("min-h-[4.75rem] w-full", className)}
+      className={cn(
+        reserveSpace ? "min-h-[4.75rem] w-full" : "min-h-0",
+        className,
+      )}
     >
       <div
         className={cn(
@@ -30,7 +35,10 @@ export function FeedbackRegion({
         )}
       >
         {hasError ? (
-          <ErrorAlert title={errorTitle ?? "Something went wrong"} message={errorMessage ?? ""} />
+          <ErrorAlert
+            title={errorTitle ?? "Something went wrong"}
+            message={errorMessage ?? ""}
+          />
         ) : (
           <p className="text-sm text-amber-200">{hint}</p>
         )}

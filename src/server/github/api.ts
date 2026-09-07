@@ -229,6 +229,29 @@ export async function readRepositoryFile(
   repositoryFullName: string,
   filePath: string,
 ): Promise<string | null> {
+  const payload = await readRepositoryFilePayload(
+    installationId,
+    repositoryFullName,
+    filePath,
+  );
+
+  if (payload?.encoding !== "utf-8") {
+    return null;
+  }
+
+  return payload.content;
+}
+
+export async function readRepositoryFilePayload(
+  installationId: number,
+  repositoryFullName: string,
+  filePath: string,
+): Promise<{
+  path: string;
+  encoding: "utf-8" | "base64";
+  content: string;
+  mimeType: string;
+} | null> {
   requireGitHubAppConfig();
   const { token } = await createInstallationAccessToken(installationId);
 
@@ -245,7 +268,28 @@ export async function readRepositoryFile(
       return null;
     }
 
-    return decodeGitHubBase64Content(data.content);
+    const normalizedBase64 = data.content.replace(/\s/g, "");
+    const lowerPath = filePath.toLowerCase();
+
+    if (lowerPath.endsWith(".pdf")) {
+      return {
+        path: filePath,
+        encoding: "base64",
+        content: normalizedBase64,
+        mimeType: "application/pdf",
+      };
+    }
+
+    return {
+      path: filePath,
+      encoding: "utf-8",
+      content: decodeGitHubBase64Content(data.content),
+      mimeType: lowerPath.endsWith(".md")
+        ? "text/markdown"
+        : lowerPath.endsWith(".yml") || lowerPath.endsWith(".yaml")
+          ? "text/yaml"
+          : "text/plain",
+    };
   } catch (error) {
     if (error instanceof Error && error.message.includes("(404)")) {
       return null;

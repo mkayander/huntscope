@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
+import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ScoreBadge } from "~/app/_components/score-badge";
 import {
   createDefaultTrackerQuery,
@@ -15,17 +17,24 @@ import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { cn } from "~/lib/utils";
-import { TrackerArtifactLink } from "~/app/_components/tracker-artifact-link";
 import { groupApplicationsByStatus } from "~/lib/career-ops/analytics";
 import { arraysEqual } from "~/lib/career-ops/status-filters";
-import { getBoardColumnOrder } from "~/lib/career-ops/status-meta";
+import {
+  getBoardColumnOrder,
+  sortStatuses,
+} from "~/lib/career-ops/status-meta";
+import {
+  serializeApplicationsMarkdown,
+  updateApplicationStatus,
+} from "~/lib/career-ops/serialize-applications";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
   queryTrackerApplications,
   type TrackerSortColumn,
   type TrackerTableQuery,
 } from "~/lib/career-ops/tracker-table";
-import type { ApplicationEntry } from "~/lib/career-ops/types";
+import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
+import { useLocalRepoMutations } from "~/hooks/use-local-repo-mutations";
 
 type TrackerView = "table" | "board";
 
@@ -33,6 +42,8 @@ type TrackerPanelProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   applications: ApplicationEntry[];
+  reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
   statusFilters: string[];
   onStatusFiltersChange: (statuses: string[]) => void;
 };
@@ -41,9 +52,13 @@ export function TrackerPanel({
   dataSource,
   defaultBranch,
   applications,
+  reportFiles,
+  outputFiles,
   statusFilters,
   onStatusFiltersChange,
 }: TrackerPanelProps) {
+  const { canWrite, isSaving, writeApplicationsMarkdown } =
+    useLocalRepoMutations();
   const [view, setView] = useState<TrackerView>("table");
   const [tableQuery, setTableQuery] = useState<TrackerTableQuery>(() =>
     createDefaultTrackerQuery(statusFilters),
@@ -58,8 +73,12 @@ export function TrackerPanel({
   }, [statusFilters]);
 
   const filteredApplications = useMemo(
-    () => queryTrackerApplications(applications, tableQuery),
-    [applications, tableQuery],
+    () =>
+      queryTrackerApplications(applications, tableQuery, {
+        reportFiles,
+        outputFiles,
+      }),
+    [applications, outputFiles, reportFiles, tableQuery],
   );
 
   const groupedApplications = useMemo(
@@ -77,6 +96,27 @@ export function TrackerPanel({
 
     return getBoardColumnOrder(statusCounts);
   }, [groupedApplications]);
+
+  const statusOptions = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    for (const application of applications) {
+      counts[application.status] = (counts[application.status] ?? 0) + 1;
+    }
+
+    return sortStatuses(counts);
+  }, [applications]);
+
+  const handleStatusChange = async (applicationNum: number, status: string) => {
+    const nextApplications = updateApplicationStatus(
+      applications,
+      applicationNum,
+      status,
+    );
+    await writeApplicationsMarkdown(
+      serializeApplicationsMarkdown(nextApplications),
+    );
+  };
 
   const handleQueryChange = (nextQuery: TrackerTableQuery) => {
     setTableQuery(nextQuery);
@@ -120,8 +160,9 @@ export function TrackerPanel({
               Application tracker
             </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Overview status chips stay
-              in sync with the status filter here.
+              Search, filter, and sort applications. Open attached PDFs and
+              evaluation reports inline, including auto-matched files from
+              `output/` and `reports/`.
             </p>
           </div>
 
@@ -158,8 +199,16 @@ export function TrackerPanel({
             applications={filteredApplications}
             dataSource={dataSource}
             defaultBranch={defaultBranch}
+            reportFiles={reportFiles}
+            outputFiles={outputFiles}
             tableQuery={tableQuery}
+            statusOptions={statusOptions}
+            canEditStatus={canWrite}
+            isSavingStatus={isSaving}
             onSort={handleSort}
+            onStatusChange={(applicationNum, status) => {
+              void handleStatusChange(applicationNum, status);
+            }}
           />
         ) : (
           <TrackerBoard
@@ -167,6 +216,8 @@ export function TrackerPanel({
             groupedApplications={groupedApplications}
             dataSource={dataSource}
             defaultBranch={defaultBranch}
+            reportFiles={reportFiles}
+            outputFiles={outputFiles}
           />
         )}
       </div>
@@ -179,11 +230,15 @@ function TrackerBoard({
   groupedApplications,
   dataSource,
   defaultBranch,
+  reportFiles,
+  outputFiles,
 }: {
   statuses: string[];
   groupedApplications: Map<string, ApplicationEntry[]>;
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
+  reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
 }) {
   return (
     <div className="mt-4 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -226,11 +281,22 @@ function TrackerBoard({
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
                         <ApplicationDate value={entry.date} />
-                        <TrackerArtifactLink
-                          dataSource={dataSource}
-                          defaultBranch={defaultBranch}
-                          value={entry.report}
-                        />
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <ApplicationPdfButton
+                            application={entry}
+                            dataSource={dataSource}
+                            defaultBranch={defaultBranch}
+                            outputFiles={outputFiles}
+                            compact
+                          />
+                          <ApplicationReportButton
+                            application={entry}
+                            dataSource={dataSource}
+                            defaultBranch={defaultBranch}
+                            reportFiles={reportFiles}
+                            compact
+                          />
+                        </div>
                       </div>
                     </li>
                   ))}
