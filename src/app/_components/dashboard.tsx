@@ -1,7 +1,9 @@
 "use client";
 
 import { ArtifactPreviewSheet } from "~/app/_components/artifact-preview-sheet";
+import { DashboardShortcuts } from "~/app/_components/dashboard-shortcuts";
 import { DataSourceSelector } from "~/app/_components/data-source-selector";
+import { MobileSectionNav } from "~/app/_components/mobile-section-nav";
 import { RepoDataView } from "~/app/_components/repo-data-view";
 import {
   DashboardSection,
@@ -15,6 +17,8 @@ export function Dashboard() {
   return (
     <ArtifactViewerProvider>
       <DashboardSectionProvider>
+        <DashboardShortcuts />
+        <MobileSectionNav />
         <div className="flex w-full max-w-screen-2xl min-w-0 items-start gap-5">
           <div className="flex min-w-0 flex-1 flex-col items-stretch gap-6">
             <DashboardSection

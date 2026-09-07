@@ -31,10 +31,26 @@ export function ArtifactPreviewSheet() {
     data?.encoding === "base64"
       ? `data:application/pdf;base64,${data.content}`
       : null;
+  const sourceUrl =
+    meta?.sourceUrl && /^https?:\/\//i.test(meta.sourceUrl)
+      ? meta.sourceUrl
+      : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/60 backdrop-blur-sm">
-      <div className="flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={isPdf ? "PDF preview" : "Report preview"}
+    >
+      <button
+        type="button"
+        aria-label="Close preview"
+        className="absolute inset-0 cursor-default"
+        onClick={closeArtifact}
+      />
+
+      <div className="relative flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
           <div className="min-w-0">
             <p className="text-xs tracking-wide text-white/45 uppercase">
@@ -71,7 +87,11 @@ export function ArtifactPreviewSheet() {
               <dl className="grid gap-3 sm:grid-cols-3">
                 <Metric label="Score" value={meta.score ?? "—"} />
                 <Metric label="Legitimacy" value={meta.legitimacy ?? "—"} />
-                <Metric label="Source" value={meta.sourceUrl ?? "—"} />
+                <Metric
+                  label="Source"
+                  value={meta.sourceUrl ?? "—"}
+                  href={sourceUrl}
+                />
               </dl>
             </GlowPanel>
           ) : null}
@@ -100,12 +120,31 @@ export function ArtifactPreviewSheet() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string | null;
+}) {
   return (
     <div>
       <dt className="text-xs tracking-wide text-white/45 uppercase">{label}</dt>
       <dd className="mt-1 text-sm font-medium break-words text-white">
-        {value}
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-violet-300 underline-offset-2 hover:underline"
+          >
+            {value}
+          </a>
+        ) : (
+          value
+        )}
       </dd>
     </div>
   );

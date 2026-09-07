@@ -1,24 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { useDashboardSections } from "~/app/_components/dashboard-section-nav";
-import { useScrollSpy } from "~/hooks/use-scroll-spy";
 import { cn } from "~/lib/utils";
 
 const TRACK_WIDTH_CLASS = "w-3";
 const NAV_WIDTH_CLASS = "w-28";
 
 export function PageSectionNav() {
-  const { sections } = useDashboardSections();
-  const sectionIds = useMemo(
-    () => sections.map((section) => section.id),
-    [sections],
-  );
-  const { activeId, scrollToSection } = useScrollSpy({ sectionIds });
+  const { sections, activeSectionId, scrollToSection } = useDashboardSections();
   const showNav = sections.length >= 2;
 
-  const activeIndex = sections.findIndex((section) => section.id === activeId);
+  const activeIndex = sections.findIndex(
+    (section) => section.id === activeSectionId,
+  );
   const progress =
     sections.length <= 1
       ? 0
@@ -28,7 +22,7 @@ export function PageSectionNav() {
     <aside
       aria-hidden={!showNav}
       className={cn(
-        "sticky top-28 hidden shrink-0 self-start pt-1 xl:block",
+        "sticky top-[4.75rem] hidden shrink-0 self-start pt-1 xl:block",
         NAV_WIDTH_CLASS,
       )}
     >
@@ -52,7 +46,7 @@ export function PageSectionNav() {
 
           <ol className="relative m-0 flex list-none flex-col p-0">
             {sections.map((section, index) => {
-              const isActive = section.id === activeId;
+              const isActive = section.id === activeSectionId;
               const isCompleted = activeIndex >= 0 && index < activeIndex;
 
               return (

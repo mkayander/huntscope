@@ -83,9 +83,14 @@ export function TrackerTableToolbar({
     <div className="mt-4 flex flex-col gap-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(9rem,1fr))_auto] lg:items-end">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <Label htmlFor="tracker-search" className="text-white/80">
-            Search
-          </Label>
+          <div className="flex items-baseline justify-between gap-2">
+            <Label htmlFor="tracker-search" className="text-white/80">
+              Search
+            </Label>
+            <span className="hidden text-[10px] tracking-wide text-white/35 uppercase sm:inline">
+              ⌘K
+            </span>
+          </div>
           <Input
             id="tracker-search"
             value={query.searchQuery}

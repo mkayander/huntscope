@@ -116,6 +116,14 @@ function RepoDataContent({
   }
 
   const sourceLabel = getDataSourceLabel(activeSource);
+  const canEditLocally =
+    activeSource.kind === "local" &&
+    activeSource.directoryHandle != null &&
+    activeSource.fileHandle == null;
+  const showAnalytics = hasAnalyticsChartData(
+    parsed.applications,
+    parsed.analytics.statusCounts,
+  );
 
   return (
     <section className="flex w-full max-w-screen-2xl min-w-0 flex-col gap-6">
@@ -129,15 +137,15 @@ function RepoDataContent({
           analytics={parsed.analytics}
           pipeline={parsed.pipeline}
           reportsCount={raw.reportsCount}
+          canEditLocally={canEditLocally}
+          hasAnalyticsSection={showAnalytics}
+          hasPipelineSection={parsed.pipeline != null}
           activeStatusFilters={statusFilters}
           onStatusFiltersChange={setStatusFilters}
         />
       </DashboardSection>
 
-      {hasAnalyticsChartData(
-        parsed.applications,
-        parsed.analytics.statusCounts,
-      ) ? (
+      {showAnalytics ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.analytics}
           label="Analytics"

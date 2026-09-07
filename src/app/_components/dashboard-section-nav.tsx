@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { useScrollSpy } from "~/hooks/use-scroll-spy";
 import { cn } from "~/lib/utils";
 
 export type DashboardSectionEntry = {
@@ -20,19 +21,28 @@ export type DashboardSectionEntry = {
 
 type DashboardSectionContextValue = {
   sections: DashboardSectionEntry[];
+  activeSectionId: string | null;
   registerSection: (section: DashboardSectionEntry) => void;
   unregisterSection: (id: string) => void;
+  scrollToSection: (sectionId: string) => void;
 };
 
-const DashboardSectionContext = createContext<DashboardSectionContextValue | null>(null);
+const DashboardSectionContext =
+  createContext<DashboardSectionContextValue | null>(null);
 
-export function DashboardSectionProvider({ children }: { children: ReactNode }) {
+export function DashboardSectionProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [sections, setSections] = useState<DashboardSectionEntry[]>([]);
 
   const registerSection = useCallback((section: DashboardSectionEntry) => {
     setSections((current) => {
       const withoutCurrent = current.filter((entry) => entry.id !== section.id);
-      return [...withoutCurrent, section].sort((left, right) => left.order - right.order);
+      return [...withoutCurrent, section].sort(
+        (left, right) => left.order - right.order,
+      );
     });
   }, []);
 
@@ -40,24 +50,38 @@ export function DashboardSectionProvider({ children }: { children: ReactNode }) 
     setSections((current) => current.filter((entry) => entry.id !== id));
   }, []);
 
+  const sectionIds = useMemo(
+    () => sections.map((section) => section.id),
+    [sections],
+  );
+
+  const { activeId, scrollToSection } = useScrollSpy({ sectionIds });
+
   const value = useMemo(
     () => ({
       sections,
+      activeSectionId: activeId,
       registerSection,
       unregisterSection,
+      scrollToSection,
     }),
-    [registerSection, sections, unregisterSection],
+    [activeId, registerSection, scrollToSection, sections, unregisterSection],
   );
 
   return (
-    <DashboardSectionContext.Provider value={value}>{children}</DashboardSectionContext.Provider>
+    <DashboardSectionContext.Provider value={value}>
+      {children}
+    </DashboardSectionContext.Provider>
   );
 }
 
 export function useDashboardSections() {
   const context = useContext(DashboardSectionContext);
+
   if (!context) {
-    throw new Error("useDashboardSections must be used within DashboardSectionProvider");
+    throw new Error(
+      "useDashboardSections must be used within DashboardSectionProvider",
+    );
   }
 
   return context;
@@ -90,7 +114,7 @@ export function DashboardSection({
       id={id}
       data-dashboard-section={id}
       aria-label={label}
-      className={cn("scroll-mt-28", className)}
+      className={cn("scroll-mt-36 xl:scroll-mt-28", className)}
     >
       {children}
     </section>
