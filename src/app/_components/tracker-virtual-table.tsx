@@ -19,11 +19,11 @@ import type {
 } from "~/lib/career-ops/tracker-table";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
-const ROW_HEIGHT = 52;
+const ROW_HEIGHT = 56;
 
-/** Column widths: fixed/narrow cols for metadata; Role + Notes share remaining space (Notes weighted higher). */
-const TRACKER_GRID_COLUMNS =
-  "grid-cols-[2.5rem_6rem_minmax(5rem,7.5rem)_minmax(8rem,1fr)_4.5rem_minmax(5.5rem,6rem)_minmax(5.75rem,7.25rem)_minmax(5.75rem,7.25rem)_minmax(8rem,1.5fr)]";
+/** Shared column template for header + virtualized rows (inline style avoids Tailwind/HMR grid drift). */
+const TRACKER_GRID_TEMPLATE =
+  "2.5rem 6rem minmax(5rem,7.5rem) minmax(8rem,1fr) 4.5rem minmax(5.5rem,6rem) minmax(5.75rem,7.25rem) minmax(5.75rem,7.25rem) minmax(8rem,1.5fr)";
 
 /** Prevents columns from squashing/overlapping on narrow viewports; table scrolls horizontally instead. */
 const TRACKER_TABLE_MIN_WIDTH_CLASS = "min-w-[58rem]";
@@ -77,7 +77,8 @@ export function TrackerVirtualTable({
         <div className={TRACKER_TABLE_MIN_WIDTH_CLASS}>
           <div role="rowgroup">
             <div
-              className={`sticky top-0 z-10 grid ${TRACKER_GRID_COLUMNS} shrink-0 border-b border-white/10 bg-[#15162c] px-2 text-sm`}
+              className="sticky top-0 z-10 grid shrink-0 border-b border-white/10 bg-[#15162c] px-2 text-sm"
+              style={{ gridTemplateColumns: TRACKER_GRID_TEMPLATE }}
               role="row"
             >
               <TrackerSortableHeader
@@ -163,8 +164,9 @@ export function TrackerVirtualTable({
                 <div
                   key={entry.num}
                   data-index={virtualRow.index}
-                  className={`absolute top-0 left-0 grid w-full ${TRACKER_GRID_COLUMNS} border-b border-white/5 px-2 text-sm text-white/90`}
+                  className="absolute top-0 left-0 grid w-full border-b border-white/5 px-2 text-sm text-white/90"
                   style={{
+                    gridTemplateColumns: TRACKER_GRID_TEMPLATE,
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
