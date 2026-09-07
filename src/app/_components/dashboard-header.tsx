@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 
 import { AuthButton } from "~/app/_components/auth-button";
-import { GitHubInstallStatusBanner } from "~/app/_components/github-install-status-banner";
 import { MobileSectionNav } from "~/app/_components/mobile-section-nav";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { getDataSourceLabel } from "~/lib/career-ops/data-source";
@@ -73,7 +72,6 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
           <AuthButton variant="compact" />
         </div>
 
-        <GitHubInstallStatusBanner className="pb-2.5" />
         <MobileSectionNav />
       </div>
     </header>
