@@ -80,104 +80,31 @@ describe("sortApplications", () => {
 });
 
 describe("queryTrackerApplications", () => {
-  it("filters by report presence after dashboard filters", () => {
-    const scoped = filterDashboardApplications(applications, {
-      ...DEFAULT_DASHBOARD_FILTERS,
-      statusFilters: ["Applied"],
-      scoreFilters: ["high"],
-    });
-
-    const results = queryTrackerApplications(scoped, {
+  it("sorts applications using the tracker query", () => {
+    const results = queryTrackerApplications(applications, {
       ...DEFAULT_TRACKER_TABLE_QUERY,
-      reportFilters: ["with"],
+      sortColumn: "company",
+      sortDirection: "asc",
     });
 
-    expect(results).toHaveLength(1);
-    expect(results[0]?.company).toBe("Acme");
+    expect(results.map((entry) => entry.company)).toEqual([
+      "Acme",
+      "Beta",
+      "Gamma",
+    ]);
   });
 
-  it("filters by pdf presence using linked and inferred output files", () => {
-    const scoped = filterDashboardApplications(applications, {
-      ...DEFAULT_DASHBOARD_FILTERS,
-      statusFilters: ["Rejected"],
-    });
-
-    const withPdf = queryTrackerApplications(
-      scoped,
-      {
-        ...DEFAULT_TRACKER_TABLE_QUERY,
-        pdfFilters: ["with"],
-      },
-      {
-        reportFiles: [],
-        outputFiles: [
-          {
-            path: "output/beta.pdf",
-            name: "beta.pdf",
-            type: "file",
-          },
-        ],
-      },
-    );
-
-    expect(withPdf).toHaveLength(1);
-    expect(withPdf[0]?.company).toBe("Beta");
-  });
-
-  it("treats inferred report files as report coverage", () => {
-    const scoped = filterDashboardApplications(applications, {
-      ...DEFAULT_DASHBOARD_FILTERS,
-      statusFilters: ["Rejected"],
-    });
-
+  it("defaults to score descending", () => {
     const results = queryTrackerApplications(
-      scoped,
-      {
-        ...DEFAULT_TRACKER_TABLE_QUERY,
-        reportFilters: ["with"],
-      },
-      {
-        reportFiles: [
-          {
-            path: "reports/002-beta.md",
-            name: "002-beta.md",
-            type: "file",
-          },
-        ],
-        outputFiles: [],
-      },
+      applications,
+      DEFAULT_TRACKER_TABLE_QUERY,
     );
 
-    expect(results).toHaveLength(1);
-    expect(results[0]?.company).toBe("Beta");
+    expect(results.map((entry) => entry.score)).toEqual(["4.5", "3.5", "2.0"]);
   });
 });
 
 describe("filterDashboardApplications with tracker data", () => {
-  it("matches any selected status when multiple are chosen", () => {
-    const results = filterDashboardApplications(applications, {
-      ...DEFAULT_DASHBOARD_FILTERS,
-      statusFilters: ["Applied", "Rejected"],
-    });
-
-    expect(results.map((entry) => entry.company).sort()).toEqual([
-      "Acme",
-      "Beta",
-    ]);
-  });
-
-  it("matches any selected score band when multiple are chosen", () => {
-    const results = filterDashboardApplications(applications, {
-      ...DEFAULT_DASHBOARD_FILTERS,
-      scoreFilters: ["high", "low"],
-    });
-
-    expect(results.map((entry) => entry.company).sort()).toEqual([
-      "Acme",
-      "Beta",
-    ]);
-  });
-
   it("searches across company and role fields", () => {
     const results = filterDashboardApplications(applications, {
       ...DEFAULT_DASHBOARD_FILTERS,

@@ -5,10 +5,7 @@ import { useMemo, useState } from "react";
 import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ScoreBadge } from "~/app/_components/score-badge";
-import {
-  createDefaultTrackerQuery,
-  TrackerTableToolbar,
-} from "~/app/_components/tracker-table-toolbar";
+import { createDefaultTrackerQuery } from "~/app/_components/tracker-table-toolbar";
 import { TrackerVirtualTable } from "~/app/_components/tracker-virtual-table";
 import { ApplicationDate } from "~/components/application-date";
 import { Button } from "~/components/ui/button";
@@ -28,7 +25,7 @@ import {
   updateApplicationStatus,
 } from "~/lib/career-ops/serialize-applications";
 import {
-  DEFAULT_TRACKER_TABLE_QUERY,
+  getTrackerSortLabel,
   queryTrackerApplications,
   type TrackerSortColumn,
   type TrackerTableQuery,
@@ -64,18 +61,14 @@ export function TrackerPanel({
     createDefaultTrackerQuery(),
   );
 
-  const filteredApplications = useMemo(
-    () =>
-      queryTrackerApplications(applications, tableQuery, {
-        reportFiles,
-        outputFiles,
-      }),
-    [applications, outputFiles, reportFiles, tableQuery],
+  const sortedApplications = useMemo(
+    () => queryTrackerApplications(applications, tableQuery),
+    [applications, tableQuery],
   );
 
   const groupedApplications = useMemo(
-    () => groupApplicationsByStatus(filteredApplications),
-    [filteredApplications],
+    () => groupApplicationsByStatus(sortedApplications),
+    [sortedApplications],
   );
 
   const boardStatuses = useMemo(() => {
@@ -103,10 +96,6 @@ export function TrackerPanel({
     await writeApplicationsMarkdown(
       serializeApplicationsMarkdown(nextApplications),
     );
-  };
-
-  const handleClearFilters = () => {
-    setTableQuery(DEFAULT_TRACKER_TABLE_QUERY);
   };
 
   const handleSort = (column: TrackerSortColumn) => {
@@ -142,9 +131,9 @@ export function TrackerPanel({
               Application tracker
             </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Open attached PDFs and
-              evaluation reports inline, including auto-matched files from
-              `output/` and `reports/`.
+              Browse and sort applications. Use the global Filters button for
+              search and scoping. Open attached PDFs and evaluation reports
+              inline.
             </p>
           </div>
 
@@ -162,13 +151,11 @@ export function TrackerPanel({
           </div>
         </div>
 
-        <TrackerTableToolbar
-          query={tableQuery}
-          resultCount={filteredApplications.length}
-          totalCount={applications.length}
-          onQueryChange={setTableQuery}
-          onClearFilters={handleClearFilters}
-        />
+        <p className="mt-4 text-sm text-white/50">
+          {applications.length} scoped application
+          {applications.length === 1 ? "" : "s"}
+          {` · sorted by ${getTrackerSortLabel(tableQuery.sortColumn, tableQuery.sortDirection)}`}
+        </p>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -178,15 +165,11 @@ export function TrackerPanel({
           </p>
         ) : applications.length === 0 ? (
           <p className="mt-6 rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm text-white/60">
-            No applications match the dashboard filters above.
-          </p>
-        ) : filteredApplications.length === 0 ? (
-          <p className="mt-6 rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm text-white/60">
-            No applications match the current tracker filters.
+            No applications match the current dashboard filters.
           </p>
         ) : view === "table" ? (
           <TrackerVirtualTable
-            applications={filteredApplications}
+            applications={sortedApplications}
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             reportFiles={reportFiles}
