@@ -189,35 +189,71 @@ function compareScores(
   return direction === "asc" ? leftScore - rightScore : rightScore - leftScore;
 }
 
-function compareEntries(
+function compareByMostRecentDate(
+  left: ApplicationEntry,
+  right: ApplicationEntry,
+): number {
+  return compareDates(right.date, left.date);
+}
+
+function comparePrimary(
   left: ApplicationEntry,
   right: ApplicationEntry,
   column: TrackerSortColumn,
+  direction: TrackerSortDirection,
 ): number {
   switch (column) {
-    case "num":
-      return left.num - right.num;
-    case "date":
-      return compareDates(left.date, right.date);
-    case "company":
-      return left.company.localeCompare(right.company, undefined, {
+    case "num": {
+      const delta = left.num - right.num;
+      return direction === "asc" ? delta : -delta;
+    }
+    case "date": {
+      const delta = compareDates(left.date, right.date);
+      return direction === "asc" ? delta : -delta;
+    }
+    case "company": {
+      const delta = left.company.localeCompare(right.company, undefined, {
         sensitivity: "base",
       });
-    case "role":
-      return left.role.localeCompare(right.role, undefined, {
+      return direction === "asc" ? delta : -delta;
+    }
+    case "role": {
+      const delta = left.role.localeCompare(right.role, undefined, {
         sensitivity: "base",
       });
+      return direction === "asc" ? delta : -delta;
+    }
     case "score":
-      return compareScores(left.score, right.score, "asc");
-    case "status":
-      return normalizeStatus(left.status).localeCompare(
+      return compareScores(left.score, right.score, direction);
+    case "status": {
+      const delta = normalizeStatus(left.status).localeCompare(
         normalizeStatus(right.status),
         undefined,
         { sensitivity: "base" },
       );
+      return direction === "asc" ? delta : -delta;
+    }
     default:
       return 0;
   }
+}
+
+function compareApplications(
+  left: ApplicationEntry,
+  right: ApplicationEntry,
+  column: TrackerSortColumn,
+  direction: TrackerSortDirection,
+): number {
+  const primary = comparePrimary(left, right, column, direction);
+  if (primary !== 0) {
+    return primary;
+  }
+
+  if (column === "date") {
+    return 0;
+  }
+
+  return compareByMostRecentDate(left, right);
 }
 
 export function sortApplications(
@@ -225,16 +261,9 @@ export function sortApplications(
   column: TrackerSortColumn,
   direction: TrackerSortDirection,
 ): ApplicationEntry[] {
-  if (column === "score") {
-    return [...applications].sort((left, right) =>
-      compareScores(left.score, right.score, direction),
-    );
-  }
-
-  const sorted = [...applications].sort((left, right) =>
-    compareEntries(left, right, column),
+  return [...applications].sort((left, right) =>
+    compareApplications(left, right, column, direction),
   );
-  return direction === "asc" ? sorted : sorted.reverse();
 }
 
 export function queryTrackerApplications(
