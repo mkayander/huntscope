@@ -16,8 +16,47 @@ export const TERMINAL_STATUSES = new Set<string>([
   "Offer",
 ]);
 
+const STATUS_DATE_SUFFIX_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const KNOWN_STATUSES = new Set<string>(STATUS_ORDER);
+
+function isKnownStatus(
+  status: string,
+): status is (typeof STATUS_ORDER)[number] {
+  return KNOWN_STATUSES.has(status);
+}
+
 export function normalizeStatus(status: string): string {
-  return status.trim();
+  const trimmed = status.trim();
+  if (!trimmed || isKnownStatus(trimmed)) {
+    return trimmed;
+  }
+
+  const spaceIndex = trimmed.lastIndexOf(" ");
+  if (spaceIndex <= 0) {
+    return trimmed;
+  }
+
+  const suffix = trimmed.slice(spaceIndex + 1);
+  if (!STATUS_DATE_SUFFIX_PATTERN.test(suffix)) {
+    return trimmed;
+  }
+
+  const baseStatus = trimmed.slice(0, spaceIndex);
+  return isKnownStatus(baseStatus) ? baseStatus : trimmed;
+}
+
+export function countApplicationsByStatus(
+  applications: readonly { status: string }[],
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+
+  for (const application of applications) {
+    const status = normalizeStatus(application.status);
+    counts[status] = (counts[status] ?? 0) + 1;
+  }
+
+  return counts;
 }
 
 export function sortStatuses(statusCounts: Record<string, number>): string[] {

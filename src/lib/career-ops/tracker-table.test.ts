@@ -145,97 +145,26 @@ describe("sortApplications", () => {
 });
 
 describe("queryTrackerApplications", () => {
-  it("filters by status, score band, and report presence", () => {
+  it("sorts applications using the tracker query", () => {
     const results = queryTrackerApplications(applications, {
       ...DEFAULT_TRACKER_TABLE_QUERY,
-      statusFilters: ["Applied"],
-      scoreFilters: ["high"],
-      reportFilters: ["with"],
+      sortColumn: "company",
+      sortDirection: "asc",
     });
 
-    expect(results).toHaveLength(1);
-    expect(results[0]?.company).toBe("Acme");
+    expect(results.map((entry) => entry.company)).toEqual([
+      "Acme",
+      "Beta",
+      "Gamma",
+    ]);
   });
 
-  it("filters by pdf presence using linked and inferred output files", () => {
-    const withPdf = queryTrackerApplications(
-      applications,
-      {
-        ...DEFAULT_TRACKER_TABLE_QUERY,
-        pdfFilters: ["with"],
-        statusFilters: ["Rejected"],
-      },
-      {
-        reportFiles: [],
-        outputFiles: [
-          {
-            path: "output/beta.pdf",
-            name: "beta.pdf",
-            type: "file",
-          },
-        ],
-      },
-    );
-
-    expect(withPdf).toHaveLength(1);
-    expect(withPdf[0]?.company).toBe("Beta");
-  });
-
-  it("treats inferred report files as report coverage", () => {
+  it("defaults to score descending", () => {
     const results = queryTrackerApplications(
       applications,
-      {
-        ...DEFAULT_TRACKER_TABLE_QUERY,
-        reportFilters: ["with"],
-        statusFilters: ["Rejected"],
-      },
-      {
-        reportFiles: [
-          {
-            path: "reports/002-beta.md",
-            name: "002-beta.md",
-            type: "file",
-          },
-        ],
-        outputFiles: [],
-      },
+      DEFAULT_TRACKER_TABLE_QUERY,
     );
 
-    expect(results).toHaveLength(1);
-    expect(results[0]?.company).toBe("Beta");
-  });
-
-  it("matches any selected status when multiple are chosen", () => {
-    const results = queryTrackerApplications(applications, {
-      ...DEFAULT_TRACKER_TABLE_QUERY,
-      statusFilters: ["Applied", "Rejected"],
-    });
-
-    expect(results.map((entry) => entry.company).sort()).toEqual([
-      "Acme",
-      "Beta",
-    ]);
-  });
-
-  it("matches any selected score band when multiple are chosen", () => {
-    const results = queryTrackerApplications(applications, {
-      ...DEFAULT_TRACKER_TABLE_QUERY,
-      scoreFilters: ["high", "low"],
-    });
-
-    expect(results.map((entry) => entry.company).sort()).toEqual([
-      "Acme",
-      "Beta",
-    ]);
-  });
-
-  it("searches across company and role fields", () => {
-    const results = queryTrackerApplications(applications, {
-      ...DEFAULT_TRACKER_TABLE_QUERY,
-      searchQuery: "designer",
-    });
-
-    expect(results).toHaveLength(1);
-    expect(results[0]?.company).toBe("Beta");
+    expect(results.map((entry) => entry.score)).toEqual(["4.5", "3.5", "2.0"]);
   });
 });

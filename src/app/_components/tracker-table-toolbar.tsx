@@ -2,189 +2,14 @@
 
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 
-import { FilterMultiSelect } from "~/app/_components/filter-multi-select";
 import { clickableSurfaceClassName } from "~/components/ui/interaction";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { cn } from "~/lib/utils";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
-  formatTrackerFilterSummary,
-  getTrackerSortLabel,
-  hasActiveTrackerFilters,
-  type TrackerPdfFilterValue,
-  type TrackerReportFilterValue,
-  type TrackerScoreFilterValue,
   type TrackerSortColumn,
   type TrackerSortDirection,
   type TrackerTableQuery,
 } from "~/lib/career-ops/tracker-table";
-import { sortStatuses } from "~/lib/career-ops/status-meta";
-import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
-import type { ApplicationEntry } from "~/lib/career-ops/types";
-
-const SCORE_FILTER_OPTIONS: {
-  value: TrackerScoreFilterValue;
-  label: string;
-}[] = [
-  { value: "high", label: "High (4+)" },
-  { value: "medium", label: "Medium (3–3.9)" },
-  { value: "low", label: "Low (<3)" },
-  { value: "unknown", label: "Unscored" },
-];
-
-const REPORT_FILTER_OPTIONS: {
-  value: TrackerReportFilterValue;
-  label: string;
-}[] = [
-  { value: "with", label: "With report" },
-  { value: "without", label: "Without report" },
-];
-
-const PDF_FILTER_OPTIONS: {
-  value: TrackerPdfFilterValue;
-  label: string;
-}[] = [
-  { value: "with", label: "With PDF" },
-  { value: "without", label: "Without PDF" },
-];
-
-type TrackerTableToolbarProps = {
-  applications: ApplicationEntry[];
-  query: TrackerTableQuery;
-  resultCount: number;
-  onQueryChange: (query: TrackerTableQuery) => void;
-  onClearFilters: () => void;
-};
-
-export function TrackerTableToolbar({
-  applications,
-  query,
-  resultCount,
-  onQueryChange,
-  onClearFilters,
-}: TrackerTableToolbarProps) {
-  const uniqueStatuses = sortStatuses(
-    applications.reduce<Record<string, number>>((counts, application) => {
-      const status = application.status;
-      counts[status] = (counts[status] ?? 0) + 1;
-      return counts;
-    }, {}),
-  );
-
-  const statusOptions = uniqueStatuses.map((status) => ({
-    value: status,
-    label: status,
-  }));
-
-  const statusSummary = formatTrackerFilterSummary(
-    query.statusFilters,
-    statusOptions,
-  );
-  const scoreSummary = formatTrackerFilterSummary(
-    query.scoreFilters,
-    SCORE_FILTER_OPTIONS,
-  );
-  const reportSummary = formatTrackerFilterSummary(
-    query.reportFilters,
-    REPORT_FILTER_OPTIONS,
-  );
-  const pdfSummary = formatTrackerFilterSummary(
-    query.pdfFilters,
-    PDF_FILTER_OPTIONS,
-  );
-
-  return (
-    <div className="mt-4 flex flex-col gap-4">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(9rem,1fr))_auto] lg:items-end">
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <div className="flex items-baseline justify-between gap-2">
-            <Label htmlFor="tracker-search" className="text-white/80">
-              Search
-            </Label>
-            <span className="hidden text-[10px] tracking-wide text-white/35 uppercase sm:inline">
-              {getSearchShortcutLabel()}
-            </span>
-          </div>
-          <Input
-            id="tracker-search"
-            value={query.searchQuery}
-            onChange={(event) => {
-              onQueryChange({ ...query, searchQuery: event.target.value });
-            }}
-            placeholder="Company, role, status, notes, score…"
-            className="border-white/15 bg-[#15162c] text-white placeholder:text-white/40"
-          />
-        </div>
-
-        <FilterMultiSelect
-          id="tracker-status-filter"
-          label="Status"
-          options={statusOptions}
-          selected={query.statusFilters}
-          placeholder="All statuses"
-          onChange={(statusFilters) => {
-            onQueryChange({ ...query, statusFilters });
-          }}
-        />
-
-        <FilterMultiSelect
-          id="tracker-score-filter"
-          label="Score"
-          options={SCORE_FILTER_OPTIONS}
-          selected={query.scoreFilters}
-          placeholder="All scores"
-          onChange={(scoreFilters) => {
-            onQueryChange({ ...query, scoreFilters });
-          }}
-        />
-
-        <FilterMultiSelect
-          id="tracker-report-filter"
-          label="Report"
-          options={REPORT_FILTER_OPTIONS}
-          selected={query.reportFilters}
-          placeholder="All reports"
-          onChange={(reportFilters) => {
-            onQueryChange({ ...query, reportFilters });
-          }}
-        />
-
-        <FilterMultiSelect
-          id="tracker-pdf-filter"
-          label="PDF"
-          options={PDF_FILTER_OPTIONS}
-          selected={query.pdfFilters}
-          placeholder="All PDFs"
-          onChange={(pdfFilters) => {
-            onQueryChange({ ...query, pdfFilters });
-          }}
-        />
-
-        <Button
-          type="button"
-          variant="brandSecondary"
-          size="pill"
-          className="w-full lg:w-auto"
-          disabled={!hasActiveTrackerFilters(query)}
-          onClick={onClearFilters}
-        >
-          Reset
-        </Button>
-      </div>
-
-      <p className="text-sm text-white/50">
-        Showing {resultCount} of {applications.length} applications
-        {statusSummary ? ` · status: ${statusSummary}` : ""}
-        {scoreSummary ? ` · score: ${scoreSummary}` : ""}
-        {reportSummary ? ` · report: ${reportSummary}` : ""}
-        {pdfSummary ? ` · pdf: ${pdfSummary}` : ""}
-        {` · sorted by ${getTrackerSortLabel(query.sortColumn, query.sortDirection)}`}
-      </p>
-    </div>
-  );
-}
 
 type SortableHeaderProps = {
   label: string;
@@ -270,11 +95,6 @@ export function TrackerSortableHeader({
   );
 }
 
-export function createDefaultTrackerQuery(
-  statusFilters: string[],
-): TrackerTableQuery {
-  return {
-    ...DEFAULT_TRACKER_TABLE_QUERY,
-    statusFilters,
-  };
+export function createDefaultTrackerQuery(): TrackerTableQuery {
+  return DEFAULT_TRACKER_TABLE_QUERY;
 }

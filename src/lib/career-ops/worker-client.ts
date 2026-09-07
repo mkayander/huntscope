@@ -1,4 +1,7 @@
-import type { ActivityHeatmap, ActivityHeatmapPeriod } from "~/lib/career-ops/activity-heatmap";
+import type {
+  ActivityHeatmap,
+  ActivityHeatmapWindow,
+} from "~/lib/career-ops/activity-heatmap";
 import type { ParsedCareerOpsRepoData } from "~/lib/career-ops/parse-repo-data";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import type {
@@ -20,7 +23,9 @@ function getWorker(): Worker {
     return worker;
   }
 
-  worker = new Worker(new URL("../../workers/career-ops.worker.ts", import.meta.url));
+  worker = new Worker(
+    new URL("../../workers/career-ops.worker.ts", import.meta.url),
+  );
 
   worker.onmessage = (event: MessageEvent<CareerOpsWorkerResponse>) => {
     const response = event.data;
@@ -94,14 +99,14 @@ export function parseRepoDataInWorker(input: {
 
 export function buildHeatmapInWorker(
   applications: ApplicationEntry[],
-  periodWeeks: ActivityHeatmapPeriod,
+  window: ActivityHeatmapWindow,
   locale?: string,
 ): Promise<ActivityHeatmap> {
   return sendRequest({
     type: "heatmap",
     payload: {
       applications,
-      periodWeeks,
+      window,
       locale,
     },
   }).then((response) => {

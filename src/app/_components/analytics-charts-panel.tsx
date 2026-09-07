@@ -14,20 +14,21 @@ import {
   buildStatusChartData,
   buildTimelineData,
 } from "~/lib/career-ops/chart-data";
+import type { DashboardFilters } from "~/lib/career-ops/dashboard-filters";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 type AnalyticsChartsPanelProps = {
   applications: ApplicationEntry[];
   statusCounts: Record<string, number>;
-  activeStatusFilters: string[];
-  onStatusFiltersChange: (statuses: string[]) => void;
+  dashboardFilters: DashboardFilters;
+  onDashboardFiltersChange: (filters: DashboardFilters) => void;
 };
 
 export function AnalyticsChartsPanel({
   applications,
   statusCounts,
-  activeStatusFilters,
-  onStatusFiltersChange,
+  dashboardFilters,
+  onDashboardFiltersChange,
 }: AnalyticsChartsPanelProps) {
   const statusData = useMemo(
     () => buildStatusChartData(statusCounts),
@@ -45,6 +46,10 @@ export function AnalyticsChartsPanel({
     () => buildScoreHistogramData(applications),
     [applications],
   );
+
+  const handleStatusFiltersChange = (statusFilters: string[]) => {
+    onDashboardFiltersChange({ ...dashboardFilters, statusFilters });
+  };
 
   const hasChartData =
     statusData.length > 0 ||
@@ -70,15 +75,15 @@ export function AnalyticsChartsPanel({
         <div className="xl:col-span-2">
           <ScoreScatterChart
             data={scatterData}
-            activeStatusFilters={activeStatusFilters}
-            onStatusFiltersChange={onStatusFiltersChange}
+            activeStatusFilters={dashboardFilters.statusFilters}
+            onStatusFiltersChange={handleStatusFiltersChange}
           />
         </div>
 
         <StatusRadialChart
           data={statusData}
-          activeStatusFilters={activeStatusFilters}
-          onStatusFiltersChange={onStatusFiltersChange}
+          activeStatusFilters={dashboardFilters.statusFilters}
+          onStatusFiltersChange={handleStatusFiltersChange}
         />
 
         <ApplicationPaceChart data={timelineData} />
