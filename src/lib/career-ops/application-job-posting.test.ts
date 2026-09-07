@@ -66,6 +66,24 @@ describe("getInlineJobPostingUrl", () => {
       }),
     ).toBe("https://example.com/jobs/acme-backend");
   });
+
+  it("reads a markdown link when notes contain only a url", () => {
+    expect(
+      getInlineJobPostingUrl({
+        ...application,
+        notes: "[Posting](https://example.com/jobs/acme-backend)",
+      }),
+    ).toBe("https://example.com/jobs/acme-backend");
+  });
+
+  it("ignores incidental urls in notes prose", () => {
+    expect(
+      getInlineJobPostingUrl({
+        ...application,
+        notes: "Strong fit — https://example.com/jobs/acme-backend follow up",
+      }),
+    ).toBeNull();
+  });
 });
 
 describe("extractHttpUrl", () => {
@@ -79,7 +97,19 @@ describe("extractHttpUrl", () => {
 });
 
 describe("resolveJobPostingUrl", () => {
-  it("prefers inline urls over report metadata", () => {
+  it("prefers inline role urls over report metadata", () => {
+    expect(
+      resolveJobPostingUrl(
+        {
+          ...application,
+          role: "[Backend Engineer](https://example.com/jobs/inline)",
+        },
+        "https://example.com/jobs/report",
+      ),
+    ).toBe("https://example.com/jobs/inline");
+  });
+
+  it("prefers notes-only urls over report metadata", () => {
     expect(
       resolveJobPostingUrl(
         {

@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ApplicationRoleLink } from "~/app/_components/application-role-link";
 import { ScoreBadge } from "~/app/_components/score-badge";
+import { getReportSourceUrlForApplication } from "~/hooks/use-report-source-url-map";
 import {
   TrackerSortableHeader,
   TrackerStaticHeader,
@@ -33,6 +34,7 @@ type TrackerVirtualTableProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   reportFiles: RepoDataFile[];
+  reportSourceUrlByPath: ReadonlyMap<string, string | null>;
   tableQuery: TrackerTableQuery;
   statusOptions: string[];
   canEditStatus: boolean;
@@ -46,6 +48,7 @@ export function TrackerVirtualTable({
   dataSource,
   defaultBranch,
   reportFiles,
+  reportSourceUrlByPath,
   tableQuery,
   statusOptions,
   canEditStatus,
@@ -188,8 +191,11 @@ export function TrackerVirtualTable({
                   <div className="flex items-center px-2 py-2" role="cell">
                     <ApplicationRoleLink
                       application={entry}
-                      dataSource={dataSource}
-                      reportFiles={reportFiles}
+                      reportSourceUrl={getReportSourceUrlForApplication(
+                        entry,
+                        reportFiles,
+                        reportSourceUrlByPath,
+                      )}
                     />
                   </div>
                   <div className="flex items-center px-2 py-2" role="cell">

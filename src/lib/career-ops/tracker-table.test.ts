@@ -112,6 +112,36 @@ describe("sortApplications", () => {
       sortApplications(entries, "score", "desc").map((entry) => entry.num),
     ).toEqual([2, 3, 1]);
   });
+
+  it("breaks date ties by application number", () => {
+    const entries: ApplicationEntry[] = [
+      { ...applications[0]!, num: 1, date: "2025-01-15" },
+      { ...applications[1]!, num: 2, date: "2025-01-15" },
+    ];
+
+    expect(
+      sortApplications(entries, "date", "desc").map((entry) => entry.num),
+    ).toEqual([2, 1]);
+  });
+
+  it("sorts markdown role labels instead of raw markdown", () => {
+    const entries: ApplicationEntry[] = [
+      {
+        ...applications[0]!,
+        num: 1,
+        role: "[Zebra Engineer](https://example.com/z)",
+      },
+      {
+        ...applications[1]!,
+        num: 2,
+        role: "Alpha Engineer",
+      },
+    ];
+
+    expect(
+      sortApplications(entries, "role", "asc").map((entry) => entry.num),
+    ).toEqual([2, 1]);
+  });
 });
 
 describe("queryTrackerApplications", () => {

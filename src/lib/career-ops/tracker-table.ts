@@ -1,4 +1,5 @@
 import { filterApplications } from "~/lib/career-ops/analytics";
+import { getRoleDisplayLabel } from "~/lib/career-ops/application-job-posting";
 import { applicationHasPdf } from "~/lib/career-ops/application-pdfs";
 import { applicationHasReport } from "~/lib/career-ops/application-reports";
 import { parseApplicationDate } from "~/lib/career-ops/dates";
@@ -218,9 +219,13 @@ function comparePrimary(
       return direction === "asc" ? delta : -delta;
     }
     case "role": {
-      const delta = left.role.localeCompare(right.role, undefined, {
-        sensitivity: "base",
-      });
+      const delta = getRoleDisplayLabel(left.role).localeCompare(
+        getRoleDisplayLabel(right.role),
+        undefined,
+        {
+          sensitivity: "base",
+        },
+      );
       return direction === "asc" ? delta : -delta;
     }
     case "score":
@@ -250,7 +255,7 @@ function compareApplications(
   }
 
   if (column === "date") {
-    return 0;
+    return right.num - left.num;
   }
 
   return compareByMostRecentDate(left, right);
