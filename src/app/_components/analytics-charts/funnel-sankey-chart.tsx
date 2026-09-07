@@ -1,13 +1,10 @@
 "use client";
 
 import * as d3 from "d3";
-import { sankey, sankeyLinkHorizontal } from "d3-sankey";
+import { sankey, sankeyJustify, sankeyLinkHorizontal } from "d3-sankey";
 import { useEffect, useRef } from "react";
 
-import {
-  CHART_COLORS,
-  CHART_MARGIN,
-} from "~/app/_components/analytics-charts/chart-theme";
+import { CHART_COLORS } from "~/app/_components/analytics-charts/chart-theme";
 import { useChartSize } from "~/app/_components/analytics-charts/use-chart-size";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import type { FunnelSankeyData } from "~/lib/career-ops/funnel-sankey";
@@ -40,19 +37,66 @@ type SankeyLinkLayout = SankeyLinkInput & {
   y1?: number;
 };
 
+type NodeLabelLayout = {
+  x: number;
+  y: number;
+  textAnchor: "start" | "end" | "middle";
+};
+
 const SANKEY_MARGIN = {
-  top: CHART_MARGIN.top,
-  right: 120,
-  bottom: CHART_MARGIN.bottom,
-  left: 12,
+  top: 28,
+  right: 16,
+  bottom: 28,
+  left: 16,
 } as const;
+
+const LABEL_GUTTER_LEFT = 92;
+const LABEL_GUTTER_RIGHT = 108;
+const SANKEY_VERTICAL_PADDING = 16;
+
+function getNodeLabelLayout(
+  node: SankeyNodeDatum,
+  leftColumnX: number,
+  rightColumnX: number,
+  innerWidth: number,
+): NodeLabelLayout {
+  const nodeX = node.x0 ?? 0;
+  const nodeWidth = (node.x1 ?? 0) - nodeX;
+  const nodeY = node.y0 ?? 0;
+  const nodeHeight = (node.y1 ?? 0) - nodeY;
+  const centerY = nodeY + nodeHeight / 2;
+
+  if (nodeX <= leftColumnX) {
+    return {
+      x: LABEL_GUTTER_LEFT - 12,
+      y: centerY,
+      textAnchor: "end",
+    };
+  }
+
+  if (nodeX >= rightColumnX) {
+    return {
+      x: innerWidth - LABEL_GUTTER_RIGHT + 24,
+      y: centerY,
+      textAnchor: "start",
+    };
+  }
+
+  return {
+    x: nodeX + nodeWidth / 2,
+    y: Math.max(12, nodeY - 10),
+    textAnchor: "middle",
+  };
+}
 
 export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const nodeCount = data.nodes.length;
+  const chartHeight = Math.min(360, Math.max(220, 72 + nodeCount * 28));
   const { containerRef, width, height } = useChartSize({
-    aspectRatio: 0.45,
-    minHeight: 260,
-    maxHeight: 420,
+    aspectRatio: chartHeight / 640,
+    minHeight: chartHeight,
+    maxHeight: chartHeight,
   });
 
   useEffect(() => {
@@ -87,15 +131,26 @@ export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
       links: data.links.map((link) => ({ ...link })),
     };
 
+    const nodePadding = Math.max(
+      22,
+      Math.min(40, innerHeight / (nodeCount + 1)),
+    );
+
     const graph = sankey<SankeyNodeDatum, SankeyLinkInput>()
       .nodeId((node) => node.id)
-      .nodeWidth(14)
-      .nodePadding(18)
+      .nodeAlign(sankeyJustify)
+      .nodeWidth(12)
+      .nodePadding(nodePadding)
       .extent([
-        [0, 0],
-        [innerWidth, innerHeight],
+        [LABEL_GUTTER_LEFT, SANKEY_VERTICAL_PADDING],
+        [
+          innerWidth - LABEL_GUTTER_RIGHT,
+          innerHeight - SANKEY_VERTICAL_PADDING,
+        ],
       ])(graphInput);
 
+    const leftColumnX = d3.min(graph.nodes, (node) => node.x0) ?? 0;
+    const rightColumnX = d3.max(graph.nodes, (node) => node.x0) ?? 0;
     const layoutLinks = graph.links as SankeyLinkLayout[];
     const linkPath = sankeyLinkHorizontal<SankeyNodeDatum, SankeyLinkLayout>();
 
@@ -108,8 +163,8 @@ export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
       .attr("d", linkPath)
       .attr("stroke", (link) => link.color)
       .attr("stroke-width", (link) => Math.max(1, link.width ?? 0))
-      .attr("stroke-opacity", 0.55)
-      .attr("stroke-linecap", "butt");
+      .attr("stroke-opacity", 0.5)
+      .attr("stroke-linecap", "round");
 
     const nodeGroups = root
       .append("g")
@@ -126,64 +181,61 @@ export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
       .attr("fill", (node) => node.color)
       .attr("rx", 2);
 
-    nodeGroups
-      .append("text")
-      .attr("x", (node) => {
-        const nodeX = node.x0 ?? 0;
-        const nodeWidth = (node.x1 ?? 0) - nodeX;
-        return nodeX < innerWidth / 2 ? nodeX - 8 : nodeX + nodeWidth + 8;
-      })
-      .attr("y", (node) => {
-        const nodeY = node.y0 ?? 0;
-        const nodeHeight = (node.y1 ?? 0) - nodeY;
-        return nodeY + nodeHeight / 2;
-      })
-      .attr("dy", "-0.15em")
-      .attr("text-anchor", (node) => {
-        const nodeX = node.x0 ?? 0;
-        return nodeX < innerWidth / 2 ? "end" : "start";
-      })
-      .attr("fill", CHART_COLORS.label)
-      .attr("font-size", 11)
-      .text((node) => node.label);
+    nodeGroups.each(function (node) {
+      const group = d3.select(this);
+      const label = getNodeLabelLayout(
+        node,
+        leftColumnX,
+        rightColumnX,
+        innerWidth,
+      );
+      const isMiddleColumn =
+        node.x0 !== undefined &&
+        node.x0 > leftColumnX &&
+        node.x0 < rightColumnX;
 
-    nodeGroups
-      .append("text")
-      .attr("x", (node) => {
-        const nodeX = node.x0 ?? 0;
-        const nodeWidth = (node.x1 ?? 0) - nodeX;
-        return nodeX < innerWidth / 2 ? nodeX - 8 : nodeX + nodeWidth + 8;
-      })
-      .attr("y", (node) => {
-        const nodeY = node.y0 ?? 0;
-        const nodeHeight = (node.y1 ?? 0) - nodeY;
-        return nodeY + nodeHeight / 2;
-      })
-      .attr("dy", "1.05em")
-      .attr("text-anchor", (node) => {
-        const nodeX = node.x0 ?? 0;
-        return nodeX < innerWidth / 2 ? "end" : "start";
-      })
-      .attr("fill", "rgba(255,255,255,0.82)")
-      .attr("font-size", 12)
-      .attr("font-weight", 600)
-      .text((node) => String(node.value ?? 0));
+      group
+        .append("text")
+        .attr("x", label.x)
+        .attr("y", label.y)
+        .attr("dy", isMiddleColumn ? "-0.1em" : "-0.35em")
+        .attr("text-anchor", label.textAnchor)
+        .attr("fill", CHART_COLORS.label)
+        .attr("font-size", 12)
+        .text(node.label);
+
+      group
+        .append("text")
+        .attr("x", label.x)
+        .attr("y", label.y)
+        .attr("dy", isMiddleColumn ? "1.05em" : "0.95em")
+        .attr("text-anchor", label.textAnchor)
+        .attr("fill", "rgba(255,255,255,0.88)")
+        .attr("font-size", 13)
+        .attr("font-weight", 600)
+        .text(String(node.value ?? 0));
+    });
 
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [data, height, width]);
+  }, [data, height, nodeCount, width]);
 
   return (
-    <div className={cn(glassCardSurfaceClassName, "rounded-xl p-4")}>
+    <div
+      className={cn(
+        glassCardSurfaceClassName,
+        "flex h-full flex-col rounded-xl p-4",
+      )}
+    >
       <div>
         <h4 className="text-sm font-semibold text-white">Pipeline funnel</h4>
-        <p className="mt-1 text-xs text-white/55">
+        <p className="mt-1 text-xs text-white/50">
           Flow width reflects how many applications reached each stage or
           outcome.
         </p>
       </div>
-      <div ref={containerRef} className="mt-4">
+      <div ref={containerRef} className="mt-4 min-h-[220px] flex-1">
         <svg ref={svgRef} className="h-auto w-full overflow-visible" />
       </div>
     </div>

@@ -35,77 +35,79 @@ export function FunnelPanel({ applications }: FunnelPanelProps) {
         </p>
       </div>
 
-      {sankeyData ? <FunnelSankeyChart data={sankeyData} /> : null}
+      <div className="mt-6 flex flex-col gap-4">
+        {sankeyData ? <FunnelSankeyChart data={sankeyData} /> : null}
 
-      <dl className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Response rate" value={metrics.responseRate} />
-        <MetricCard label="Interview rate" value={metrics.interviewRate} />
-        <MetricCard label="Offer rate" value={metrics.offerRate} />
-        <MetricCard
-          label="Active pipeline"
-          value={String(metrics.activeCount)}
-        />
-      </dl>
+        <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Response rate" value={metrics.responseRate} />
+          <MetricCard label="Interview rate" value={metrics.interviewRate} />
+          <MetricCard label="Offer rate" value={metrics.offerRate} />
+          <MetricCard
+            label="Active pipeline"
+            value={String(metrics.activeCount)}
+          />
+        </dl>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className={cn(glassCardSurfaceClassName, "rounded-xl p-4")}>
-          <h4 className="text-sm font-semibold text-white">Stage counts</h4>
-          <ul className="mt-3 space-y-2 text-sm text-white/80">
-            <li className="flex justify-between gap-3">
-              <span>Interviews</span>
-              <span className="font-medium text-white">
-                {metrics.interviewCount}
-              </span>
-            </li>
-            <li className="flex justify-between gap-3">
-              <span>Offers</span>
-              <span className="font-medium text-white">
-                {metrics.offerCount}
-              </span>
-            </li>
-            <li className="flex justify-between gap-3">
-              <span>Rejected / discarded</span>
-              <span className="font-medium text-white">
-                {metrics.rejectedCount}
-              </span>
-            </li>
-            <li className="flex justify-between gap-3">
-              <span>Terminal total</span>
-              <span className="font-medium text-white">
-                {metrics.terminalCount}
-              </span>
-            </li>
-          </ul>
-        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className={cn(glassCardSurfaceClassName, "rounded-xl p-4")}>
+            <h4 className="text-sm font-semibold text-white">Stage counts</h4>
+            <ul className="mt-3 space-y-2 text-sm text-white/80">
+              <li className="flex justify-between gap-3">
+                <span>Interviews</span>
+                <span className="font-medium text-white">
+                  {metrics.interviewCount}
+                </span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span>Offers</span>
+                <span className="font-medium text-white">
+                  {metrics.offerCount}
+                </span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span>Rejected / discarded</span>
+                <span className="font-medium text-white">
+                  {metrics.rejectedCount}
+                </span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span>Terminal total</span>
+                <span className="font-medium text-white">
+                  {metrics.terminalCount}
+                </span>
+              </li>
+            </ul>
+          </div>
 
-        <div className={cn(glassCardSurfaceClassName, "rounded-xl p-4")}>
-          <h4 className="text-sm font-semibold text-white">Score quality</h4>
-          <ul className="mt-3 space-y-2 text-sm text-white/80">
-            <li className="flex justify-between gap-3">
-              <span>Avg score (applied+)</span>
-              <span className="font-medium text-white">
-                {metrics.averageScoreApplied}
-              </span>
-            </li>
-            <li className="flex justify-between gap-3">
-              <span>Avg score (interviews)</span>
-              <span className="font-medium text-white">
-                {metrics.averageScoreInterview}
-              </span>
-            </li>
-            <li className="flex justify-between gap-3">
-              <span>Rejections ≥ 4.0</span>
-              <span className="font-medium text-white">
-                {metrics.rejectionByScoreBand.high}
-              </span>
-            </li>
-            <li className="flex justify-between gap-3">
-              <span>Rejections 3.0–3.9</span>
-              <span className="font-medium text-white">
-                {metrics.rejectionByScoreBand.medium}
-              </span>
-            </li>
-          </ul>
+          <div className={cn(glassCardSurfaceClassName, "rounded-xl p-4")}>
+            <h4 className="text-sm font-semibold text-white">Score quality</h4>
+            <ul className="mt-3 space-y-2 text-sm text-white/80">
+              <li className="flex justify-between gap-3">
+                <span>Avg score (applied+)</span>
+                <span className="font-medium text-white">
+                  {metrics.averageScoreApplied}
+                </span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span>Avg score (interviews)</span>
+                <span className="font-medium text-white">
+                  {metrics.averageScoreInterview}
+                </span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span>Rejections ≥ 4.0</span>
+                <span className="font-medium text-white">
+                  {metrics.rejectionByScoreBand.high}
+                </span>
+              </li>
+              <li className="flex justify-between gap-3">
+                <span>Rejections 3.0–3.9</span>
+                <span className="font-medium text-white">
+                  {metrics.rejectionByScoreBand.medium}
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </GlowPanel>
