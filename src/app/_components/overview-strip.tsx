@@ -106,7 +106,7 @@ export function OverviewStrip({
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <button
           type="button"
-          onClick={() => scrollTo(DASHBOARD_SECTION_IDS.reports)}
+          onClick={() => scrollTo(DASHBOARD_SECTION_IDS.tracker)}
           className={cn(
             glassCardSurfaceClassName,
             clickableCardClassName,
@@ -114,7 +114,9 @@ export function OverviewStrip({
           )}
         >
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-white">Pipeline inbox</h3>
+            <h3 className="text-sm font-semibold text-white">
+              Evaluation reports
+            </h3>
             <span className="text-xs text-white/50">
               {pipeline?.pendingCount ?? 0} pending ·{" "}
               {pipeline?.processedCount ?? 0} processed
@@ -124,7 +126,7 @@ export function OverviewStrip({
             {reportsCount}
           </p>
           <p className="text-xs text-white/50">
-            evaluation reports in `reports/`
+            in `reports/` — open per job from Application tracker
           </p>
         </button>
 

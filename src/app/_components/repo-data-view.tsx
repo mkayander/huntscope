@@ -12,10 +12,6 @@ import { FunnelPanel } from "~/app/_components/funnel-panel";
 import { OverviewStrip } from "~/app/_components/overview-strip";
 import { PipelinePanel } from "~/app/_components/pipeline-panel";
 import { RecentApplications } from "~/app/_components/recent-applications";
-import {
-  LatestReportCard,
-  ReportsPanel,
-} from "~/app/_components/reports-panel";
 import { TrackerPanel } from "~/app/_components/tracker-panel";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import {
@@ -185,21 +181,6 @@ function RepoDataContent({
           />
         </DashboardSection>
       ) : null}
-
-      <DashboardSection
-        id={DASHBOARD_SECTION_IDS.reports}
-        label="Reports"
-        order={45}
-      >
-        <LatestReportCard
-          dataSource={activeSource}
-          defaultBranch={raw.defaultBranch}
-          reportFiles={raw.reportFiles}
-        />
-        <div className="mt-6">
-          <ReportsPanel reportFiles={raw.reportFiles} />
-        </div>
-      </DashboardSection>
 
       {parsed.pipeline ? (
         <DashboardSection
