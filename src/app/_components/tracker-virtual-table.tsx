@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
+import { ApplicationRoleLink } from "~/app/_components/application-role-link";
 import { ScoreBadge } from "~/app/_components/score-badge";
 import {
   TrackerSortableHeader,
@@ -188,12 +189,12 @@ export function TrackerVirtualTable({
                   >
                     {entry.company}
                   </div>
-                  <div
-                    className="flex items-center truncate px-2 py-2"
-                    title={entry.role}
-                    role="cell"
-                  >
-                    {entry.role}
+                  <div className="flex items-center px-2 py-2" role="cell">
+                    <ApplicationRoleLink
+                      application={entry}
+                      dataSource={dataSource}
+                      reportFiles={reportFiles}
+                    />
                   </div>
                   <div className="flex items-center px-2 py-2" role="cell">
                     <ScoreBadge score={entry.score} />
