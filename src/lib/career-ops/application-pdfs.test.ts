@@ -59,7 +59,7 @@ describe("inferOutputFileForApplication", () => {
 });
 
 describe("getEffectivePdfValue", () => {
-  it("prefers the linked pdf column value", () => {
+  it("returns the resolved repo path for linked pdfs", () => {
     expect(
       getEffectivePdfValue(
         {
@@ -68,7 +68,19 @@ describe("getEffectivePdfValue", () => {
         },
         outputFiles,
       ),
-    ).toBe("[cv](output/example.pdf)");
+    ).toBe("output/example.pdf");
+  });
+
+  it("returns null for linked values that do not resolve to a path", () => {
+    expect(
+      getEffectivePdfValue(
+        {
+          ...application,
+          pdf: "pending",
+        },
+        outputFiles,
+      ),
+    ).toBeNull();
   });
 
   it("falls back to inferred output files when the column is empty", () => {
@@ -87,6 +99,18 @@ describe("applicationHasPdf", () => {
           ...application,
           num: 99,
           company: "Unrelated Co",
+        },
+        outputFiles,
+      ),
+    ).toBe(false);
+  });
+
+  it("returns false for non-resolvable linked values", () => {
+    expect(
+      applicationHasPdf(
+        {
+          ...application,
+          pdf: "TBD",
         },
         outputFiles,
       ),

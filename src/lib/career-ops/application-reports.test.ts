@@ -42,7 +42,7 @@ describe("inferReportFileForApplication", () => {
 });
 
 describe("getEffectiveReportValue", () => {
-  it("prefers the linked report column value", () => {
+  it("returns the resolved repo path for linked reports", () => {
     expect(
       getEffectiveReportValue(
         {
@@ -51,7 +51,19 @@ describe("getEffectiveReportValue", () => {
         },
         reportFiles,
       ),
-    ).toBe("[report](reports/002-example-2026-02-03.md)");
+    ).toBe("reports/002-example-2026-02-03.md");
+  });
+
+  it("returns null for linked values that do not resolve to a path", () => {
+    expect(
+      getEffectiveReportValue(
+        {
+          ...application,
+          report: "pending",
+        },
+        reportFiles,
+      ),
+    ).toBeNull();
   });
 
   it("falls back to inferred report files when the column is empty", () => {

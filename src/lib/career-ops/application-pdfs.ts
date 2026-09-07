@@ -1,19 +1,22 @@
+import {
+  getCompanySearchToken,
+  getCompanySearchTokens,
+  hasLinkedArtifactValue,
+  inferApplicationForFile,
+  inferFileForApplication,
+} from "~/lib/career-ops/application-artifact-inference";
+import type { ApplicationArtifactRef } from "~/lib/career-ops/application-artifacts";
 import { extractMarkdownLink } from "~/lib/career-ops/links";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
-export type ApplicationPdfSource = "linked" | "inferred";
+export type ApplicationPdfSource = ApplicationArtifactRef["source"];
+export type ApplicationPdfRef = ApplicationArtifactRef;
 
-export type ApplicationPdfRef = {
-  value: string;
-  path: string;
-  label: string;
-  source: ApplicationPdfSource;
+export {
+  getCompanySearchToken,
+  getCompanySearchTokens,
+  hasLinkedArtifactValue as hasLinkedPdfValue,
 };
-
-export function hasLinkedPdfValue(value: string): boolean {
-  const trimmed = value.trim();
-  return trimmed.length > 0 && trimmed !== "—" && trimmed !== "-";
-}
 
 export function getPdfPathFromApplicationValue(value: string): string | null {
   const markdownLink = extractMarkdownLink(value);
@@ -29,89 +32,25 @@ export function getPdfPathFromApplicationValue(value: string): string | null {
   return null;
 }
 
-export function getCompanySearchToken(company: string): string | null {
-  const token = company
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .find(Boolean);
-
-  return token ?? null;
-}
-
-function getPdfFiles(outputFiles: readonly RepoDataFile[]): RepoDataFile[] {
-  return outputFiles.filter(
-    (file) => file.type === "file" && file.name.toLowerCase().endsWith(".pdf"),
-  );
-}
-
 export function inferApplicationForOutputFile(
   file: RepoDataFile,
   applications: readonly ApplicationEntry[],
 ): ApplicationEntry | null {
-  const stem = file.name.replace(/\.[^.]+$/, "").toLowerCase();
-
-  return (
-    applications.find((application) => {
-      const token = getCompanySearchToken(application.company);
-      return token ? stem.includes(token) : false;
-    }) ?? null
-  );
+  return inferApplicationForFile(file, applications);
 }
 
 export function inferOutputFileForApplication(
   application: ApplicationEntry,
   outputFiles: readonly RepoDataFile[],
 ): RepoDataFile | null {
-  const pdfFiles = getPdfFiles(outputFiles);
-  const paddedPrefix = `${application.num}`.padStart(3, "0");
-  const numberedCandidates = pdfFiles.filter(
-    (file) =>
-      file.name.startsWith(`${paddedPrefix}-`) ||
-      file.name.startsWith(`${application.num}-`),
-  );
-
-  if (numberedCandidates.length > 0) {
-    return (
-      [...numberedCandidates].sort((left, right) =>
-        right.name.localeCompare(left.name),
-      )[0] ?? null
-    );
-  }
-
-  const token = getCompanySearchToken(application.company);
-  if (!token) {
-    return null;
-  }
-
-  const companyMatches = pdfFiles.filter((file) => {
-    const stem = file.name.replace(/\.[^.]+$/, "").toLowerCase();
-    return stem.includes(token);
-  });
-
-  if (companyMatches.length === 0) {
-    return null;
-  }
-
-  if (companyMatches.length === 1) {
-    return companyMatches[0] ?? null;
-  }
-
-  return (
-    [...companyMatches].sort((left, right) =>
-      right.name.localeCompare(left.name),
-    )[0] ?? null
-  );
+  return inferFileForApplication(application, outputFiles, ".pdf");
 }
 
 export function getEffectivePdfValue(
   application: ApplicationEntry,
   outputFiles: readonly RepoDataFile[] = [],
 ): string | null {
-  if (hasLinkedPdfValue(application.pdf)) {
-    return application.pdf;
-  }
-
-  return inferOutputFileForApplication(application, outputFiles)?.path ?? null;
+  return getApplicationPdfRef(application, outputFiles)?.path ?? null;
 }
 
 export function applicationHasPdf(
@@ -156,7 +95,7 @@ export function getApplicationPdfRef(
   application: ApplicationEntry,
   outputFiles: readonly RepoDataFile[] = [],
 ): ApplicationPdfRef | null {
-  if (hasLinkedPdfValue(application.pdf)) {
+  if (hasLinkedArtifactValue(application.pdf)) {
     const path = getPdfPathFromApplicationValue(application.pdf);
 
     if (!path) {

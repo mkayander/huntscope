@@ -15,7 +15,7 @@ const applications: ApplicationEntry[] = [
     role: "Engineer",
     score: "4.5",
     status: "Applied",
-    pdf: "",
+    pdf: "[cv](output/acme.pdf)",
     report: "reports/acme.md",
     notes: "",
   },
@@ -88,6 +88,30 @@ describe("queryTrackerApplications", () => {
     expect(results[0]?.company).toBe("Acme");
   });
 
+  it("filters by pdf presence using linked and inferred output files", () => {
+    const withPdf = queryTrackerApplications(
+      applications,
+      {
+        ...DEFAULT_TRACKER_TABLE_QUERY,
+        pdfFilters: ["with"],
+        statusFilters: ["Rejected"],
+      },
+      {
+        reportFiles: [],
+        outputFiles: [
+          {
+            path: "output/beta.pdf",
+            name: "beta.pdf",
+            type: "file",
+          },
+        ],
+      },
+    );
+
+    expect(withPdf).toHaveLength(1);
+    expect(withPdf[0]?.company).toBe("Beta");
+  });
+
   it("treats inferred report files as report coverage", () => {
     const results = queryTrackerApplications(
       applications,
@@ -96,13 +120,16 @@ describe("queryTrackerApplications", () => {
         reportFilters: ["with"],
         statusFilters: ["Rejected"],
       },
-      [
-        {
-          path: "reports/002-beta.md",
-          name: "002-beta.md",
-          type: "file",
-        },
-      ],
+      {
+        reportFiles: [
+          {
+            path: "reports/002-beta.md",
+            name: "002-beta.md",
+            type: "file",
+          },
+        ],
+        outputFiles: [],
+      },
     );
 
     expect(results).toHaveLength(1);

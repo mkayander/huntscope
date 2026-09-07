@@ -1,53 +1,28 @@
+import {
+  hasLinkedArtifactValue,
+  inferFileForApplication,
+} from "~/lib/career-ops/application-artifact-inference";
+import type { ApplicationArtifactRef } from "~/lib/career-ops/application-artifacts";
 import { extractMarkdownLink } from "~/lib/career-ops/links";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
-export type ApplicationReportSource = "linked" | "inferred";
+export type ApplicationReportSource = ApplicationArtifactRef["source"];
+export type ApplicationReportRef = ApplicationArtifactRef;
 
-export type ApplicationReportRef = {
-  value: string;
-  path: string;
-  label: string;
-  source: ApplicationReportSource;
-};
-
-export function hasLinkedReportValue(value: string): boolean {
-  const trimmed = value.trim();
-  return trimmed.length > 0 && trimmed !== "—" && trimmed !== "-";
-}
+export { hasLinkedArtifactValue as hasLinkedReportValue };
 
 export function inferReportFileForApplication(
   application: ApplicationEntry,
   reportFiles: readonly RepoDataFile[],
 ): RepoDataFile | null {
-  const paddedPrefix = `${application.num}`.padStart(3, "0");
-  const candidates = reportFiles.filter(
-    (file) =>
-      file.type === "file" &&
-      file.name.endsWith(".md") &&
-      (file.name.startsWith(`${paddedPrefix}-`) ||
-        file.name.startsWith(`${application.num}-`)),
-  );
-
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  return (
-    [...candidates].sort((left, right) =>
-      right.name.localeCompare(left.name),
-    )[0] ?? null
-  );
+  return inferFileForApplication(application, reportFiles, ".md");
 }
 
 export function getEffectiveReportValue(
   application: ApplicationEntry,
   reportFiles: readonly RepoDataFile[] = [],
 ): string | null {
-  if (hasLinkedReportValue(application.report)) {
-    return application.report;
-  }
-
-  return inferReportFileForApplication(application, reportFiles)?.path ?? null;
+  return getApplicationReportRef(application, reportFiles)?.path ?? null;
 }
 
 export function applicationHasReport(
@@ -94,7 +69,7 @@ export function getApplicationReportRef(
   application: ApplicationEntry,
   reportFiles: readonly RepoDataFile[] = [],
 ): ApplicationReportRef | null {
-  if (hasLinkedReportValue(application.report)) {
+  if (hasLinkedArtifactValue(application.report)) {
     const path = getReportPathFromValue(application.report);
 
     if (!path) {

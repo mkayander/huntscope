@@ -73,8 +73,12 @@ export function TrackerPanel({
   }, [statusFilters]);
 
   const filteredApplications = useMemo(
-    () => queryTrackerApplications(applications, tableQuery, reportFiles),
-    [applications, reportFiles, tableQuery],
+    () =>
+      queryTrackerApplications(applications, tableQuery, {
+        reportFiles,
+        outputFiles,
+      }),
+    [applications, outputFiles, reportFiles, tableQuery],
   );
 
   const groupedApplications = useMemo(

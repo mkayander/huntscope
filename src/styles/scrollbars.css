@@ -38,6 +38,9 @@
    * Radix Select uses react-remove-scroll, which hides the body scrollbar and
    * adds compensating padding. With scrollbar-gutter: stable on html, keep the
    * gutter visible and avoid layout shift when dropdowns open.
+   *
+   * Artifact drawer scroll lock uses data-overlay-scroll-locked with the same
+   * overflow rules so both mechanisms share one CSS-based approach.
    */
   html:has(body[data-scroll-locked]) {
     overflow: hidden;

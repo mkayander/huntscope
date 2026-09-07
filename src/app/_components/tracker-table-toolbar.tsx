@@ -13,6 +13,7 @@ import {
   formatTrackerFilterSummary,
   getTrackerSortLabel,
   hasActiveTrackerFilters,
+  type TrackerPdfFilterValue,
   type TrackerReportFilterValue,
   type TrackerScoreFilterValue,
   type TrackerSortColumn,
@@ -39,6 +40,14 @@ const REPORT_FILTER_OPTIONS: {
 }[] = [
   { value: "with", label: "With report" },
   { value: "without", label: "Without report" },
+];
+
+const PDF_FILTER_OPTIONS: {
+  value: TrackerPdfFilterValue;
+  label: string;
+}[] = [
+  { value: "with", label: "With PDF" },
+  { value: "without", label: "Without PDF" },
 ];
 
 type TrackerTableToolbarProps = {
@@ -81,10 +90,14 @@ export function TrackerTableToolbar({
     query.reportFilters,
     REPORT_FILTER_OPTIONS,
   );
+  const pdfSummary = formatTrackerFilterSummary(
+    query.pdfFilters,
+    PDF_FILTER_OPTIONS,
+  );
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(9rem,1fr))_auto] lg:items-end">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(9rem,1fr))_auto] lg:items-end">
         <div className="flex min-w-0 flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-2">
             <Label htmlFor="tracker-search" className="text-white/80">
@@ -138,6 +151,17 @@ export function TrackerTableToolbar({
           }}
         />
 
+        <FilterMultiSelect
+          id="tracker-pdf-filter"
+          label="PDF"
+          options={PDF_FILTER_OPTIONS}
+          selected={query.pdfFilters}
+          placeholder="All PDFs"
+          onChange={(pdfFilters) => {
+            onQueryChange({ ...query, pdfFilters });
+          }}
+        />
+
         <Button
           type="button"
           variant="brandSecondary"
@@ -155,6 +179,7 @@ export function TrackerTableToolbar({
         {statusSummary ? ` · status: ${statusSummary}` : ""}
         {scoreSummary ? ` · score: ${scoreSummary}` : ""}
         {reportSummary ? ` · report: ${reportSummary}` : ""}
+        {pdfSummary ? ` · pdf: ${pdfSummary}` : ""}
         {` · sorted by ${getTrackerSortLabel(query.sortColumn, query.sortDirection)}`}
       </p>
     </div>
