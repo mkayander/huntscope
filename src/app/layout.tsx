@@ -6,6 +6,7 @@ import { Geist } from "next/font/google";
 import { headers } from "next/headers";
 
 import { PwaRegister } from "~/app/_components/pwa-register";
+import { ScrollLockStyleFix } from "~/components/scroll-lock-style-fix";
 import { LocaleProvider } from "~/lib/i18n/locale-context";
 import { APP_LOCALE } from "~/lib/i18n/locale";
 import { PAGE_SHELL_LANDING_BACKGROUND } from "~/lib/page-shell-background";
@@ -69,6 +70,7 @@ export default async function RootLayout({
         <meta name="darkreader-lock" />
       </head>
       <body className={`${geist.className} antialiased`}>
+        <ScrollLockStyleFix />
         <PwaRegister />
         <LocaleProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>
