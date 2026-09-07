@@ -7,22 +7,36 @@ import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { computeFunnelMetrics } from "~/lib/career-ops/funnel";
 import { buildFunnelSankeyData } from "~/lib/career-ops/funnel-sankey";
+import {
+  getDashboardPeriodLabel,
+  hasActiveDashboardFilters,
+  type DashboardFilters,
+} from "~/lib/career-ops/dashboard-filters";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { cn } from "~/lib/utils";
 
 type FunnelPanelProps = {
   applications: ApplicationEntry[];
+  totalApplications: number;
+  dashboardFilters: DashboardFilters;
 };
 
-export function FunnelPanel({ applications }: FunnelPanelProps) {
+export function FunnelPanel({
+  applications,
+  totalApplications,
+  dashboardFilters,
+}: FunnelPanelProps) {
   const metrics = computeFunnelMetrics(applications);
   const sankeyData = useMemo(
     () => buildFunnelSankeyData(applications),
     [applications],
   );
+  const filterSummary = hasActiveDashboardFilters(dashboardFilters)
+    ? `Filtered view: ${applications.length} of ${totalApplications} applications · ${getDashboardPeriodLabel(dashboardFilters.periodWeeks)}`
+    : null;
 
-  if (applications.length === 0) {
+  if (totalApplications === 0) {
     return null;
   }
 
@@ -31,12 +45,27 @@ export function FunnelPanel({ applications }: FunnelPanelProps) {
       <div>
         <h3 className="text-lg font-semibold text-white">Funnel & velocity</h3>
         <p className="mt-1 text-sm text-white/60">
-          Conversion rates across your application pipeline.
+          Conversion rates across your application pipeline for the current
+          dashboard filters.
         </p>
+        {filterSummary ? (
+          <p className="mt-2 text-xs text-white/45">{filterSummary}</p>
+        ) : null}
       </div>
 
       <div className="mt-6 flex flex-col gap-4">
-        {sankeyData ? <FunnelSankeyChart data={sankeyData} /> : null}
+        {applications.length === 0 ? (
+          <div
+            className={cn(
+              glassCardSurfaceClassName,
+              "rounded-xl px-4 py-8 text-center text-sm text-white/60",
+            )}
+          >
+            No applications match the current dashboard filters.
+          </div>
+        ) : sankeyData ? (
+          <FunnelSankeyChart data={sankeyData} />
+        ) : null}
 
         <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Response rate" value={metrics.responseRate} />

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { AnalyticsChartsPanel } from "~/app/_components/analytics-charts-panel";
+import { DashboardFiltersBar } from "~/app/_components/dashboard-filters-bar";
 import { DataFilesPanel } from "~/app/_components/data-files-panel";
 import { OutputFilesPanel } from "~/app/_components/output-files-panel";
 import { DashboardSection } from "~/app/_components/dashboard-section-nav";
@@ -21,8 +22,14 @@ import {
 import { useHomeShell } from "~/hooks/use-home-shell";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { hasAnalyticsChartData } from "~/lib/career-ops/chart-data";
+import { computeApplicationAnalytics } from "~/lib/career-ops/analytics";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { getDataSourceLabel } from "~/lib/career-ops/data-source";
+import {
+  DEFAULT_DASHBOARD_FILTERS,
+  filterDashboardApplications,
+  type DashboardFilters,
+} from "~/lib/career-ops/dashboard-filters";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { useParsedRepoData } from "~/lib/career-ops/use-parsed-repo-data";
 
@@ -63,9 +70,22 @@ function RepoDataContent({
 }: {
   activeSource: CareerOpsDataSource;
 }) {
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [dashboardFilters, setDashboardFilters] = useState<DashboardFilters>(
+    DEFAULT_DASHBOARD_FILTERS,
+  );
   const { raw, error, isLoading } = useCareerOpsRawData(activeSource);
   const { parsed, isParsing, parseError } = useParsedRepoData(raw);
+  const filteredApplications = useMemo(
+    () =>
+      parsed
+        ? filterDashboardApplications(parsed.applications, dashboardFilters)
+        : [],
+    [dashboardFilters, parsed],
+  );
+  const filteredAnalytics = useMemo(
+    () => computeApplicationAnalytics(filteredApplications),
+    [filteredApplications],
+  );
 
   if (isLoading && !raw) {
     return (
@@ -115,8 +135,8 @@ function RepoDataContent({
     activeSource.directoryHandle != null &&
     activeSource.fileHandle == null;
   const showAnalytics = hasAnalyticsChartData(
-    parsed.applications,
-    parsed.analytics.statusCounts,
+    filteredApplications,
+    filteredAnalytics.statusCounts,
   );
 
   return (
@@ -128,14 +148,20 @@ function RepoDataContent({
       >
         <OverviewStrip
           repoFullName={sourceLabel}
-          analytics={parsed.analytics}
+          analytics={filteredAnalytics}
           pipeline={parsed.pipeline}
           reportsCount={raw.reportsCount}
           canEditLocally={canEditLocally}
           hasAnalyticsSection={showAnalytics}
           hasPipelineSection={parsed.pipeline != null}
-          activeStatusFilters={statusFilters}
-          onStatusFiltersChange={setStatusFilters}
+          dashboardFilters={dashboardFilters}
+          onDashboardFiltersChange={setDashboardFilters}
+        />
+        <DashboardFiltersBar
+          applications={parsed.applications}
+          filters={dashboardFilters}
+          resultCount={filteredApplications.length}
+          onFiltersChange={setDashboardFilters}
         />
       </DashboardSection>
 
@@ -146,10 +172,10 @@ function RepoDataContent({
           order={20}
         >
           <AnalyticsChartsPanel
-            applications={parsed.applications}
-            statusCounts={parsed.analytics.statusCounts}
-            activeStatusFilters={statusFilters}
-            onStatusFiltersChange={setStatusFilters}
+            applications={filteredApplications}
+            statusCounts={filteredAnalytics.statusCounts}
+            dashboardFilters={dashboardFilters}
+            onDashboardFiltersChange={setDashboardFilters}
           />
         </DashboardSection>
       ) : null}
@@ -159,7 +185,11 @@ function RepoDataContent({
         label="Funnel"
         order={25}
       >
-        <FunnelPanel applications={parsed.applications} />
+        <FunnelPanel
+          applications={filteredApplications}
+          totalApplications={parsed.applications.length}
+          dashboardFilters={dashboardFilters}
+        />
       </DashboardSection>
 
       <DashboardSection
@@ -167,17 +197,20 @@ function RepoDataContent({
         label="Activity"
         order={30}
       >
-        <ActivityHeatmapPanel applications={parsed.applications} />
+        <ActivityHeatmapPanel
+          applications={filteredApplications}
+          periodWeeks={dashboardFilters.periodWeeks ?? 52}
+        />
       </DashboardSection>
 
-      {parsed.analytics.recentApplications.length > 0 ? (
+      {filteredAnalytics.recentApplications.length > 0 ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.recent}
           label="Recent"
           order={40}
         >
           <RecentApplications
-            applications={parsed.analytics.recentApplications}
+            applications={filteredAnalytics.recentApplications}
           />
         </DashboardSection>
       ) : null}
@@ -203,11 +236,11 @@ function RepoDataContent({
         <TrackerPanel
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
-          applications={parsed.applications}
+          applications={filteredApplications}
+          allApplications={parsed.applications}
+          totalApplications={parsed.applications.length}
           reportFiles={raw.reportFiles}
           outputFiles={raw.outputFiles}
-          statusFilters={statusFilters}
-          onStatusFiltersChange={setStatusFilters}
         />
       </DashboardSection>
 

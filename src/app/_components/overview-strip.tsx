@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApplicationAnalytics } from "~/lib/career-ops/analytics";
+import type { DashboardFilters } from "~/lib/career-ops/dashboard-filters";
 import type { PipelineSummary } from "~/lib/career-ops/types";
 import {
   getStatusChipClassName,
@@ -23,8 +24,8 @@ type OverviewStripProps = {
   canEditLocally: boolean;
   hasAnalyticsSection: boolean;
   hasPipelineSection: boolean;
-  activeStatusFilters: string[];
-  onStatusFiltersChange: (statuses: string[]) => void;
+  dashboardFilters: DashboardFilters;
+  onDashboardFiltersChange: (filters: DashboardFilters) => void;
 };
 
 export function OverviewStrip({
@@ -35,8 +36,8 @@ export function OverviewStrip({
   canEditLocally,
   hasAnalyticsSection,
   hasPipelineSection,
-  activeStatusFilters,
-  onStatusFiltersChange,
+  dashboardFilters,
+  onDashboardFiltersChange,
 }: OverviewStripProps) {
   const { scrollToSection } = useDashboardSections();
   const statuses = sortStatuses(analytics.statusCounts);
@@ -163,9 +164,14 @@ export function OverviewStrip({
               variant="chip"
               className={getStatusChipClassName(
                 "All",
-                activeStatusFilters.length === 0,
+                dashboardFilters.statusFilters.length === 0,
               )}
-              onClick={() => onStatusFiltersChange([])}
+              onClick={() =>
+                onDashboardFiltersChange({
+                  ...dashboardFilters,
+                  statusFilters: [],
+                })
+              }
             >
               All {analytics.total}
             </Button>
@@ -176,12 +182,16 @@ export function OverviewStrip({
                 variant="chip"
                 className={getStatusChipClassName(
                   status,
-                  activeStatusFilters.includes(status),
+                  dashboardFilters.statusFilters.includes(status),
                 )}
                 onClick={() =>
-                  onStatusFiltersChange(
-                    toggleStatusFilter(activeStatusFilters, status),
-                  )
+                  onDashboardFiltersChange({
+                    ...dashboardFilters,
+                    statusFilters: toggleStatusFilter(
+                      dashboardFilters.statusFilters,
+                      status,
+                    ),
+                  })
                 }
               >
                 {status} {analytics.statusCounts[status]}

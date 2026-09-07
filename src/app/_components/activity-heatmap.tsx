@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { ErrorAlert } from "~/app/_components/error-alert";
-import { Button } from "~/components/ui/button";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import {
@@ -15,12 +14,6 @@ import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { formatDisplayDate, getWeekdayLabels } from "~/lib/i18n/date-format";
 import { useLocale } from "~/lib/i18n/locale-context";
 
-const PERIOD_OPTIONS: { value: ActivityHeatmapPeriod; label: string }[] = [
-  { value: 12, label: "12 weeks" },
-  { value: 26, label: "6 months" },
-  { value: 52, label: "1 year" },
-];
-
 const LEVEL_CLASS_NAMES: Record<ActivityLevel, string> = {
   0: "bg-white/8 ring-1 ring-white/5",
   1: "bg-violet-900/70 ring-1 ring-violet-800/40",
@@ -31,17 +24,23 @@ const LEVEL_CLASS_NAMES: Record<ActivityLevel, string> = {
 
 type ActivityHeatmapProps = {
   applications: ApplicationEntry[];
+  periodWeeks: ActivityHeatmapPeriod;
 };
 
-export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
+export function ActivityHeatmapPanel({
+  applications,
+  periodWeeks,
+}: ActivityHeatmapProps) {
   const locale = useLocale();
   const dayLabels = getWeekdayLabels(locale);
-  const [periodWeeks, setPeriodWeeks] = useState<ActivityHeatmapPeriod>(52);
   const [hoveredDay, setHoveredDay] = useState<{
     date: string;
     count: number;
   } | null>(null);
-  const { heatmap, isLoading, error } = useActivityHeatmap(applications, periodWeeks);
+  const { heatmap, isLoading, error } = useActivityHeatmap(
+    applications,
+    periodWeeks,
+  );
 
   const summaryLabel =
     hoveredDay != null
@@ -60,29 +59,18 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
         <div>
           <h3 className="text-lg font-semibold text-white">Search activity</h3>
           <p className="mt-1 text-sm text-white/60">
-            GitHub-style heat map of evaluations added to your tracker over time.
-            Computed locally in a background worker.
+            GitHub-style heat map of evaluations added to your tracker over
+            time. Period follows the dashboard filter above.
           </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {PERIOD_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              variant={periodWeeks === option.value ? "brand" : "brandSecondary"}
-              size="pillSm"
-              onClick={() => setPeriodWeeks(option.value)}
-            >
-              {option.label}
-            </Button>
-          ))}
         </div>
       </div>
 
       {error ? (
         <div className="mt-4">
-          <ErrorAlert title="Could not build activity heat map" message={error} />
+          <ErrorAlert
+            title="Could not build activity heat map"
+            message={error}
+          />
         </div>
       ) : null}
 
@@ -162,8 +150,8 @@ export function ActivityHeatmapPanel({ applications }: ActivityHeatmapProps) {
       {heatmap ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-white/50">
           <span>
-            {heatmap.activeDays} active day{heatmap.activeDays === 1 ? "" : "s"} ·{" "}
-            {heatmap.datedApplications} dated row
+            {heatmap.activeDays} active day{heatmap.activeDays === 1 ? "" : "s"}{" "}
+            · {heatmap.datedApplications} dated row
             {heatmap.datedApplications === 1 ? "" : "s"}
             {heatmap.undatedApplications > 0
               ? ` · ${heatmap.undatedApplications} without a parseable date`

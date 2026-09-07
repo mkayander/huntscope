@@ -1,4 +1,3 @@
-import { filterApplications } from "~/lib/career-ops/analytics";
 import { applicationHasPdf } from "~/lib/career-ops/application-pdfs";
 import { applicationHasReport } from "~/lib/career-ops/application-reports";
 import { parseApplicationDate } from "~/lib/career-ops/dates";
@@ -14,9 +13,6 @@ export type TrackerReportFilterValue = "with" | "without";
 export type TrackerPdfFilterValue = "with" | "without";
 
 export type TrackerTableQuery = {
-  searchQuery: string;
-  statusFilters: string[];
-  scoreFilters: TrackerScoreFilterValue[];
   reportFilters: TrackerReportFilterValue[];
   pdfFilters: TrackerPdfFilterValue[];
   sortColumn: TrackerSortColumn;
@@ -24,9 +20,6 @@ export type TrackerTableQuery = {
 };
 
 export const DEFAULT_TRACKER_TABLE_QUERY: TrackerTableQuery = {
-  searchQuery: "",
-  statusFilters: [],
-  scoreFilters: [],
   reportFilters: [],
   pdfFilters: [],
   sortColumn: "num",
@@ -50,29 +43,13 @@ function hasReportValue(
   return applicationHasReport(application, reportFiles);
 }
 
-function matchesScoreValue(
-  score: string,
-  filter: TrackerScoreFilterValue,
+function matchesReportValue(
+  application: ApplicationEntry,
+  filter: TrackerReportFilterValue,
+  reportFiles: readonly RepoDataFile[],
 ): boolean {
-  const parsed = parseScore(score);
-
-  if (filter === "unknown") {
-    return parsed === null;
-  }
-
-  if (parsed === null) {
-    return false;
-  }
-
-  if (filter === "high") {
-    return parsed >= 4;
-  }
-
-  if (filter === "medium") {
-    return parsed >= 3 && parsed < 4;
-  }
-
-  return parsed < 3;
+  const hasReport = hasReportValue(application, reportFiles);
+  return filter === "with" ? hasReport : !hasReport;
 }
 
 function hasPdfValue(
@@ -103,26 +80,6 @@ function matchesPdfFilters(
   return pdfFilters.some((filter) =>
     matchesPdfValue(application, filter, outputFiles),
   );
-}
-
-function matchesReportValue(
-  application: ApplicationEntry,
-  filter: TrackerReportFilterValue,
-  reportFiles: readonly RepoDataFile[],
-): boolean {
-  const hasReport = hasReportValue(application, reportFiles);
-  return filter === "with" ? hasReport : !hasReport;
-}
-
-function matchesScoreFilters(
-  score: string,
-  scoreFilters: TrackerScoreFilterValue[],
-): boolean {
-  if (scoreFilters.length === 0) {
-    return true;
-  }
-
-  return scoreFilters.some((filter) => matchesScoreValue(score, filter));
 }
 
 function matchesReportFilters(
@@ -244,12 +201,8 @@ export function queryTrackerApplications(
 ): ApplicationEntry[] {
   const { reportFiles, outputFiles } = repoFiles;
 
-  const filtered = filterApplications(applications, {
-    statusFilters: query.statusFilters,
-    searchQuery: query.searchQuery,
-  }).filter(
+  const filtered = applications.filter(
     (application) =>
-      matchesScoreFilters(application.score, query.scoreFilters) &&
       matchesReportFilters(application, query.reportFilters, reportFiles) &&
       matchesPdfFilters(application, query.pdfFilters, outputFiles),
   );
@@ -259,9 +212,6 @@ export function queryTrackerApplications(
 
 export function hasActiveTrackerFilters(query: TrackerTableQuery): boolean {
   return (
-    query.searchQuery.trim().length > 0 ||
-    query.statusFilters.length > 0 ||
-    query.scoreFilters.length > 0 ||
     query.reportFilters.length > 0 ||
     query.pdfFilters.length > 0 ||
     query.sortColumn !== DEFAULT_TRACKER_TABLE_QUERY.sortColumn ||

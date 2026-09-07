@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_DASHBOARD_FILTERS,
+  filterDashboardApplications,
+} from "~/lib/career-ops/dashboard-filters";
+import {
   DEFAULT_TRACKER_TABLE_QUERY,
   queryTrackerApplications,
   sortApplications,
@@ -76,11 +80,15 @@ describe("sortApplications", () => {
 });
 
 describe("queryTrackerApplications", () => {
-  it("filters by status, score band, and report presence", () => {
-    const results = queryTrackerApplications(applications, {
-      ...DEFAULT_TRACKER_TABLE_QUERY,
+  it("filters by report presence after dashboard filters", () => {
+    const scoped = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
       statusFilters: ["Applied"],
       scoreFilters: ["high"],
+    });
+
+    const results = queryTrackerApplications(scoped, {
+      ...DEFAULT_TRACKER_TABLE_QUERY,
       reportFilters: ["with"],
     });
 
@@ -89,12 +97,16 @@ describe("queryTrackerApplications", () => {
   });
 
   it("filters by pdf presence using linked and inferred output files", () => {
+    const scoped = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
+      statusFilters: ["Rejected"],
+    });
+
     const withPdf = queryTrackerApplications(
-      applications,
+      scoped,
       {
         ...DEFAULT_TRACKER_TABLE_QUERY,
         pdfFilters: ["with"],
-        statusFilters: ["Rejected"],
       },
       {
         reportFiles: [],
@@ -113,12 +125,16 @@ describe("queryTrackerApplications", () => {
   });
 
   it("treats inferred report files as report coverage", () => {
+    const scoped = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
+      statusFilters: ["Rejected"],
+    });
+
     const results = queryTrackerApplications(
-      applications,
+      scoped,
       {
         ...DEFAULT_TRACKER_TABLE_QUERY,
         reportFilters: ["with"],
-        statusFilters: ["Rejected"],
       },
       {
         reportFiles: [
@@ -135,10 +151,12 @@ describe("queryTrackerApplications", () => {
     expect(results).toHaveLength(1);
     expect(results[0]?.company).toBe("Beta");
   });
+});
 
+describe("filterDashboardApplications with tracker data", () => {
   it("matches any selected status when multiple are chosen", () => {
-    const results = queryTrackerApplications(applications, {
-      ...DEFAULT_TRACKER_TABLE_QUERY,
+    const results = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
       statusFilters: ["Applied", "Rejected"],
     });
 
@@ -149,8 +167,8 @@ describe("queryTrackerApplications", () => {
   });
 
   it("matches any selected score band when multiple are chosen", () => {
-    const results = queryTrackerApplications(applications, {
-      ...DEFAULT_TRACKER_TABLE_QUERY,
+    const results = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
       scoreFilters: ["high", "low"],
     });
 
@@ -161,8 +179,8 @@ describe("queryTrackerApplications", () => {
   });
 
   it("searches across company and role fields", () => {
-    const results = queryTrackerApplications(applications, {
-      ...DEFAULT_TRACKER_TABLE_QUERY,
+    const results = filterDashboardApplications(applications, {
+      ...DEFAULT_DASHBOARD_FILTERS,
       searchQuery: "designer",
     });
 
