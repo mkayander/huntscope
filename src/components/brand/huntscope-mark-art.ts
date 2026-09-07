@@ -5,16 +5,16 @@ export type HuntscopeGridCell = {
   opacity?: number;
 };
 
-/** 3×3 grid forming letter H — bright side columns + crossbar, recessed mid top/bottom. */
+/** 3×3 grid forming letter H — all squares visible; mid top/bottom are darker purple. */
 export const HUNTSCOPE_H_GRID: HuntscopeGridCell[] = [
   { col: 0, row: 0, fill: "#c4b5fd" },
-  { col: 1, row: 0, fill: "#120828", opacity: 0.5 },
+  { col: 1, row: 0, fill: "#4c1d95" },
   { col: 2, row: 0, fill: "#c4b5fd" },
   { col: 0, row: 1, fill: "#ddd6fe" },
   { col: 1, row: 1, fill: "#ffffff" },
   { col: 2, row: 1, fill: "#ddd6fe" },
   { col: 0, row: 2, fill: "#a78bfa" },
-  { col: 1, row: 2, fill: "#120828", opacity: 0.5 },
+  { col: 1, row: 2, fill: "#4c1d95" },
   { col: 2, row: 2, fill: "#a78bfa" },
 ];
 

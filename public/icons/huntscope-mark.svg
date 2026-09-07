@@ -54,13 +54,13 @@
     <g transform="translate(-54 -54)" filter="url(#hs-grid-glow)">
       <!-- H letter: bright side columns + crossbar, recessed mid top/bottom -->
       <rect x="0" y="0" width="32" height="32" rx="8" fill="#c4b5fd" />
-      <rect x="38" y="0" width="32" height="32" rx="8" fill="#120828" opacity="0.5" />
+      <rect x="38" y="0" width="32" height="32" rx="8" fill="#4c1d95" />
       <rect x="76" y="0" width="32" height="32" rx="8" fill="#c4b5fd" />
       <rect x="0" y="38" width="32" height="32" rx="8" fill="#ddd6fe" />
       <rect x="38" y="38" width="32" height="32" rx="8" fill="#ffffff" />
       <rect x="76" y="38" width="32" height="32" rx="8" fill="#ddd6fe" />
       <rect x="0" y="76" width="32" height="32" rx="8" fill="#a78bfa" />
-      <rect x="38" y="76" width="32" height="32" rx="8" fill="#120828" opacity="0.5" />
+      <rect x="38" y="76" width="32" height="32" rx="8" fill="#4c1d95" />
       <rect x="76" y="76" width="32" height="32" rx="8" fill="#a78bfa" />
     </g>
   </g>

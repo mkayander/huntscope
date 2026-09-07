@@ -26,13 +26,13 @@
     <g transform="translate(-4.725 -4.725)">
       <!-- H letter -->
       <rect x="0" y="0" width="2.8" height="2.8" rx="0.8" fill="#c4b5fd" />
-      <rect x="3.325" y="0" width="2.8" height="2.8" rx="0.8" fill="#120828" opacity="0.45" />
+      <rect x="3.325" y="0" width="2.8" height="2.8" rx="0.8" fill="#4c1d95" />
       <rect x="6.65" y="0" width="2.8" height="2.8" rx="0.8" fill="#c4b5fd" />
       <rect x="0" y="3.325" width="2.8" height="2.8" rx="0.8" fill="#ddd6fe" />
       <rect x="3.325" y="3.325" width="2.8" height="2.8" rx="0.8" fill="#ffffff" />
       <rect x="6.65" y="3.325" width="2.8" height="2.8" rx="0.8" fill="#ddd6fe" />
       <rect x="0" y="6.65" width="2.8" height="2.8" rx="0.8" fill="#a78bfa" />
-      <rect x="3.325" y="6.65" width="2.8" height="2.8" rx="0.8" fill="#120828" opacity="0.45" />
+      <rect x="3.325" y="6.65" width="2.8" height="2.8" rx="0.8" fill="#4c1d95" />
       <rect x="6.65" y="6.65" width="2.8" height="2.8" rx="0.8" fill="#a78bfa" />
     </g>
   </g>
