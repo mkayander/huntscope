@@ -12,20 +12,14 @@ import {
   LandingBackgroundProvider,
 } from "~/app/_components/landing-background/landing-background-shell";
 import { HuntscopeWordmark } from "~/components/brand/huntscope-wordmark";
-
 import {
   CareerOpsDataSourceProvider,
   useCareerOpsDataSource,
 } from "~/hooks/use-career-ops-data-source";
-
 import { HomeShellProvider, useHomeShell } from "~/hooks/use-home-shell";
-
 import { useHasMounted } from "~/hooks/use-has-mounted";
-
 import { usePageShellTheme } from "~/hooks/use-page-shell-theme";
-
 import type { HomeInitialState } from "~/lib/home/initial-state";
-
 import { authClient } from "~/lib/auth-client";
 
 type HomeContentProps = {
@@ -69,24 +63,10 @@ function HomeContentFallback({
 
   if (initialState.showDashboard) {
     return (
-      <main className="relative isolate flex min-h-screen flex-col items-center text-white">
+      <main className="relative isolate flex min-h-screen flex-col text-white">
         <DashboardAmbientBackground />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <HuntscopeWordmark />
-
-            <p className="max-w-xl text-lg text-white/80">
-              Analytics for your career-ops project or companion repository.
-            </p>
-          </div>
-
-          {initialState.isSignedIn && initialState.userLabel ? (
-            <div className="flex min-h-10 w-full max-w-md items-center justify-center text-center text-2xl text-white">
-              <p>Logged in as {initialState.userLabel}</p>
-            </div>
-          ) : null}
-
+        <div className="relative z-10 w-full">
           <Dashboard />
         </div>
       </main>
@@ -119,7 +99,7 @@ function HomeContentBody({
 
   const isSignedIn = Boolean(session?.user);
 
-  const { canShowDashboard, hasLocalSource } = useCareerOpsDataSource();
+  const { canShowDashboard } = useCareerOpsDataSource();
 
   const showDashboard = hasMounted
     ? canShowDashboard || isSignedIn
@@ -159,22 +139,10 @@ function HomeContentBody({
   }
 
   return (
-    <main className="relative isolate flex min-h-screen flex-col items-center text-white">
+    <main className="relative isolate flex min-h-screen flex-col text-white">
       <DashboardAmbientBackground />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-screen-2xl flex-col items-center gap-10 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <HuntscopeWordmark />
-
-          <p className="max-w-xl text-lg text-white/80">
-            {hasLocalSource
-              ? "Viewing your local career-ops project. GitHub sign-in remains optional for companion repositories."
-              : "Analytics for your career-ops project or companion repository."}
-          </p>
-        </div>
-
-        <AuthButton />
-
+      <div className="relative z-10 w-full">
         <Dashboard />
       </div>
     </main>

@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
+import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ScoreBadge } from "~/app/_components/score-badge";
-import { ArtifactLinkButton } from "~/app/_components/artifact-link-button";
 import {
   createDefaultTrackerQuery,
   TrackerTableToolbar,
@@ -32,7 +33,7 @@ import {
   type TrackerSortColumn,
   type TrackerTableQuery,
 } from "~/lib/career-ops/tracker-table";
-import type { ApplicationEntry } from "~/lib/career-ops/types";
+import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 import { useLocalRepoMutations } from "~/hooks/use-local-repo-mutations";
 
 type TrackerView = "table" | "board";
@@ -41,6 +42,8 @@ type TrackerPanelProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   applications: ApplicationEntry[];
+  reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
   statusFilters: string[];
   onStatusFiltersChange: (statuses: string[]) => void;
 };
@@ -49,6 +52,8 @@ export function TrackerPanel({
   dataSource,
   defaultBranch,
   applications,
+  reportFiles,
+  outputFiles,
   statusFilters,
   onStatusFiltersChange,
 }: TrackerPanelProps) {
@@ -68,8 +73,12 @@ export function TrackerPanel({
   }, [statusFilters]);
 
   const filteredApplications = useMemo(
-    () => queryTrackerApplications(applications, tableQuery),
-    [applications, tableQuery],
+    () =>
+      queryTrackerApplications(applications, tableQuery, {
+        reportFiles,
+        outputFiles,
+      }),
+    [applications, outputFiles, reportFiles, tableQuery],
   );
 
   const groupedApplications = useMemo(
@@ -151,8 +160,9 @@ export function TrackerPanel({
               Application tracker
             </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Local folders support
-              inline status edits.
+              Search, filter, and sort applications. Open attached PDFs and
+              evaluation reports inline, including auto-matched files from
+              `output/` and `reports/`.
             </p>
           </div>
 
@@ -189,6 +199,8 @@ export function TrackerPanel({
             applications={filteredApplications}
             dataSource={dataSource}
             defaultBranch={defaultBranch}
+            reportFiles={reportFiles}
+            outputFiles={outputFiles}
             tableQuery={tableQuery}
             statusOptions={statusOptions}
             canEditStatus={canWrite}
@@ -204,6 +216,8 @@ export function TrackerPanel({
             groupedApplications={groupedApplications}
             dataSource={dataSource}
             defaultBranch={defaultBranch}
+            reportFiles={reportFiles}
+            outputFiles={outputFiles}
           />
         )}
       </div>
@@ -216,11 +230,15 @@ function TrackerBoard({
   groupedApplications,
   dataSource,
   defaultBranch,
+  reportFiles,
+  outputFiles,
 }: {
   statuses: string[];
   groupedApplications: Map<string, ApplicationEntry[]>;
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
+  reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
 }) {
   return (
     <div className="mt-4 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -263,12 +281,22 @@ function TrackerBoard({
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
                         <ApplicationDate value={entry.date} />
-                        <ArtifactLinkButton
-                          dataSource={dataSource}
-                          defaultBranch={defaultBranch}
-                          value={entry.report}
-                          className="block truncate text-xs font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-                        />
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <ApplicationPdfButton
+                            application={entry}
+                            dataSource={dataSource}
+                            defaultBranch={defaultBranch}
+                            outputFiles={outputFiles}
+                            compact
+                          />
+                          <ApplicationReportButton
+                            application={entry}
+                            dataSource={dataSource}
+                            defaultBranch={defaultBranch}
+                            reportFiles={reportFiles}
+                            compact
+                          />
+                        </div>
                       </div>
                     </li>
                   ))}

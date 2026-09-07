@@ -1,112 +1,204 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ErrorAlert } from "~/app/_components/error-alert";
+import { ReportMarkdown } from "~/app/_components/report-markdown";
+import { ReportPreviewMeta } from "~/app/_components/report-preview-meta";
 import { Button } from "~/components/ui/button";
-import { GlowPanel } from "~/components/ui/glow-panel";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
+import { useBodyScrollLock } from "~/hooks/use-body-scroll-lock";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
+import type { ArtifactPreviewRequest } from "~/hooks/use-artifact-viewer";
 import { useRepoFile } from "~/hooks/use-repo-file";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { parseReportMarkdown } from "~/lib/career-ops/parse-report";
+import { cn } from "~/lib/utils";
+
+const DRAWER_ANIMATION_MS = 300;
 
 export function ArtifactPreviewSheet() {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { activeArtifact, closeArtifact } = useArtifactViewer();
   const { activeSource } = useCareerOpsDataSource();
+  const [displayedArtifact, setDisplayedArtifact] =
+    useState<ArtifactPreviewRequest | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const { data, isLoading, error } = useRepoFile(
     activeSource,
-    activeArtifact?.path ?? null,
+    displayedArtifact?.path ?? null,
   );
 
-  if (!activeArtifact) {
+  const handleClose = useCallback(() => {
+    if (isClosing || !displayedArtifact) {
+      return;
+    }
+
+    closeArtifact();
+  }, [closeArtifact, displayedArtifact, isClosing]);
+
+  useEffect(() => {
+    if (activeArtifact) {
+      setDisplayedArtifact(activeArtifact);
+      setIsClosing(false);
+      return;
+    }
+
+    if (!displayedArtifact) {
+      return;
+    }
+
+    setIsClosing(true);
+    const timer = window.setTimeout(() => {
+      setDisplayedArtifact(null);
+      setIsClosing(false);
+    }, DRAWER_ANIMATION_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [activeArtifact, displayedArtifact]);
+
+  useBodyScrollLock(Boolean(displayedArtifact));
+
+  useEffect(() => {
+    if (!displayedArtifact || isClosing) {
+      return;
+    }
+
+    closeButtonRef.current?.focus();
+  }, [displayedArtifact, isClosing]);
+
+  if (!displayedArtifact) {
     return null;
   }
 
-  const isPdf = activeArtifact.path.toLowerCase().endsWith(".pdf");
+  const isPdf = displayedArtifact.path.toLowerCase().endsWith(".pdf");
+  const isMarkdownReport =
+    !isPdf && displayedArtifact.path.toLowerCase().endsWith(".md");
   const meta =
-    data?.encoding === "utf-8" ? parseReportMarkdown(data.content) : null;
+    data?.encoding === "utf-8" && isMarkdownReport
+      ? parseReportMarkdown(data.content)
+      : null;
   const pdfSrc =
     data?.encoding === "base64"
       ? `data:application/pdf;base64,${data.content}`
       : null;
+  const sourceUrl =
+    meta?.sourceUrl && /^https?:\/\//i.test(meta.sourceUrl)
+      ? meta.sourceUrl
+      : null;
+  const displayTitle =
+    meta?.title ??
+    displayedArtifact.label ??
+    displayedArtifact.path.split("/").pop() ??
+    displayedArtifact.path;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/60 backdrop-blur-sm">
-      <div className="flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl">
+    <div
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-label={isPdf ? "PDF preview" : "Report preview"}
+    >
+      <button
+        type="button"
+        aria-label="Close preview"
+        className={cn(
+          "absolute inset-0 cursor-pointer bg-black/60 backdrop-blur-sm motion-reduce:animate-none",
+          isClosing
+            ? "animate-out fade-out-0 duration-200"
+            : "animate-in fade-in-0 duration-200",
+        )}
+        onClick={handleClose}
+      />
+
+      <aside
+        className={cn(
+          "cursor-surface absolute inset-y-0 right-0 flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl motion-reduce:animate-none",
+          isClosing
+            ? "animate-out fade-out-0 slide-out-to-right duration-300"
+            : "animate-in fade-in-0 slide-in-from-right duration-300",
+        )}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
           <div className="min-w-0">
             <p className="text-xs tracking-wide text-white/45 uppercase">
               {isPdf ? "PDF preview" : "Report preview"}
             </p>
-            <h2 className="truncate text-lg font-semibold text-white">
-              {activeArtifact.label ?? activeArtifact.path}
+            <h2 className="mt-1 text-lg leading-snug font-semibold text-white">
+              {displayTitle}
             </h2>
             <p className="mt-1 truncate text-xs text-white/50">
-              {activeArtifact.path}
+              {displayedArtifact.path}
             </p>
           </div>
           <Button
+            ref={closeButtonRef}
             type="button"
             variant="brandSecondary"
             size="pillSm"
-            onClick={closeArtifact}
+            onClick={handleClose}
           >
             Close
           </Button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
           {isLoading ? (
-            <p className="text-sm text-white/60">Loading file…</p>
+            <div className="space-y-3">
+              <div
+                className={cn(
+                  glassCardSurfaceClassName,
+                  "h-24 animate-pulse rounded-xl",
+                )}
+              />
+              <div
+                className={cn(
+                  glassCardSurfaceClassName,
+                  "h-48 animate-pulse rounded-xl",
+                )}
+              />
+            </div>
           ) : null}
 
           {error ? (
             <ErrorAlert title="Could not open file" message={error.message} />
           ) : null}
 
-          {meta ? (
-            <GlowPanel className="mb-4">
-              <dl className="grid gap-3 sm:grid-cols-3">
-                <Metric label="Score" value={meta.score ?? "—"} />
-                <Metric label="Legitimacy" value={meta.legitimacy ?? "—"} />
-                <Metric label="Source" value={meta.sourceUrl ?? "—"} />
-              </dl>
-            </GlowPanel>
+          {!isLoading && !error && meta ? (
+            <ReportPreviewMeta meta={meta} sourceUrl={sourceUrl} />
           ) : null}
 
           {pdfSrc ? (
             <iframe
-              title={activeArtifact.label ?? activeArtifact.path}
+              title={displayedArtifact.label ?? displayedArtifact.path}
               src={pdfSrc}
-              className="h-[75vh] w-full rounded-xl border border-white/10 bg-white"
+              className="mt-4 h-[75vh] w-full rounded-xl border border-white/10 bg-white"
             />
           ) : null}
 
-          {data?.encoding === "utf-8" ? (
-            <article className="prose prose-invert prose-headings:text-white prose-p:text-white/85 prose-a:text-violet-300 prose-strong:text-white prose-code:text-violet-200 max-w-none">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSanitize]}
-              >
-                {data.content}
-              </ReactMarkdown>
-            </article>
+          {!isLoading && !error && data?.encoding === "utf-8" ? (
+            <div
+              className={cn(
+                glassCardSurfaceClassName,
+                "mt-4 rounded-xl px-4 py-5 sm:px-5 sm:py-6",
+                meta ? undefined : "mt-0",
+              )}
+            >
+              {isMarkdownReport ? (
+                <ReportMarkdown content={data.content} />
+              ) : (
+                <ReportMarkdown
+                  content={data.content}
+                  stripFrontmatter={false}
+                />
+              )}
+            </div>
           ) : null}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs tracking-wide text-white/45 uppercase">{label}</dt>
-      <dd className="mt-1 text-sm font-medium break-words text-white">
-        {value}
-      </dd>
+      </aside>
     </div>
   );
 }

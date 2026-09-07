@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { parseReportMarkdown } from "~/lib/career-ops/parse-report";
+import {
+  parseReportMarkdown,
+  stripReportFrontmatter,
+} from "~/lib/career-ops/parse-report";
 
 describe("parseReportMarkdown", () => {
   it("extracts score, legitimacy, and URL from a career-ops report", () => {
@@ -30,5 +33,32 @@ describe("parseReportMarkdown", () => {
       legitimacy: null,
       sourceUrl: null,
     });
+  });
+});
+
+describe("stripReportFrontmatter", () => {
+  it("removes title and top metadata while keeping section content", () => {
+    const fixture = readFileSync(
+      join(
+        process.cwd(),
+        "fixtures/sample-career-repo/reports/001-acme-2026-01-15.md",
+      ),
+      "utf8",
+    );
+
+    const body = stripReportFrontmatter(fixture);
+
+    expect(body).toContain("## Summary");
+    expect(body).toContain("Score: 4.5");
+    expect(body).not.toContain("# Acme Corp");
+    expect(body).not.toContain("**Score:**");
+    expect(body).not.toContain("**Legitimacy:**");
+    expect(body).not.toContain("**URL:**");
+  });
+
+  it("returns sparse content unchanged", () => {
+    expect(stripReportFrontmatter("No structured header")).toBe(
+      "No structured header",
+    );
   });
 });

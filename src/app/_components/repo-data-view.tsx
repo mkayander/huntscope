@@ -4,20 +4,14 @@ import { useState } from "react";
 
 import { ActivityHeatmapPanel } from "~/app/_components/activity-heatmap";
 import { AnalyticsChartsPanel } from "~/app/_components/analytics-charts-panel";
-import {
-  DataFilesPanel,
-  OutputFilesPanel,
-} from "~/app/_components/data-files-panel";
+import { DataFilesPanel } from "~/app/_components/data-files-panel";
+import { OutputFilesPanel } from "~/app/_components/output-files-panel";
 import { DashboardSection } from "~/app/_components/dashboard-section-nav";
 import { ErrorAlert } from "~/app/_components/error-alert";
 import { FunnelPanel } from "~/app/_components/funnel-panel";
 import { OverviewStrip } from "~/app/_components/overview-strip";
 import { PipelinePanel } from "~/app/_components/pipeline-panel";
 import { RecentApplications } from "~/app/_components/recent-applications";
-import {
-  LatestReportCard,
-  ReportsPanel,
-} from "~/app/_components/reports-panel";
 import { TrackerPanel } from "~/app/_components/tracker-panel";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import {
@@ -116,6 +110,14 @@ function RepoDataContent({
   }
 
   const sourceLabel = getDataSourceLabel(activeSource);
+  const canEditLocally =
+    activeSource.kind === "local" &&
+    activeSource.directoryHandle != null &&
+    activeSource.fileHandle == null;
+  const showAnalytics = hasAnalyticsChartData(
+    parsed.applications,
+    parsed.analytics.statusCounts,
+  );
 
   return (
     <section className="flex w-full max-w-screen-2xl min-w-0 flex-col gap-6">
@@ -129,15 +131,15 @@ function RepoDataContent({
           analytics={parsed.analytics}
           pipeline={parsed.pipeline}
           reportsCount={raw.reportsCount}
+          canEditLocally={canEditLocally}
+          hasAnalyticsSection={showAnalytics}
+          hasPipelineSection={parsed.pipeline != null}
           activeStatusFilters={statusFilters}
           onStatusFiltersChange={setStatusFilters}
         />
       </DashboardSection>
 
-      {hasAnalyticsChartData(
-        parsed.applications,
-        parsed.analytics.statusCounts,
-      ) ? (
+      {showAnalytics ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.analytics}
           label="Analytics"
@@ -180,21 +182,6 @@ function RepoDataContent({
         </DashboardSection>
       ) : null}
 
-      <DashboardSection
-        id={DASHBOARD_SECTION_IDS.reports}
-        label="Reports"
-        order={45}
-      >
-        <LatestReportCard
-          dataSource={activeSource}
-          defaultBranch={raw.defaultBranch}
-          reportFiles={raw.reportFiles}
-        />
-        <div className="mt-6">
-          <ReportsPanel reportFiles={raw.reportFiles} />
-        </div>
-      </DashboardSection>
-
       {parsed.pipeline ? (
         <DashboardSection
           id={DASHBOARD_SECTION_IDS.pipeline}
@@ -217,6 +204,8 @@ function RepoDataContent({
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
           applications={parsed.applications}
+          reportFiles={raw.reportFiles}
+          outputFiles={raw.outputFiles}
           statusFilters={statusFilters}
           onStatusFiltersChange={setStatusFilters}
         />
@@ -231,6 +220,7 @@ function RepoDataContent({
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
           outputFiles={raw.outputFiles}
+          applications={parsed.applications}
         />
       </DashboardSection>
 

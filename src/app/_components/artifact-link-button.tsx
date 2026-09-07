@@ -1,6 +1,8 @@
 "use client";
 
+import { clickableLinkClassName } from "~/components/ui/interaction";
 import { resolveArtifactLink } from "~/lib/career-ops/links";
+import { cn } from "~/lib/utils";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
 
@@ -29,10 +31,7 @@ export function ArtifactLinkButton({
     return (
       <button
         type="button"
-        className={
-          className ??
-          "block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-        }
+        className={cn("block truncate", clickableLinkClassName, className)}
         onClick={() =>
           openArtifact({
             path,
@@ -56,10 +55,7 @@ export function ArtifactLinkButton({
       href={artifact.href}
       target="_blank"
       rel="noreferrer"
-      className={
-        className ??
-        "block truncate font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-      }
+      className={cn("block truncate", clickableLinkClassName, className)}
     >
       {artifact.label}
     </a>

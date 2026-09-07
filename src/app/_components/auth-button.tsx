@@ -18,8 +18,13 @@ import { useHasMounted } from "~/hooks/use-has-mounted";
 import { authClient } from "~/lib/auth-client";
 import { performSignOut } from "~/lib/auth/sign-out";
 import { useGitHubInstallStatus } from "~/hooks/use-github-install-status";
+import { cn } from "~/lib/utils";
 
-export function AuthButton() {
+type AuthButtonProps = {
+  variant?: "landing" | "compact";
+};
+
+export function AuthButton({ variant = "landing" }: AuthButtonProps) {
   const hasMounted = useHasMounted();
   const queryClient = useQueryClient();
   const { activeSource, hasGitHubSource } = useCareerOpsDataSource();
@@ -60,7 +65,13 @@ export function AuthButton() {
       : null;
   const feedbackErrorMessage = signOutError ?? signInError;
 
-  if (showAuthSkeleton) {
+  const isCompact = variant === "compact";
+  const buttonSize = isCompact ? "pillSm" : "cta";
+  const buttonClassName = isCompact
+    ? "whitespace-nowrap"
+    : `w-full max-w-sm ${LANDING_CTA_BUTTON_CLASS}`;
+
+  if (showAuthSkeleton && !isCompact) {
     return (
       <div className="flex w-full max-w-md flex-col items-center gap-4">
         <PanelButtonSkeleton
@@ -72,9 +83,30 @@ export function AuthButton() {
     );
   }
 
+  if (showAuthSkeleton && isCompact) {
+    return (
+      <Button
+        type="button"
+        variant="brandSecondary"
+        size="pillSm"
+        disabled
+        className="whitespace-nowrap"
+      >
+        <ButtonLoadingIcon isLoading />
+        <span>…</span>
+      </Button>
+    );
+  }
+
   return (
-    <div className="flex w-full max-w-md flex-col items-center gap-4">
-      {isAuthenticated ? (
+    <div
+      className={cn(
+        isCompact
+          ? "relative flex shrink-0 items-center gap-2"
+          : "flex w-full max-w-md flex-col items-center gap-4",
+      )}
+    >
+      {isAuthenticated && !isCompact ? (
         <div
           className="flex min-h-10 w-full items-center justify-center text-center text-2xl text-white"
           aria-live="polite"
@@ -83,11 +115,17 @@ export function AuthButton() {
         </div>
       ) : null}
 
+      {isAuthenticated && isCompact ? (
+        <p className="hidden max-w-[10rem] truncate text-right text-xs text-white/60 sm:block">
+          {displayUserLabel}
+        </p>
+      ) : null}
+
       <Button
         type="button"
         variant={isAuthenticated ? "brandSecondary" : "brand"}
-        size="cta"
-        className={`w-full max-w-sm ${LANDING_CTA_BUTTON_CLASS}`}
+        size={buttonSize}
+        className={buttonClassName}
         disabled={isBusy}
         onClick={() => {
           if (isAuthenticated) {
@@ -144,10 +182,21 @@ export function AuthButton() {
         </StableButtonLabel>
       </Button>
 
-      <FeedbackRegion
-        errorTitle={feedbackErrorTitle}
-        errorMessage={feedbackErrorMessage}
-      />
+      {isCompact && feedbackErrorMessage ? (
+        <FeedbackRegion
+          reserveSpace={false}
+          errorTitle={feedbackErrorTitle}
+          errorMessage={feedbackErrorMessage}
+          className="absolute top-full right-0 z-50 mt-2 w-72"
+        />
+      ) : null}
+
+      {!isCompact ? (
+        <FeedbackRegion
+          errorTitle={feedbackErrorTitle}
+          errorMessage={feedbackErrorMessage}
+        />
+      ) : null}
     </div>
   );
 }

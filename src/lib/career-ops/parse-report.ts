@@ -39,3 +39,55 @@ export function sortReportFilesByName<T extends { name: string }>(
 ): T[] {
   return [...files].sort((left, right) => right.name.localeCompare(left.name));
 }
+
+const METADATA_LINE_PATTERN =
+  /^\*\*(Score|Legitimacy|URL|Source):\*\*|^(Score|Legitimacy|URL|Source):/i;
+
+/**
+ * Removes the report title and top-level metadata block so the preview body
+ * does not duplicate the summary card. Section-level lines like "Score: 4.5"
+ * under headings are preserved.
+ */
+export function stripReportFrontmatter(content: string): string {
+  const lines = content.split("\n");
+  let index = 0;
+
+  while (index < lines.length && lines[index]?.trim() === "") {
+    index += 1;
+  }
+
+  if (index < lines.length && /^#\s+/.test(lines[index] ?? "")) {
+    index += 1;
+  }
+
+  while (index < lines.length && lines[index]?.trim() === "") {
+    index += 1;
+  }
+
+  while (index < lines.length) {
+    const line = lines[index]?.trim() ?? "";
+
+    if (line === "") {
+      index += 1;
+      continue;
+    }
+
+    if (/^##\s+/.test(line)) {
+      break;
+    }
+
+    if (METADATA_LINE_PATTERN.test(line)) {
+      index += 1;
+      continue;
+    }
+
+    break;
+  }
+
+  while (index < lines.length && lines[index]?.trim() === "") {
+    index += 1;
+  }
+
+  const body = lines.slice(index).join("\n").trim();
+  return body.length > 0 ? body : content.trim();
+}

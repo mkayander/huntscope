@@ -5,7 +5,6 @@ export const DASHBOARD_SECTION_IDS = {
   funnel: "dashboard-funnel",
   activity: "dashboard-activity",
   recent: "dashboard-recent",
-  reports: "dashboard-reports",
   pipeline: "dashboard-pipeline",
   tracker: "dashboard-tracker",
   outputs: "dashboard-outputs",

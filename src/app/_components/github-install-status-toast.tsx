@@ -2,6 +2,7 @@
 
 import { XIcon } from "lucide-react";
 
+import { clickableSurfaceClassName } from "~/components/ui/interaction";
 import { useGitHubInstallStatus } from "~/hooks/use-github-install-status";
 import {
   getGitHubStatusMessage,
@@ -62,7 +63,10 @@ export function GitHubInstallStatusToast() {
         <button
           type="button"
           onClick={clearGitHubInstallStatus}
-          className="shrink-0 rounded-md p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white/85"
+          className={cn(
+            clickableSurfaceClassName,
+            "shrink-0 rounded-md p-1 text-white/50 hover:text-white/85",
+          )}
           aria-label="Dismiss"
         >
           <XIcon className="size-4" />

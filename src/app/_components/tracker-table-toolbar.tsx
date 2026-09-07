@@ -3,14 +3,17 @@
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 
 import { FilterMultiSelect } from "~/app/_components/filter-multi-select";
+import { clickableSurfaceClassName } from "~/components/ui/interaction";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
 import {
   DEFAULT_TRACKER_TABLE_QUERY,
   formatTrackerFilterSummary,
   getTrackerSortLabel,
   hasActiveTrackerFilters,
+  type TrackerPdfFilterValue,
   type TrackerReportFilterValue,
   type TrackerScoreFilterValue,
   type TrackerSortColumn,
@@ -18,6 +21,7 @@ import {
   type TrackerTableQuery,
 } from "~/lib/career-ops/tracker-table";
 import { sortStatuses } from "~/lib/career-ops/status-meta";
+import { getSearchShortcutLabel } from "~/lib/dashboard/shortcut-label";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 const SCORE_FILTER_OPTIONS: {
@@ -36,6 +40,14 @@ const REPORT_FILTER_OPTIONS: {
 }[] = [
   { value: "with", label: "With report" },
   { value: "without", label: "Without report" },
+];
+
+const PDF_FILTER_OPTIONS: {
+  value: TrackerPdfFilterValue;
+  label: string;
+}[] = [
+  { value: "with", label: "With PDF" },
+  { value: "without", label: "Without PDF" },
 ];
 
 type TrackerTableToolbarProps = {
@@ -78,14 +90,23 @@ export function TrackerTableToolbar({
     query.reportFilters,
     REPORT_FILTER_OPTIONS,
   );
+  const pdfSummary = formatTrackerFilterSummary(
+    query.pdfFilters,
+    PDF_FILTER_OPTIONS,
+  );
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(9rem,1fr))_auto] lg:items-end">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(9rem,1fr))_auto] lg:items-end">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <Label htmlFor="tracker-search" className="text-white/80">
-            Search
-          </Label>
+          <div className="flex items-baseline justify-between gap-2">
+            <Label htmlFor="tracker-search" className="text-white/80">
+              Search
+            </Label>
+            <span className="hidden text-[10px] tracking-wide text-white/35 uppercase sm:inline">
+              {getSearchShortcutLabel()}
+            </span>
+          </div>
           <Input
             id="tracker-search"
             value={query.searchQuery}
@@ -130,6 +151,17 @@ export function TrackerTableToolbar({
           }}
         />
 
+        <FilterMultiSelect
+          id="tracker-pdf-filter"
+          label="PDF"
+          options={PDF_FILTER_OPTIONS}
+          selected={query.pdfFilters}
+          placeholder="All PDFs"
+          onChange={(pdfFilters) => {
+            onQueryChange({ ...query, pdfFilters });
+          }}
+        />
+
         <Button
           type="button"
           variant="brandSecondary"
@@ -147,6 +179,7 @@ export function TrackerTableToolbar({
         {statusSummary ? ` · status: ${statusSummary}` : ""}
         {scoreSummary ? ` · score: ${scoreSummary}` : ""}
         {reportSummary ? ` · report: ${reportSummary}` : ""}
+        {pdfSummary ? ` · pdf: ${pdfSummary}` : ""}
         {` · sorted by ${getTrackerSortLabel(query.sortColumn, query.sortDirection)}`}
       </p>
     </div>
@@ -217,7 +250,10 @@ export function TrackerSortableHeader({
       <button
         type="button"
         onClick={() => onSort(column)}
-        className="inline-flex w-full cursor-pointer items-center gap-1 rounded-md px-0 py-1 text-left font-medium text-white/60 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+        className={cn(
+          clickableSurfaceClassName,
+          "inline-flex w-full items-center gap-1 rounded-md px-0 py-1 text-left font-medium text-white/60 hover:text-white",
+        )}
       >
         <span>{label}</span>
         {isActive ? (

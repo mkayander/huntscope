@@ -113,15 +113,6 @@ export const SECTION_PANEL_ACCENT_CONFIG: Record<
     ],
     wash: "linear-gradient(180deg, rgba(251, 191, 36, 0.04) 0%, transparent 50%)",
   },
-  [DASHBOARD_SECTION_IDS.reports]: {
-    orbs: [
-      {
-        className:
-          "absolute -left-4 top-4 h-36 w-52 rounded-full bg-fuchsia-400/10 blur-3xl",
-      },
-    ],
-    wash: "linear-gradient(180deg, rgba(217, 70, 239, 0.04) 0%, transparent 48%)",
-  },
   [DASHBOARD_SECTION_IDS.outputs]: {
     orbs: [
       {
