@@ -1,5 +1,8 @@
 import { parseApplicationDate } from "~/lib/career-ops/dates";
-import { extractMarkdownLink } from "~/lib/career-ops/links";
+import {
+  getPdfPathFromApplicationValue,
+  inferApplicationForOutputFile,
+} from "~/lib/career-ops/application-pdfs";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
 export type OutputFileSortColumn = "name" | "company" | "role" | "date";
@@ -31,51 +34,19 @@ export const DEFAULT_OUTPUT_FILES_TABLE_QUERY: OutputFilesTableQuery = {
 
 const FILENAME_DATE_PATTERN = /(\d{4}-\d{2}-\d{2})/;
 
-export function getPdfPathFromApplicationValue(value: string): string | null {
-  const markdownLink = extractMarkdownLink(value);
-  if (markdownLink && !markdownLink.href.startsWith("http")) {
-    return markdownLink.href.replace(/^\.\//, "");
-  }
-
-  const trimmed = value.trim();
-  if (trimmed.toLowerCase().endsWith(".pdf")) {
-    return trimmed.replace(/^\.\//, "");
-  }
-
-  return null;
-}
-
-export function getFileExtension(name: string): string {
-  const match = /\.([^.]+)$/.exec(name);
-  return match?.[1]?.toLowerCase() ?? "";
-}
+export {
+  getPdfPathFromApplicationValue,
+  inferApplicationForOutputFile,
+} from "~/lib/career-ops/application-pdfs";
 
 function extractDateFromFilename(name: string): string | null {
   const match = FILENAME_DATE_PATTERN.exec(name);
   return match?.[1] ?? null;
 }
 
-function getCompanySearchToken(company: string): string | null {
-  const token = company
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .find(Boolean);
-
-  return token ?? null;
-}
-
-export function inferApplicationForOutputFile(
-  file: RepoDataFile,
-  applications: readonly ApplicationEntry[],
-): ApplicationEntry | null {
-  const stem = file.name.replace(/\.[^.]+$/, "").toLowerCase();
-
-  return (
-    applications.find((application) => {
-      const token = getCompanySearchToken(application.company);
-      return token ? stem.includes(token) : false;
-    }) ?? null
-  );
+export function getFileExtension(name: string): string {
+  const match = /\.([^.]+)$/.exec(name);
+  return match?.[1]?.toLowerCase() ?? "";
 }
 
 export function buildOutputFileRows(

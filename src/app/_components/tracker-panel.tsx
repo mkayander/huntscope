@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ScoreBadge } from "~/app/_components/score-badge";
 import {
@@ -42,6 +43,7 @@ type TrackerPanelProps = {
   defaultBranch: string | null;
   applications: ApplicationEntry[];
   reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
   statusFilters: string[];
   onStatusFiltersChange: (statuses: string[]) => void;
 };
@@ -51,6 +53,7 @@ export function TrackerPanel({
   defaultBranch,
   applications,
   reportFiles,
+  outputFiles,
   statusFilters,
   onStatusFiltersChange,
 }: TrackerPanelProps) {
@@ -153,8 +156,9 @@ export function TrackerPanel({
               Application tracker
             </h3>
             <p className="mt-1 text-sm text-white/60">
-              Search, filter, and sort applications. Open evaluation reports
-              inline, including auto-matched files from `reports/`.
+              Search, filter, and sort applications. Open attached PDFs and
+              evaluation reports inline, including auto-matched files from
+              `output/` and `reports/`.
             </p>
           </div>
 
@@ -192,6 +196,7 @@ export function TrackerPanel({
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             reportFiles={reportFiles}
+            outputFiles={outputFiles}
             tableQuery={tableQuery}
             statusOptions={statusOptions}
             canEditStatus={canWrite}
@@ -208,6 +213,7 @@ export function TrackerPanel({
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             reportFiles={reportFiles}
+            outputFiles={outputFiles}
           />
         )}
       </div>
@@ -221,12 +227,14 @@ function TrackerBoard({
   dataSource,
   defaultBranch,
   reportFiles,
+  outputFiles,
 }: {
   statuses: string[];
   groupedApplications: Map<string, ApplicationEntry[]>;
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
 }) {
   return (
     <div className="mt-4 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -269,13 +277,22 @@ function TrackerBoard({
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-white/50">
                         <ApplicationDate value={entry.date} />
-                        <ApplicationReportButton
-                          application={entry}
-                          dataSource={dataSource}
-                          defaultBranch={defaultBranch}
-                          reportFiles={reportFiles}
-                          compact
-                        />
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <ApplicationPdfButton
+                            application={entry}
+                            dataSource={dataSource}
+                            defaultBranch={defaultBranch}
+                            outputFiles={outputFiles}
+                            compact
+                          />
+                          <ApplicationReportButton
+                            application={entry}
+                            dataSource={dataSource}
+                            defaultBranch={defaultBranch}
+                            reportFiles={reportFiles}
+                            compact
+                          />
+                        </div>
                       </div>
                     </li>
                   ))}

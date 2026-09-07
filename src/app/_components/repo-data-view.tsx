@@ -224,6 +224,7 @@ function RepoDataContent({
           defaultBranch={raw.defaultBranch}
           applications={parsed.applications}
           reportFiles={raw.reportFiles}
+          outputFiles={raw.outputFiles}
           statusFilters={statusFilters}
           onStatusFiltersChange={setStatusFilters}
         />

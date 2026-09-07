@@ -3,6 +3,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef } from "react";
 
+import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ScoreBadge } from "~/app/_components/score-badge";
 import {
@@ -22,16 +23,17 @@ const ROW_HEIGHT = 52;
 
 /** Column widths: fixed/narrow cols for metadata; Role + Notes share remaining space (Notes weighted higher). */
 const TRACKER_GRID_COLUMNS =
-  "grid-cols-[2.5rem_6rem_minmax(5rem,7.5rem)_minmax(8rem,1fr)_4.5rem_minmax(5.5rem,6rem)_minmax(5.75rem,7.25rem)_minmax(8rem,1.5fr)]";
+  "grid-cols-[2.5rem_6rem_minmax(5rem,7.5rem)_minmax(8rem,1fr)_4.5rem_minmax(5.5rem,6rem)_minmax(5.75rem,7.25rem)_minmax(5.75rem,7.25rem)_minmax(8rem,1.5fr)]";
 
 /** Prevents columns from squashing/overlapping on narrow viewports; table scrolls horizontally instead. */
-const TRACKER_TABLE_MIN_WIDTH_CLASS = "min-w-[52rem]";
+const TRACKER_TABLE_MIN_WIDTH_CLASS = "min-w-[58rem]";
 
 type TrackerVirtualTableProps = {
   applications: ApplicationEntry[];
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   reportFiles: RepoDataFile[];
+  outputFiles: RepoDataFile[];
   tableQuery: TrackerTableQuery;
   statusOptions: string[];
   canEditStatus: boolean;
@@ -45,6 +47,7 @@ export function TrackerVirtualTable({
   dataSource,
   defaultBranch,
   reportFiles,
+  outputFiles,
   tableQuery,
   statusOptions,
   canEditStatus,
@@ -131,6 +134,7 @@ export function TrackerVirtualTable({
                 onSort={onSort}
                 className="px-2 py-2"
               />
+              <TrackerStaticHeader as="div" label="PDF" className="px-2 py-2" />
               <TrackerStaticHeader
                 as="div"
                 label="Report"
@@ -205,6 +209,15 @@ export function TrackerVirtualTable({
                         {entry.status}
                       </span>
                     )}
+                  </div>
+                  <div className="flex items-center px-2 py-2" role="cell">
+                    <ApplicationPdfButton
+                      application={entry}
+                      dataSource={dataSource}
+                      defaultBranch={defaultBranch}
+                      outputFiles={outputFiles}
+                      compact
+                    />
                   </div>
                   <div className="flex items-center px-2 py-2" role="cell">
                     <ApplicationReportButton
