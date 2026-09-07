@@ -1,14 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
 
 import { ErrorAlert } from "~/app/_components/error-alert";
+import { ReportMarkdown } from "~/app/_components/report-markdown";
+import { ReportPreviewMeta } from "~/app/_components/report-preview-meta";
 import { Button } from "~/components/ui/button";
-import { clickableLinkClassName } from "~/components/ui/interaction";
-import { GlowPanel } from "~/components/ui/glow-panel";
+import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
 import type { ArtifactPreviewRequest } from "~/hooks/use-artifact-viewer";
 import { useRepoFile } from "~/hooks/use-repo-file";
@@ -79,8 +77,12 @@ export function ArtifactPreviewSheet() {
   }
 
   const isPdf = displayedArtifact.path.toLowerCase().endsWith(".pdf");
+  const isMarkdownReport =
+    !isPdf && displayedArtifact.path.toLowerCase().endsWith(".md");
   const meta =
-    data?.encoding === "utf-8" ? parseReportMarkdown(data.content) : null;
+    data?.encoding === "utf-8" && isMarkdownReport
+      ? parseReportMarkdown(data.content)
+      : null;
   const pdfSrc =
     data?.encoding === "base64"
       ? `data:application/pdf;base64,${data.content}`
@@ -89,6 +91,11 @@ export function ArtifactPreviewSheet() {
     meta?.sourceUrl && /^https?:\/\//i.test(meta.sourceUrl)
       ? meta.sourceUrl
       : null;
+  const displayTitle =
+    meta?.title ??
+    displayedArtifact.label ??
+    displayedArtifact.path.split("/").pop() ??
+    displayedArtifact.path;
 
   return (
     <div
@@ -123,8 +130,8 @@ export function ArtifactPreviewSheet() {
             <p className="text-xs tracking-wide text-white/45 uppercase">
               {isPdf ? "PDF preview" : "Report preview"}
             </p>
-            <h2 className="truncate text-lg font-semibold text-white">
-              {displayedArtifact.label ?? displayedArtifact.path}
+            <h2 className="mt-1 text-lg leading-snug font-semibold text-white">
+              {displayTitle}
             </h2>
             <p className="mt-1 truncate text-xs text-white/50">
               {displayedArtifact.path}
@@ -141,79 +148,60 @@ export function ArtifactPreviewSheet() {
           </Button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
           {isLoading ? (
-            <p className="text-sm text-white/60">Loading file…</p>
+            <div className="space-y-3">
+              <div
+                className={cn(
+                  glassCardSurfaceClassName,
+                  "h-24 animate-pulse rounded-xl",
+                )}
+              />
+              <div
+                className={cn(
+                  glassCardSurfaceClassName,
+                  "h-48 animate-pulse rounded-xl",
+                )}
+              />
+            </div>
           ) : null}
 
           {error ? (
             <ErrorAlert title="Could not open file" message={error.message} />
           ) : null}
 
-          {meta ? (
-            <GlowPanel className="mb-4">
-              <dl className="grid gap-3 sm:grid-cols-3">
-                <Metric label="Score" value={meta.score ?? "—"} />
-                <Metric label="Legitimacy" value={meta.legitimacy ?? "—"} />
-                <Metric
-                  label="Source"
-                  value={meta.sourceUrl ?? "—"}
-                  href={sourceUrl}
-                />
-              </dl>
-            </GlowPanel>
+          {!isLoading && !error && meta ? (
+            <ReportPreviewMeta meta={meta} sourceUrl={sourceUrl} />
           ) : null}
 
           {pdfSrc ? (
             <iframe
               title={displayedArtifact.label ?? displayedArtifact.path}
               src={pdfSrc}
-              className="h-[75vh] w-full rounded-xl border border-white/10 bg-white"
+              className="mt-4 h-[75vh] w-full rounded-xl border border-white/10 bg-white"
             />
           ) : null}
 
-          {data?.encoding === "utf-8" ? (
-            <article className="prose prose-invert prose-headings:text-white prose-p:text-white/85 prose-a:text-violet-300 prose-strong:text-white prose-code:text-violet-200 max-w-none">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSanitize]}
-              >
-                {data.content}
-              </ReactMarkdown>
-            </article>
+          {!isLoading && !error && data?.encoding === "utf-8" ? (
+            <div
+              className={cn(
+                glassCardSurfaceClassName,
+                "mt-4 rounded-xl px-4 py-5 sm:px-5 sm:py-6",
+                meta ? undefined : "mt-0",
+              )}
+            >
+              {isMarkdownReport ? (
+                <ReportMarkdown content={data.content} />
+              ) : (
+                <ReportMarkdown
+                  content={data.content}
+                  stripFrontmatter={false}
+                />
+              )}
+            </div>
           ) : null}
         </div>
       </aside>
-    </div>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: string;
-  href?: string | null;
-}) {
-  return (
-    <div>
-      <dt className="text-xs tracking-wide text-white/45 uppercase">{label}</dt>
-      <dd className="mt-1 text-sm font-medium break-words text-white">
-        {href ? (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={clickableLinkClassName}
-          >
-            {value}
-          </a>
-        ) : (
-          value
-        )}
-      </dd>
     </div>
   );
 }

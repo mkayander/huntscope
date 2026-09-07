@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "./scrollbars.css";
 @import "./cursors.css";
+@import "./report-markdown.css";
 
 @custom-variant dark (&:is(.dark *));
 
