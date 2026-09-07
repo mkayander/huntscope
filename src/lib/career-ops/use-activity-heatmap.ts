@@ -56,7 +56,7 @@ export function useActivityHeatmap(
     return () => {
       cancelled = true;
     };
-  }, [applications, locale, window.endDateKey, window.startDateKey]);
+  }, [applications, locale, window]);
 
   return {
     heatmap,

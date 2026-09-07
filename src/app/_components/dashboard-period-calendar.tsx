@@ -87,8 +87,7 @@ export function DashboardPeriodCalendar({
   const weekdayLabels = getWeekdayLabels(locale);
 
   const selectionStart = rangeAnchor ?? committedRange?.start ?? null;
-  const selectionEnd =
-    rangeAnchor != null ? rangeAnchor : (committedRange?.end ?? null);
+  const selectionEnd = rangeAnchor ?? committedRange?.end ?? null;
 
   const monthLabel = new Date(
     visibleMonth.year,
