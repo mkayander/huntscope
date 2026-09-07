@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
@@ -9,21 +9,58 @@ import { ErrorAlert } from "~/app/_components/error-alert";
 import { Button } from "~/components/ui/button";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { useArtifactViewer } from "~/hooks/use-artifact-viewer";
+import type { ArtifactPreviewRequest } from "~/hooks/use-artifact-viewer";
 import { useRepoFile } from "~/hooks/use-repo-file";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { parseReportMarkdown } from "~/lib/career-ops/parse-report";
+import { cn } from "~/lib/utils";
+
+const DRAWER_ANIMATION_MS = 300;
 
 export function ArtifactPreviewSheet() {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { activeArtifact, closeArtifact } = useArtifactViewer();
   const { activeSource } = useCareerOpsDataSource();
+  const [displayedArtifact, setDisplayedArtifact] =
+    useState<ArtifactPreviewRequest | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const { data, isLoading, error } = useRepoFile(
     activeSource,
-    activeArtifact?.path ?? null,
+    displayedArtifact?.path ?? null,
   );
 
+  const handleClose = useCallback(() => {
+    if (isClosing || !displayedArtifact) {
+      return;
+    }
+
+    closeArtifact();
+  }, [closeArtifact, displayedArtifact, isClosing]);
+
   useEffect(() => {
-    if (!activeArtifact) {
+    if (activeArtifact) {
+      setDisplayedArtifact(activeArtifact);
+      setIsClosing(false);
+      return;
+    }
+
+    if (!displayedArtifact) {
+      return;
+    }
+
+    setIsClosing(true);
+    const timer = window.setTimeout(() => {
+      setDisplayedArtifact(null);
+      setIsClosing(false);
+    }, DRAWER_ANIMATION_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [activeArtifact, displayedArtifact]);
+
+  useEffect(() => {
+    if (!displayedArtifact || isClosing) {
       return;
     }
 
@@ -34,13 +71,13 @@ export function ArtifactPreviewSheet() {
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [activeArtifact]);
+  }, [displayedArtifact, isClosing]);
 
-  if (!activeArtifact) {
+  if (!displayedArtifact) {
     return null;
   }
 
-  const isPdf = activeArtifact.path.toLowerCase().endsWith(".pdf");
+  const isPdf = displayedArtifact.path.toLowerCase().endsWith(".pdf");
   const meta =
     data?.encoding === "utf-8" ? parseReportMarkdown(data.content) : null;
   const pdfSrc =
@@ -54,7 +91,7 @@ export function ArtifactPreviewSheet() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
       aria-label={isPdf ? "PDF preview" : "Report preview"}
@@ -62,12 +99,22 @@ export function ArtifactPreviewSheet() {
       <button
         type="button"
         aria-label="Close preview"
-        className="absolute inset-0 cursor-pointer"
-        onClick={closeArtifact}
+        className={cn(
+          "absolute inset-0 cursor-pointer bg-black/60 backdrop-blur-sm motion-reduce:animate-none",
+          isClosing
+            ? "animate-out fade-out-0 duration-200"
+            : "animate-in fade-in-0 duration-200",
+        )}
+        onClick={handleClose}
       />
 
-      <div
-        className="relative flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl"
+      <aside
+        className={cn(
+          "absolute inset-y-0 right-0 flex h-full w-full max-w-3xl flex-col border-l border-white/10 bg-[#0f1024] shadow-2xl motion-reduce:animate-none",
+          isClosing
+            ? "animate-out fade-out-0 slide-out-to-right duration-300"
+            : "animate-in fade-in-0 slide-in-from-right duration-300",
+        )}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
@@ -76,10 +123,10 @@ export function ArtifactPreviewSheet() {
               {isPdf ? "PDF preview" : "Report preview"}
             </p>
             <h2 className="truncate text-lg font-semibold text-white">
-              {activeArtifact.label ?? activeArtifact.path}
+              {displayedArtifact.label ?? displayedArtifact.path}
             </h2>
             <p className="mt-1 truncate text-xs text-white/50">
-              {activeArtifact.path}
+              {displayedArtifact.path}
             </p>
           </div>
           <Button
@@ -87,7 +134,7 @@ export function ArtifactPreviewSheet() {
             type="button"
             variant="brandSecondary"
             size="pillSm"
-            onClick={closeArtifact}
+            onClick={handleClose}
           >
             Close
           </Button>
@@ -118,7 +165,7 @@ export function ArtifactPreviewSheet() {
 
           {pdfSrc ? (
             <iframe
-              title={activeArtifact.label ?? activeArtifact.path}
+              title={displayedArtifact.label ?? displayedArtifact.path}
               src={pdfSrc}
               className="h-[75vh] w-full rounded-xl border border-white/10 bg-white"
             />
@@ -135,7 +182,7 @@ export function ArtifactPreviewSheet() {
             </article>
           ) : null}
         </div>
-      </div>
+      </aside>
     </div>
   );
 }
