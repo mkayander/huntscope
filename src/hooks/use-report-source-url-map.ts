@@ -3,10 +3,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import {
-  getApplicationReportRef,
-  resolveApplicationReportFetchRef,
-} from "~/lib/career-ops/application-reports";
+import { resolveApplicationReportFetchRef } from "~/lib/career-ops/application-reports";
 import {
   getInlineJobPostingUrl,
   isHttpUrl,
