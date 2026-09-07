@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -29,6 +30,7 @@ import {
 } from "~/lib/cache/github-query-options";
 import { authClient } from "~/lib/auth-client";
 import { loadCareerOpsFromLocalSource } from "~/lib/local-repo/load-career-ops-data";
+import { DASHBOARD_PATH, LANDING_PATH } from "~/lib/routes";
 import { useLocalRepo } from "~/lib/local-repo/use-local-repo";
 import { useHomeShell } from "~/hooks/use-home-shell";
 import { api } from "~/trpc/react";
@@ -68,6 +70,8 @@ const CareerOpsDataSourceContext =
 
 function useCareerOpsDataSourceState() {
   const { isSignedIn: initialIsSignedIn } = useHomeShell();
+  const router = useRouter();
+  const pathname = usePathname();
   const { data: session } = authClient.useSession();
   const isSignedIn = Boolean(session?.user) || initialIsSignedIn;
   const [preference, setPreference] =
@@ -78,7 +82,11 @@ function useCareerOpsDataSourceState() {
   const preferLocalSource = useCallback(() => {
     writeDataSourcePreference("local");
     setPreference("local");
-  }, []);
+
+    if (pathname === LANDING_PATH) {
+      router.push(DASHBOARD_PATH);
+    }
+  }, [pathname, router]);
 
   const localRepo = useLocalRepo({ onConnected: preferLocalSource });
   const connectionQuery = api.github.getConnection.useQuery(undefined, {
@@ -157,7 +165,6 @@ function useCareerOpsDataSourceState() {
     localDataQuery,
     hasLocalSource: localSource != null,
     hasGitHubSource: githubSource != null,
-    canShowDashboard: localSource != null || githubSource != null,
   };
 }
 

@@ -4,6 +4,7 @@ import { ActionButtonRow } from "~/app/_components/action-button-row";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { DataPreview } from "~/app/_components/data-preview";
 import { GitHubInstallButton } from "~/app/_components/github-install-button";
+import { OpenDashboardButton } from "~/app/_components/open-dashboard-button";
 import {
   GitHubInstallationHealthCheckError,
   useGitHubInstallationHealthCheck,
@@ -73,6 +74,7 @@ function GitHubRepoConnected() {
       ) : null}
 
       <ActionButtonRow centered>
+        <OpenDashboardButton className="w-full max-w-sm" />
         <GitHubInstallButton
           variant="brandSecondary"
           size="pill"

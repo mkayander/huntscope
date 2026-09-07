@@ -9,9 +9,14 @@ import { isGitHubAppConfigured } from "~/server/github/config";
 import { consumeInstallState } from "~/server/github/installation-store";
 import { getGitHubUserAccessToken } from "~/server/github/user-access-token";
 import type { ConnectInstallationErrorCode } from "~/server/github/connect-installation";
+import { DASHBOARD_PATH, LANDING_PATH } from "~/lib/routes";
 
-function redirectWithMessage(request: Request, message: string) {
-  const url = new URL("/", request.url);
+function redirectWithMessage(
+  request: Request,
+  message: string,
+  destination: string = DASHBOARD_PATH,
+) {
+  const url = new URL(destination, request.url);
   url.searchParams.set("github", message);
   return NextResponse.redirect(url);
 }
@@ -37,7 +42,7 @@ export async function GET(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
 
   if (!session?.user) {
-    return redirectWithMessage(request, "sign-in-required");
+    return redirectWithMessage(request, "sign-in-required", LANDING_PATH);
   }
 
   const url = new URL(request.url);
