@@ -111,8 +111,7 @@ export function resolveApplicationReportFetchRef(
   const reportRef = getApplicationReportRef(application, reportFiles);
 
   if (
-    !reportRef ||
-    reportRef.source !== "linked" ||
+    reportRef?.source !== "linked" ||
     reportFiles.length === 0 ||
     reportFileExistsAtPath(reportFiles, reportRef.path)
   ) {
