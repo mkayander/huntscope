@@ -200,7 +200,6 @@ export function TrackerPanel({
             dataSource={dataSource}
             defaultBranch={defaultBranch}
             reportFiles={reportFiles}
-            outputFiles={outputFiles}
             tableQuery={tableQuery}
             statusOptions={statusOptions}
             canEditStatus={canWrite}
