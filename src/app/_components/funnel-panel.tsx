@@ -1,8 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
+
+import { FunnelSankeyChart } from "~/app/_components/analytics-charts/funnel-sankey-chart";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { computeFunnelMetrics } from "~/lib/career-ops/funnel";
+import { buildFunnelSankeyData } from "~/lib/career-ops/funnel-sankey";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
 import { cn } from "~/lib/utils";
@@ -13,6 +17,10 @@ type FunnelPanelProps = {
 
 export function FunnelPanel({ applications }: FunnelPanelProps) {
   const metrics = computeFunnelMetrics(applications);
+  const sankeyData = useMemo(
+    () => buildFunnelSankeyData(applications),
+    [applications],
+  );
 
   if (applications.length === 0) {
     return null;
@@ -26,6 +34,8 @@ export function FunnelPanel({ applications }: FunnelPanelProps) {
           Conversion rates across your application pipeline.
         </p>
       </div>
+
+      {sankeyData ? <FunnelSankeyChart data={sankeyData} /> : null}
 
       <dl className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Response rate" value={metrics.responseRate} />
