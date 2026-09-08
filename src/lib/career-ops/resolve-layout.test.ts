@@ -4,6 +4,7 @@ import {
   deriveDataDirFromTrackerPath,
   parseDataRootMarker,
   resolveCareerOpsLayout,
+  resolveDataDir,
 } from "~/lib/career-ops/resolve-layout";
 
 describe("parseDataRootMarker", () => {
@@ -15,6 +16,11 @@ describe("parseDataRootMarker", () => {
 
   it("strips trailing slashes", () => {
     expect(parseDataRootMarker("external-data/")).toBe("external-data");
+  });
+
+  it("rejects parent traversal and absolute paths", () => {
+    expect(parseDataRootMarker("../outside")).toBe("");
+    expect(parseDataRootMarker("/absolute/path")).toBe("");
   });
 });
 
@@ -34,6 +40,28 @@ describe("deriveDataDirFromTrackerPath", () => {
   });
 });
 
+describe("resolveDataDir", () => {
+  it("prefers data/ when pipeline lives under data/", () => {
+    expect(
+      resolveDataDir({
+        dataDirPath: "data",
+        applicationsPath: "applications.md",
+        pipelinePath: "data/pipeline.md",
+      }),
+    ).toBe("data");
+  });
+
+  it("falls back to data/ for root-level trackers", () => {
+    expect(
+      resolveDataDir({
+        dataDirPath: "data",
+        applicationsPath: "applications.md",
+        pipelinePath: null,
+      }),
+    ).toBe("data");
+  });
+});
+
 describe("resolveCareerOpsLayout", () => {
   it("prefers data/applications.md over root-level applications.md", async () => {
     const files = new Map([
@@ -45,13 +73,17 @@ describe("resolveCareerOpsLayout", () => {
       readFile: async (path) => files.get(path) ?? null,
     });
 
-    expect(layout).toEqual({
+    expect(layout).toMatchObject({
       dataRoot: "",
       applicationsPath: "data/applications.md",
       pipelinePath: "data/pipeline.md",
+      applicationsWritePath: "data/applications.md",
+      pipelineWritePath: "data/pipeline.md",
       dataDir: "data",
       reportsDir: "reports",
       outputDir: "output",
+      applicationsMarkdown: "# Applications",
+      pipelineMarkdown: null,
     });
   });
 
@@ -63,7 +95,8 @@ describe("resolveCareerOpsLayout", () => {
     });
 
     expect(layout?.applicationsPath).toBe("applications.md");
-    expect(layout?.dataDir).toBe("");
+    expect(layout?.dataDir).toBe("data");
+    expect(layout?.applicationsMarkdown).toBe("# Applications");
   });
 
   it("resolves paths relative to a .career-ops-data marker", async () => {
@@ -77,17 +110,21 @@ describe("resolveCareerOpsLayout", () => {
       readFile: async (path) => files.get(path) ?? null,
     });
 
-    expect(layout).toEqual({
+    expect(layout).toMatchObject({
       dataRoot: "external-data",
       applicationsPath: "external-data/data/applications.md",
       pipelinePath: "external-data/data/pipeline.md",
+      applicationsWritePath: "external-data/data/applications.md",
+      pipelineWritePath: "external-data/data/pipeline.md",
       dataDir: "external-data/data",
       reportsDir: "external-data/reports",
       outputDir: "external-data/output",
+      applicationsMarkdown: "# Applications",
+      pipelineMarkdown: "## Pending",
     });
   });
 
-  it("detects layout from a non-empty data directory listing", async () => {
+  it("detects layout from recognizable files in data/", async () => {
     const layout = await resolveCareerOpsLayout({
       readFile: async () => null,
       listDirectory: async () => [
@@ -97,6 +134,17 @@ describe("resolveCareerOpsLayout", () => {
 
     expect(layout?.dataDir).toBe("data");
     expect(layout?.applicationsPath).toBe("data/applications.md");
+  });
+
+  it("ignores unrelated files in data/", async () => {
+    const layout = await resolveCareerOpsLayout({
+      readFile: async () => null,
+      listDirectory: async () => [
+        { path: "data/readme.txt", name: "readme.txt", type: "file" },
+      ],
+    });
+
+    expect(layout).toBeNull();
   });
 
   it("returns null when no career-ops files are present", async () => {

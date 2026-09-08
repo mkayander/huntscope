@@ -106,26 +106,20 @@ async function listDirectoryEntries(
 export async function loadCareerOpsFromDirectory(
   directoryHandle: FileSystemDirectoryHandle,
 ): Promise<RawCareerOpsRepoData> {
-  const layout = await resolveCareerOpsLayout({
+  const resolved = await resolveCareerOpsLayout({
     readFile: (path) => readTextFile(directoryHandle, path),
     listDirectory: (path) => listDirectoryEntries(directoryHandle, path),
   });
 
-  if (!layout) {
+  if (!resolved) {
     throw new Error(
       "This folder does not look like a career-ops project or companion repo. Expected files such as data/applications.md or data/pipeline.md.",
     );
   }
 
-  const [
-    applicationsContent,
-    pipelineContent,
-    dataDirectory,
-    reportsDirectory,
-    outputDirectory,
-  ] = await Promise.all([
-    readTextFile(directoryHandle, layout.applicationsPath),
-    readTextFile(directoryHandle, layout.pipelinePath),
+  const { applicationsMarkdown, pipelineMarkdown, ...layout } = resolved;
+
+  const [dataDirectory, reportsDirectory, outputDirectory] = await Promise.all([
     listDirectoryEntries(directoryHandle, layout.dataDir),
     listDirectoryEntries(directoryHandle, layout.reportsDir),
     listDirectoryEntries(directoryHandle, layout.outputDir),
@@ -137,8 +131,8 @@ export async function loadCareerOpsFromDirectory(
     fullName: `local://${directoryHandle.name}`,
     defaultBranch: null,
     layout,
-    applicationsMarkdown: applicationsContent,
-    pipelineMarkdown: pipelineContent,
+    applicationsMarkdown,
+    pipelineMarkdown,
     dataDirectory,
     reportsDirectory,
     outputDirectory,
@@ -174,6 +168,8 @@ export async function loadCareerOpsFromLaunchedFile(
       ? trackerPath
       : CAREER_OPS_PATHS.applications,
     pipelinePath: isPipelineFile ? trackerPath : CAREER_OPS_PATHS.pipeline,
+    applicationsWritePath: CAREER_OPS_PATHS.applications,
+    pipelineWritePath: CAREER_OPS_PATHS.pipeline,
     dataDir,
     reportsDir: CAREER_OPS_PATHS.reportsDir,
     outputDir: CAREER_OPS_PATHS.outputDir,

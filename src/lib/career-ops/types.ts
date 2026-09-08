@@ -27,6 +27,8 @@ export type CareerOpsResolvedLayout = {
   dataRoot: string;
   applicationsPath: string;
   pipelinePath: string;
+  applicationsWritePath: string;
+  pipelineWritePath: string;
   dataDir: string;
   reportsDir: string;
   outputDir: string;

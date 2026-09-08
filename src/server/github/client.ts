@@ -128,14 +128,14 @@ export async function fetchCareerOpsRepoData(
 ): Promise<RawCareerOpsRepoData> {
   const connection = await getAuthorizedInstallation(userId, repo);
 
-  const layout = await resolveCareerOpsLayout({
+  const resolved = await resolveCareerOpsLayout({
     readFile: (path) =>
       readRepositoryFile(connection.installationId, repo.fullName, path),
     listDirectory: (path) =>
       listRepositoryContents(connection.installationId, repo.fullName, path),
   });
 
-  if (!layout) {
+  if (!resolved) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message:
@@ -143,41 +143,27 @@ export async function fetchCareerOpsRepoData(
     });
   }
 
-  const [
-    applicationsContent,
-    pipelineContent,
-    dataDirectory,
-    reportsDirectory,
-    outputDirectory,
-    defaultBranch,
-  ] = await Promise.all([
-    readRepositoryFile(
-      connection.installationId,
-      repo.fullName,
-      layout.applicationsPath,
-    ),
-    readRepositoryFile(
-      connection.installationId,
-      repo.fullName,
-      layout.pipelinePath,
-    ),
-    listRepositoryContents(
-      connection.installationId,
-      repo.fullName,
-      layout.dataDir,
-    ),
-    listRepositoryContents(
-      connection.installationId,
-      repo.fullName,
-      layout.reportsDir,
-    ),
-    listRepositoryContents(
-      connection.installationId,
-      repo.fullName,
-      layout.outputDir,
-    ),
-    getRepositoryDefaultBranch(connection.installationId, repo.fullName),
-  ]);
+  const { applicationsMarkdown, pipelineMarkdown, ...layout } = resolved;
+
+  const [dataDirectory, reportsDirectory, outputDirectory, defaultBranch] =
+    await Promise.all([
+      listRepositoryContents(
+        connection.installationId,
+        repo.fullName,
+        layout.dataDir,
+      ),
+      listRepositoryContents(
+        connection.installationId,
+        repo.fullName,
+        layout.reportsDir,
+      ),
+      listRepositoryContents(
+        connection.installationId,
+        repo.fullName,
+        layout.outputDir,
+      ),
+      getRepositoryDefaultBranch(connection.installationId, repo.fullName),
+    ]);
 
   try {
     return buildCareerOpsRepoData({
@@ -186,8 +172,8 @@ export async function fetchCareerOpsRepoData(
       fullName: repo.fullName,
       defaultBranch,
       layout,
-      applicationsMarkdown: applicationsContent,
-      pipelineMarkdown: pipelineContent,
+      applicationsMarkdown,
+      pipelineMarkdown,
       dataDirectory,
       reportsDirectory,
       outputDirectory,

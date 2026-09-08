@@ -4,7 +4,10 @@ import {
 } from "~/lib/career-ops/application-artifact-inference";
 import type { ApplicationArtifactRef } from "~/lib/career-ops/application-artifacts";
 import { extractMarkdownLink } from "~/lib/career-ops/links";
-import { normalizeRepoRelativePath } from "~/lib/career-ops/repo-paths";
+import {
+  normalizeRepoRelativePath,
+  matchRepoFilePath,
+} from "~/lib/career-ops/repo-paths";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
 export type ApplicationReportSource = ApplicationArtifactRef["source"];
@@ -33,21 +36,33 @@ export function applicationHasReport(
   return getEffectiveReportValue(application, reportFiles) !== null;
 }
 
-function getReportPathFromValue(value: string): string | null {
+function getReportPathFromValue(
+  value: string,
+  reportFiles: readonly RepoDataFile[] = [],
+): string | null {
   const markdownLink = extractMarkdownLink(value);
-  if (markdownLink && !markdownLink.href.startsWith("http")) {
-    return normalizeRepoRelativePath(markdownLink.href);
+  const rawPath =
+    markdownLink && !markdownLink.href.startsWith("http")
+      ? normalizeRepoRelativePath(markdownLink.href)
+      : null;
+
+  if (rawPath) {
+    return matchRepoFilePath(rawPath, reportFiles);
   }
 
   const trimmed = value.trim();
   if (trimmed.includes("/") || trimmed.endsWith(".md")) {
-    return normalizeRepoRelativePath(trimmed);
+    return matchRepoFilePath(normalizeRepoRelativePath(trimmed), reportFiles);
   }
 
   return null;
 }
 
-function getReportLabel(value: string, application: ApplicationEntry): string {
+function getReportLabel(
+  value: string,
+  application: ApplicationEntry,
+  reportFiles: readonly RepoDataFile[] = [],
+): string {
   const markdownLink = extractMarkdownLink(value);
   const label = markdownLink?.label?.trim();
 
@@ -55,7 +70,7 @@ function getReportLabel(value: string, application: ApplicationEntry): string {
     return label;
   }
 
-  const path = getReportPathFromValue(value);
+  const path = getReportPathFromValue(value, reportFiles);
   if (path) {
     const basename = path.split("/").pop()?.replace(/\.md$/i, "") ?? "";
     if (basename) {
@@ -71,7 +86,7 @@ export function getApplicationReportRef(
   reportFiles: readonly RepoDataFile[] = [],
 ): ApplicationReportRef | null {
   if (hasLinkedArtifactValue(application.report)) {
-    const path = getReportPathFromValue(application.report);
+    const path = getReportPathFromValue(application.report, reportFiles);
 
     if (!path) {
       return null;
@@ -80,7 +95,7 @@ export function getApplicationReportRef(
     return {
       value: application.report,
       path,
-      label: getReportLabel(application.report, application),
+      label: getReportLabel(application.report, application, reportFiles),
       source: "linked",
     };
   }

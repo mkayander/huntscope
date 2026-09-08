@@ -41,4 +41,32 @@ describe("parsePipelineMarkdown", () => {
       pendingPreview: ["- Empresa A"],
     });
   });
+
+  it("parses localized German pipeline sections", () => {
+    const content = `## Offen
+- Firma A
+
+## Verarbeitet
+- Firma B`;
+
+    expect(parsePipelineMarkdown(content)).toEqual({
+      pendingCount: 1,
+      processedCount: 1,
+      pendingPreview: ["- Firma A"],
+    });
+  });
+
+  it("parses localized French pipeline sections", () => {
+    const content = `## En attente
+- Société A
+
+## Traitées
+- Société B`;
+
+    expect(parsePipelineMarkdown(content)).toEqual({
+      pendingCount: 1,
+      processedCount: 1,
+      pendingPreview: ["- Société A"],
+    });
+  });
 });

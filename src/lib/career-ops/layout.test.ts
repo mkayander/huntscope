@@ -10,6 +10,8 @@ const defaultLayout = {
   dataRoot: "",
   applicationsPath: CAREER_OPS_PATHS.applications,
   pipelinePath: CAREER_OPS_PATHS.pipeline,
+  applicationsWritePath: CAREER_OPS_PATHS.applications,
+  pipelineWritePath: CAREER_OPS_PATHS.pipeline,
   dataDir: CAREER_OPS_PATHS.dataDir,
   reportsDir: CAREER_OPS_PATHS.reportsDir,
   outputDir: CAREER_OPS_PATHS.outputDir,

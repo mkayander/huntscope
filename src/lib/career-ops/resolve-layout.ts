@@ -1,3 +1,7 @@
+import type { CareerOpsResolvedLayout } from "~/lib/career-ops/types";
+
+export type { CareerOpsResolvedLayout };
+
 export const CAREER_OPS_DATA_ROOT_MARKER = ".career-ops-data";
 
 export const APPLICATIONS_CANDIDATE_PATHS = [
@@ -10,15 +14,27 @@ export const PIPELINE_CANDIDATE_PATHS = [
   "pipeline.md",
 ] as const;
 
-import type { CareerOpsResolvedLayout } from "~/lib/career-ops/types";
-
-export type { CareerOpsResolvedLayout };
+const CAREER_OPS_DATA_DIR_MARKERS = new Set([
+  "applications.md",
+  "pipeline.md",
+  "scan-history.tsv",
+  "scan-runs.tsv",
+  "follow-ups.md",
+  "blacklist.md",
+  "salary-observations.tsv",
+  "assessments.tsv",
+]);
 
 export type CareerOpsLayoutReader = {
   readFile: (path: string) => Promise<string | null>;
   listDirectory?: (
     path: string,
   ) => Promise<Array<{ path: string; name: string; type: string }>>;
+};
+
+export type ResolvedCareerOpsLayout = CareerOpsResolvedLayout & {
+  applicationsMarkdown: string | null;
+  pipelineMarkdown: string | null;
 };
 
 function joinRepoPath(...segments: string[]): string {
@@ -31,8 +47,13 @@ function prefixDataRoot(dataRoot: string, relativePath: string): string {
 
 export function parseDataRootMarker(content: string): string {
   const line = content.trim().split("\n")[0]?.trim() ?? "";
+  const normalized = line.replace(/^\.\//, "").replace(/\/$/, "");
 
-  return line.replace(/^\.\//, "").replace(/\/$/, "");
+  if (!normalized || normalized.startsWith("/") || normalized.includes("..")) {
+    return "";
+  }
+
+  return normalized;
 }
 
 export function deriveDataDirFromTrackerPath(trackerPath: string): string {
@@ -49,17 +70,56 @@ export function deriveDataDirFromTrackerPath(trackerPath: string): string {
   return slashIndex >= 0 ? trackerPath.slice(0, slashIndex) : "";
 }
 
+function pathBelongsToDataDir(dataDirPath: string, filePath: string): boolean {
+  return (
+    filePath === `${dataDirPath}/applications.md` ||
+    filePath === `${dataDirPath}/pipeline.md` ||
+    filePath.startsWith(`${dataDirPath}/`)
+  );
+}
+
+export function resolveDataDir(input: {
+  dataDirPath: string;
+  applicationsPath: string | null;
+  pipelinePath: string | null;
+}): string {
+  const trackerPaths = [input.applicationsPath, input.pipelinePath].filter(
+    (path): path is string => path !== null,
+  );
+
+  if (
+    trackerPaths.some((path) => pathBelongsToDataDir(input.dataDirPath, path))
+  ) {
+    return input.dataDirPath;
+  }
+
+  const primaryTracker = input.applicationsPath ?? input.pipelinePath;
+
+  if (primaryTracker) {
+    const derived = deriveDataDirFromTrackerPath(primaryTracker);
+    return derived || input.dataDirPath;
+  }
+
+  return input.dataDirPath;
+}
+
+function hasRecognizableCareerOpsDataFiles(
+  entries: Array<{ name: string }>,
+): boolean {
+  return entries.some((entry) => CAREER_OPS_DATA_DIR_MARKERS.has(entry.name));
+}
+
 async function findExistingFile(
   readFile: (path: string) => Promise<string | null>,
   dataRoot: string,
   candidates: readonly string[],
-): Promise<string | null> {
+): Promise<{ path: string; content: string } | null> {
   for (const candidate of candidates) {
     const path = prefixDataRoot(dataRoot, candidate);
     const content = await readFile(path);
 
     if (content !== null) {
-      return path;
+      return { path, content };
     }
   }
 
@@ -68,41 +128,54 @@ async function findExistingFile(
 
 export async function resolveCareerOpsLayout(
   reader: CareerOpsLayoutReader,
-): Promise<CareerOpsResolvedLayout | null> {
+): Promise<ResolvedCareerOpsLayout | null> {
   const markerContent = await reader.readFile(CAREER_OPS_DATA_ROOT_MARKER);
   const dataRoot = markerContent ? parseDataRootMarker(markerContent) : "";
 
-  const [applicationsPath, pipelinePath] = await Promise.all([
+  const [applicationsFile, pipelineFile] = await Promise.all([
     findExistingFile(reader.readFile, dataRoot, APPLICATIONS_CANDIDATE_PATHS),
     findExistingFile(reader.readFile, dataRoot, PIPELINE_CANDIDATE_PATHS),
   ]);
 
+  const applicationsPath = applicationsFile?.path ?? null;
+  const pipelinePath = pipelineFile?.path ?? null;
   const dataDirPath = prefixDataRoot(dataRoot, "data");
   const dataDirectoryEntries = reader.listDirectory
     ? await reader.listDirectory(dataDirPath)
     : [];
 
   const hasLayoutData = Boolean(
-    applicationsPath ?? pipelinePath ?? dataDirectoryEntries.length > 0,
+    applicationsPath ??
+    pipelinePath ??
+    hasRecognizableCareerOpsDataFiles(dataDirectoryEntries),
   );
 
   if (!hasLayoutData) {
     return null;
   }
 
-  const trackerPath = applicationsPath ?? pipelinePath;
-  const dataDir = trackerPath
-    ? deriveDataDirFromTrackerPath(trackerPath)
-    : dataDirPath;
+  const dataDir = resolveDataDir({
+    dataDirPath,
+    applicationsPath,
+    pipelinePath,
+  });
 
-  return {
+  const layout: CareerOpsResolvedLayout = {
     dataRoot,
     applicationsPath:
       applicationsPath ?? prefixDataRoot(dataRoot, "data/applications.md"),
     pipelinePath: pipelinePath ?? prefixDataRoot(dataRoot, "data/pipeline.md"),
+    applicationsWritePath: prefixDataRoot(dataRoot, "data/applications.md"),
+    pipelineWritePath: prefixDataRoot(dataRoot, "data/pipeline.md"),
     dataDir,
     reportsDir: prefixDataRoot(dataRoot, "reports"),
     outputDir: prefixDataRoot(dataRoot, "output"),
+  };
+
+  return {
+    ...layout,
+    applicationsMarkdown: applicationsFile?.content ?? null,
+    pipelineMarkdown: pipelineFile?.content ?? null,
   };
 }
 

@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { parseApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
@@ -16,6 +19,18 @@ const SAMPLE_TABLE = `# Applications
 describe("serializeApplicationsMarkdown", () => {
   it("round-trips a simple applications table", () => {
     const parsed = parseApplicationsMarkdown(SAMPLE_TABLE);
+    const serialized = serializeApplicationsMarkdown(parsed);
+    const reparsed = parseApplicationsMarkdown(serialized);
+
+    expect(reparsed).toEqual(parsed);
+  });
+
+  it("round-trips career-ops tables with a Via column", () => {
+    const content = readFileSync(
+      join(process.cwd(), "fixtures/career-ops-repo/data/applications.md"),
+      "utf8",
+    );
+    const parsed = parseApplicationsMarkdown(content);
     const serialized = serializeApplicationsMarkdown(parsed);
     const reparsed = parseApplicationsMarkdown(serialized);
 
