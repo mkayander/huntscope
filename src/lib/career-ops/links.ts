@@ -1,4 +1,5 @@
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
+import { normalizeRepoRelativePath } from "~/lib/career-ops/repo-paths";
 
 export function extractMarkdownLink(
   value: string,
@@ -50,7 +51,7 @@ export function resolveDataSourceFileUrl(
 
     return resolveRepoFileUrl(
       source.repo.fullName,
-      path,
+      normalizeRepoRelativePath(path),
       defaultBranch ?? "main",
     );
   }
@@ -68,7 +69,7 @@ export function resolveArtifactLink(
   if (markdownLink) {
     const path = markdownLink.href.startsWith("http")
       ? null
-      : markdownLink.href.replace(/^\.\//, "");
+      : normalizeRepoRelativePath(markdownLink.href);
     const href = markdownLink.href.startsWith("http")
       ? markdownLink.href
       : resolveDataSourceFileUrl(source, markdownLink.href, defaultBranch);
@@ -83,7 +84,7 @@ export function resolveArtifactLink(
   const trimmed = value.trim();
 
   if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
-    const path = trimmed.replace(/^\.\//, "");
+    const path = normalizeRepoRelativePath(trimmed);
     return {
       label: "Report",
       href: resolveDataSourceFileUrl(source, trimmed, defaultBranch),
@@ -92,7 +93,7 @@ export function resolveArtifactLink(
   }
 
   if (trimmed.toLowerCase().endsWith(".pdf")) {
-    const path = trimmed.replace(/^\.\//, "");
+    const path = normalizeRepoRelativePath(trimmed);
     return {
       label: "PDF",
       href: resolveDataSourceFileUrl(source, trimmed, defaultBranch),

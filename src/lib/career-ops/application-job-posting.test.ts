@@ -21,6 +21,7 @@ const application: ApplicationEntry = {
   num: 1,
   date: "2026-01-15",
   company: "Acme Corp",
+  via: "",
   role: "Backend Engineer",
   score: "4.2",
   status: "Applied",
@@ -194,5 +195,34 @@ describe("fixture report metadata", () => {
         parseReportMarkdown(reportContent).sourceUrl,
       ),
     ).toBe("https://example.com/jobs/techcorp-fullstack");
+  });
+
+  it("resolves posting urls from career-ops fixture reports", () => {
+    const applications = parseApplicationsMarkdown(
+      readFileSync(
+        join(process.cwd(), "fixtures/career-ops-repo/data/applications.md"),
+        "utf8",
+      ),
+    );
+    const acme = applications.find((entry) => entry.company === "Acme");
+
+    expect(acme?.via).toBe("—");
+    expect(acme?.role).toBe("Senior Platform Engineer");
+
+    const reportRef = resolveApplicationReportFetchRef(acme!, [
+      {
+        path: "reports/001-acme-2026-06-20.md",
+        name: "001-acme-2026-06-20.md",
+        type: "file",
+      },
+    ]);
+    const reportContent = readFileSync(
+      join(process.cwd(), "fixtures/career-ops-repo", reportRef!.path),
+      "utf8",
+    );
+
+    expect(
+      resolveJobPostingUrl(acme!, parseReportMarkdown(reportContent).sourceUrl),
+    ).toBe("https://boards.example.test/acme/jobs/12345");
   });
 });
