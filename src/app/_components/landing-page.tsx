@@ -20,7 +20,7 @@ export function LandingPage({ githubConfigured }: LandingPageProps) {
     <LandingBackgroundProvider>
       <LandingBackgroundCanvas />
 
-      <main className="relative isolate flex min-h-screen flex-col items-center text-white">
+      <main className="min-h-app-viewport relative isolate flex flex-col items-center text-white">
         <div className="container flex flex-col items-center gap-10 px-4 py-16 pb-28">
           <div className="flex flex-col items-center gap-4 text-center">
             <HuntscopeWordmark />

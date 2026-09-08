@@ -9,13 +9,18 @@
 }
 
 @layer utilities {
-  /* Span the visual viewport so backgrounds reach under a classic scrollbar. */
+  /* Track the live visual viewport so fixed layers do not leave gaps when mobile browser chrome moves. */
   .fixed-viewport-bleed {
     position: fixed;
     top: 0;
-    bottom: 0;
     left: 0;
-    width: 100vw;
+    width: 100%;
+    height: var(--visual-viewport-height, 100dvh);
+    max-height: var(--visual-viewport-height, 100dvh);
+  }
+
+  .min-h-app-viewport {
+    min-height: var(--visual-viewport-height, 100dvh);
   }
 }
 
@@ -26,8 +31,19 @@
     scrollbar-gutter: stable;
     background-color: var(--background);
     background-image: var(--page-shell-background);
-    background-attachment: fixed;
     background-size: cover;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    html {
+      background-attachment: scroll;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    html {
+      background-attachment: fixed;
+    }
   }
 
   html[data-page-shell="dashboard"] {

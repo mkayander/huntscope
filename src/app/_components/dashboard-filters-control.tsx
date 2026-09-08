@@ -108,7 +108,7 @@ export function DashboardFiltersControl({
 
   return (
     <>
-      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-end px-4 sm:bottom-6 sm:px-6">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom,0px))] z-40 flex justify-end px-4 sm:bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] sm:px-6">
         <Button
           type="button"
           variant="brand"
