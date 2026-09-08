@@ -235,8 +235,21 @@ export function FunnelSankeyChart({ data }: FunnelSankeyChartProps) {
           reached each stage or outcome.
         </p>
       </div>
-      <div ref={containerRef} className="mt-4 min-h-[220px] flex-1">
-        <svg ref={svgRef} className="h-auto w-full overflow-visible" />
+      <div className="mt-4 flex flex-col gap-2">
+        <p className="text-[11px] text-white/40 lg:hidden">
+          Swipe the chart horizontally to read all stages.
+        </p>
+        <div className="[scrollbar-width:thin] overflow-x-auto overscroll-x-contain lg:overflow-visible">
+          <div
+            ref={containerRef}
+            className="min-h-[220px] w-full min-w-[640px] flex-1 lg:min-w-0"
+          >
+            <svg
+              ref={svgRef}
+              className="block h-auto w-full overflow-visible"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

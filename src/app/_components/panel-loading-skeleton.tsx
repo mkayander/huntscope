@@ -21,6 +21,17 @@ export const AUTH_BUTTON_LABELS = [
   "Signing out",
 ] as const;
 
+export const AUTH_BUTTON_LABELS_COMPACT_SIGNED_IN = [
+  "Sign out",
+  "Signing out",
+] as const;
+
+export const AUTH_BUTTON_LABELS_COMPACT_SIGNED_OUT = [
+  "Sign in with GitHub",
+  AUTH_BUTTON_LABEL_PLACEHOLDER,
+  "Loading session",
+] as const;
+
 type PanelDescriptionSkeletonProps = {
   centered?: boolean;
   className?: string;

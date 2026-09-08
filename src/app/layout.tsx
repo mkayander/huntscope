@@ -36,6 +36,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#2e026d",
   colorScheme: "dark",
+  viewportFit: "cover",
 };
 
 const geist = Geist({
