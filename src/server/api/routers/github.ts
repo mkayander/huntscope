@@ -9,7 +9,7 @@ import {
 } from "~/server/github/client";
 import { throwIfGitHubRateLimited } from "~/server/github/errors";
 import { readRepositoryFile } from "~/server/github/api";
-import { CAREER_OPS_PATHS } from "~/lib/career-ops/layout";
+import { resolveCareerOpsLayout } from "~/lib/career-ops/resolve-layout";
 import {
   clearInstallationConnection,
   getInstallationConnection,
@@ -150,16 +150,33 @@ export const githubRouter = createTRPCRouter({
       return null;
     }
 
+    const layout = await resolveCareerOpsLayout({
+      readFile: (path) =>
+        readRepositoryFile(
+          connection.installationId,
+          repository.fullName,
+          path,
+        ),
+    });
+
+    if (!layout) {
+      return {
+        repositoryFullName: repository.fullName,
+        filePath: "data/applications.md",
+        preview: null,
+      };
+    }
+
     const content = await readRepositoryFile(
       connection.installationId,
       repository.fullName,
-      CAREER_OPS_PATHS.applications,
+      layout.applicationsPath,
     );
 
     if (!content) {
       return {
         repositoryFullName: repository.fullName,
-        filePath: CAREER_OPS_PATHS.applications,
+        filePath: layout.applicationsPath,
         preview: null,
       };
     }
@@ -168,7 +185,7 @@ export const githubRouter = createTRPCRouter({
 
     return {
       repositoryFullName: repository.fullName,
-      filePath: CAREER_OPS_PATHS.applications,
+      filePath: layout.applicationsPath,
       preview: lines,
     };
   }),

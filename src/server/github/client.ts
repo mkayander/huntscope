@@ -1,9 +1,10 @@
 import { TRPCError } from "@trpc/server";
 
+import { buildCareerOpsRepoData } from "~/lib/career-ops/layout";
 import {
-  buildCareerOpsRepoData,
-  CAREER_OPS_PATHS,
-} from "~/lib/career-ops/layout";
+  repositoryHasCareerOpsLayout,
+  resolveCareerOpsLayout,
+} from "~/lib/career-ops/resolve-layout";
 import type {
   GitHubRepoSummary,
   RawCareerOpsRepoData,
@@ -62,16 +63,15 @@ async function getAuthorizedInstallation(userId: string, repo?: SelectedRepo) {
   return connection;
 }
 
-async function repositoryHasCareerOpsLayout(
+async function checkRepositoryHasCareerOpsLayout(
   installationId: number,
   fullName: string,
 ): Promise<boolean> {
-  const [applicationsContent, pipelineContent] = await Promise.all([
-    readRepositoryFile(installationId, fullName, CAREER_OPS_PATHS.applications),
-    readRepositoryFile(installationId, fullName, CAREER_OPS_PATHS.pipeline),
-  ]);
-
-  return Boolean(applicationsContent ?? pipelineContent);
+  return repositoryHasCareerOpsLayout({
+    readFile: (path) => readRepositoryFile(installationId, fullName, path),
+    listDirectory: (path) =>
+      listRepositoryContents(installationId, fullName, path),
+  });
 }
 
 export function isGitHubRateLimitError(error: unknown): boolean {
@@ -91,7 +91,7 @@ export async function listUserRepos(
         return null;
       }
 
-      const hasCareerOpsLayout = await repositoryHasCareerOpsLayout(
+      const hasCareerOpsLayout = await checkRepositoryHasCareerOpsLayout(
         connection.installationId,
         repository.fullName,
       );
@@ -128,6 +128,21 @@ export async function fetchCareerOpsRepoData(
 ): Promise<RawCareerOpsRepoData> {
   const connection = await getAuthorizedInstallation(userId, repo);
 
+  const layout = await resolveCareerOpsLayout({
+    readFile: (path) =>
+      readRepositoryFile(connection.installationId, repo.fullName, path),
+    listDirectory: (path) =>
+      listRepositoryContents(connection.installationId, repo.fullName, path),
+  });
+
+  if (!layout) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message:
+        "This repository does not look like a career-ops project or companion repo. Expected files such as data/applications.md or data/pipeline.md.",
+    });
+  }
+
   const [
     applicationsContent,
     pipelineContent,
@@ -139,27 +154,27 @@ export async function fetchCareerOpsRepoData(
     readRepositoryFile(
       connection.installationId,
       repo.fullName,
-      CAREER_OPS_PATHS.applications,
+      layout.applicationsPath,
     ),
     readRepositoryFile(
       connection.installationId,
       repo.fullName,
-      CAREER_OPS_PATHS.pipeline,
+      layout.pipelinePath,
     ),
     listRepositoryContents(
       connection.installationId,
       repo.fullName,
-      CAREER_OPS_PATHS.dataDir,
+      layout.dataDir,
     ),
     listRepositoryContents(
       connection.installationId,
       repo.fullName,
-      CAREER_OPS_PATHS.reportsDir,
+      layout.reportsDir,
     ),
     listRepositoryContents(
       connection.installationId,
       repo.fullName,
-      CAREER_OPS_PATHS.outputDir,
+      layout.outputDir,
     ),
     getRepositoryDefaultBranch(connection.installationId, repo.fullName),
   ]);
@@ -170,6 +185,7 @@ export async function fetchCareerOpsRepoData(
       name: repo.name,
       fullName: repo.fullName,
       defaultBranch,
+      layout,
       applicationsMarkdown: applicationsContent,
       pipelineMarkdown: pipelineContent,
       dataDirectory,

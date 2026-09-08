@@ -78,14 +78,21 @@ export function useLocalRepoMutations() {
 
   const writeApplicationsMarkdown = useCallback(
     async (content: string) =>
-      writeTextFile(CAREER_OPS_PATHS.applications, content),
-    [writeTextFile],
+      writeTextFile(
+        localDataQuery.data?.layout.applicationsPath ??
+          CAREER_OPS_PATHS.applications,
+        content,
+      ),
+    [localDataQuery.data?.layout.applicationsPath, writeTextFile],
   );
 
   const writePipelineMarkdown = useCallback(
     async (content: string) =>
-      writeTextFile(CAREER_OPS_PATHS.pipeline, content),
-    [writeTextFile],
+      writeTextFile(
+        localDataQuery.data?.layout.pipelinePath ?? CAREER_OPS_PATHS.pipeline,
+        content,
+      ),
+    [localDataQuery.data?.layout.pipelinePath, writeTextFile],
   );
 
   return {

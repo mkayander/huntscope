@@ -27,4 +27,18 @@ describe("parsePipelineMarkdown", () => {
       pendingPreview: [],
     });
   });
+
+  it("parses localized Spanish pipeline sections", () => {
+    const content = `## Pendientes
+- Empresa A
+
+## Procesadas
+- Empresa B`;
+
+    expect(parsePipelineMarkdown(content)).toEqual({
+      pendingCount: 1,
+      processedCount: 1,
+      pendingPreview: ["- Empresa A"],
+    });
+  });
 });
