@@ -3,10 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import {
-  hasViaColumnInApplicationsMarkdown,
-  parseApplicationsMarkdown,
-} from "~/lib/career-ops/parse-applications";
+import { parseApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
 import {
   serializeApplicationsMarkdown,
   updateApplicationStatus,
@@ -40,21 +37,25 @@ describe("serializeApplicationsMarkdown", () => {
     const serialized = serializeApplicationsMarkdown(parsed);
     const reparsed = parseApplicationsMarkdown(serialized);
 
+    expect(serialized).toContain("| Via |");
     expect(reparsed).toEqual(parsed);
   });
 
-  it("preserves an empty Via column when requested", () => {
+  it("omits the Via column when no rows have meaningful via values", () => {
     const content = `${CAREER_OPS_TABLE_HEADER}
-| 1 | 2026-06-20 | Acme | | Engineer | 4.2/5 | Applied | | | |`;
+| 1 | 2026-06-20 | Acme | — | Engineer | 4.2/5 | Applied | | | |
+| 2 | 2026-06-25 | Globex | — | Staff DevOps Engineer | 4.5/5 | Interview | | | |`;
 
     const parsed = parseApplicationsMarkdown(content);
-    const serialized = serializeApplicationsMarkdown(parsed, {
-      includeViaColumn: hasViaColumnInApplicationsMarkdown(content),
-    });
-    const reparsed = parseApplicationsMarkdown(serialized);
+    const serialized = serializeApplicationsMarkdown(parsed);
 
-    expect(serialized).toContain("| Via |");
-    expect(reparsed[0]?.via).toBe("—");
+    expect(serialized).not.toContain("| Via |");
+
+    const reparsed = parseApplicationsMarkdown(serialized);
+    expect(reparsed.map((application) => application.role)).toEqual(
+      parsed.map((application) => application.role),
+    );
+    expect(reparsed.every((application) => application.via === "")).toBe(true);
   });
 
   it("updates status for one application", () => {

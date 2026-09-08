@@ -60,26 +60,18 @@ function parseHeaderColumns(
   return columns;
 }
 
-export function hasViaColumnInApplicationsMarkdown(
-  content: string | null,
+export function hasMeaningfulViaValue(via: string): boolean {
+  const trimmed = via.trim();
+
+  return trimmed.length > 0 && trimmed !== "—" && trimmed !== "-";
+}
+
+export function shouldShowViaColumn(
+  applications: readonly ApplicationEntry[],
 ): boolean {
-  if (!content) {
-    return false;
-  }
-
-  for (const line of content.split("\n")) {
-    if (!line.startsWith("|")) {
-      continue;
-    }
-
-    const headerColumns = parseHeaderColumns(line);
-
-    if (headerColumns?.has("via")) {
-      return true;
-    }
-  }
-
-  return false;
+  return applications.some((application) =>
+    hasMeaningfulViaValue(application.via),
+  );
 }
 
 function getCell(

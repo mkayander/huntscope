@@ -1,3 +1,4 @@
+import { shouldShowViaColumn } from "~/lib/career-ops/parse-applications";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 const LEGACY_TABLE_HEADER = `# Applications
@@ -21,15 +22,8 @@ function formatTableCell(value: string): string {
   return trimmed.length > 0 ? escapeTableCell(trimmed) : "—";
 }
 
-function shouldIncludeViaColumn(
-  applications: ApplicationEntry[],
-  options?: { includeViaColumn?: boolean },
-): boolean {
-  if (options?.includeViaColumn !== undefined) {
-    return options.includeViaColumn;
-  }
-
-  return applications.some((application) => application.via.length > 0);
+function shouldIncludeViaColumn(applications: ApplicationEntry[]): boolean {
+  return shouldShowViaColumn(applications);
 }
 
 function serializeApplicationRow(
@@ -60,9 +54,8 @@ function serializeApplicationRow(
 
 export function serializeApplicationsMarkdown(
   applications: ApplicationEntry[],
-  options?: { includeViaColumn?: boolean },
 ): string {
-  const includeVia = shouldIncludeViaColumn(applications, options);
+  const includeVia = shouldIncludeViaColumn(applications);
   const header = includeVia ? CAREER_OPS_TABLE_HEADER : LEGACY_TABLE_HEADER;
   const rows = applications
     .map((application) => serializeApplicationRow(application, includeVia))
