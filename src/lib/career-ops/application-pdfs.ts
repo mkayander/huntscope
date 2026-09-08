@@ -7,6 +7,7 @@ import {
 } from "~/lib/career-ops/application-artifact-inference";
 import type { ApplicationArtifactRef } from "~/lib/career-ops/application-artifacts";
 import { extractMarkdownLink } from "~/lib/career-ops/links";
+import { normalizeRepoRelativePath } from "~/lib/career-ops/repo-paths";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
 export type ApplicationPdfSource = ApplicationArtifactRef["source"];
@@ -21,12 +22,12 @@ export {
 export function getPdfPathFromApplicationValue(value: string): string | null {
   const markdownLink = extractMarkdownLink(value);
   if (markdownLink && !markdownLink.href.startsWith("http")) {
-    return markdownLink.href.replace(/^\.\//, "");
+    return normalizeRepoRelativePath(markdownLink.href);
   }
 
   const trimmed = value.trim();
   if (trimmed.toLowerCase().endsWith(".pdf")) {
-    return trimmed.replace(/^\.\//, "");
+    return normalizeRepoRelativePath(trimmed);
   }
 
   return null;

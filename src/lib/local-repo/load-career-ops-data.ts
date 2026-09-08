@@ -83,7 +83,7 @@ async function listDirectoryEntries(
     } catch {
       try {
         await currentDirectory.getDirectoryHandle(name);
-        type = "directory";
+        type = "dir";
       } catch {
         continue;
       }

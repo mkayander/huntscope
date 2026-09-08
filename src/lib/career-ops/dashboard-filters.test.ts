@@ -16,6 +16,7 @@ function createApplication(
     num,
     date: "2026-01-15",
     company: `Company ${num}`,
+    via: "",
     role: "Engineer",
     score: "4.2",
     status: "Applied",

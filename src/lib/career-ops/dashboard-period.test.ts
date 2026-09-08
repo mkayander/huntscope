@@ -22,6 +22,7 @@ function createApplication(date: string, company = "Acme"): ApplicationEntry {
     num: 1,
     date,
     company,
+    via: "",
     role: "Engineer",
     score: "4.0",
     status: "Applied",
