@@ -77,7 +77,7 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
             />
             <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
               <OpenDashboardButton className="w-full min-w-0" />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Button
                   type="button"
                   variant="brandSecondary"
