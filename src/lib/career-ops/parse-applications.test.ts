@@ -1,12 +1,80 @@
 import { describe, expect, it } from "vitest";
 
-import { parseApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
+import {
+  hasMeaningfulViaValue,
+  parseApplicationsMarkdown,
+  shouldShowViaColumn,
+} from "~/lib/career-ops/parse-applications";
 
 const LEGACY_TABLE_HEADER = `| # | Date | Company | Role | Score | Status | PDF | Report | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |`;
 
 const CAREER_OPS_TABLE_HEADER = `| # | Date | Company | Via | Role | Score | Status | PDF | Report | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`;
+
+describe("hasMeaningfulViaValue", () => {
+  it("treats placeholders as empty", () => {
+    expect(hasMeaningfulViaValue("")).toBe(false);
+    expect(hasMeaningfulViaValue("—")).toBe(false);
+    expect(hasMeaningfulViaValue("-")).toBe(false);
+  });
+
+  it("detects agency names", () => {
+    expect(hasMeaningfulViaValue("Hays")).toBe(true);
+  });
+});
+
+describe("shouldShowViaColumn", () => {
+  it("is false when every row has an empty via", () => {
+    expect(
+      shouldShowViaColumn([
+        {
+          num: 1,
+          date: "2026-01-01",
+          company: "Acme",
+          via: "—",
+          role: "Engineer",
+          score: "4",
+          status: "Applied",
+          pdf: "",
+          report: "",
+          notes: "",
+        },
+      ]),
+    ).toBe(false);
+  });
+
+  it("is true when at least one row has a via value", () => {
+    expect(
+      shouldShowViaColumn([
+        {
+          num: 1,
+          date: "2026-01-01",
+          company: "Acme",
+          via: "—",
+          role: "Engineer",
+          score: "4",
+          status: "Applied",
+          pdf: "",
+          report: "",
+          notes: "",
+        },
+        {
+          num: 2,
+          date: "2026-01-02",
+          company: "Globex",
+          via: "Hays",
+          role: "Staff Engineer",
+          score: "4.5",
+          status: "Interview",
+          pdf: "",
+          report: "",
+          notes: "",
+        },
+      ]),
+    ).toBe(true);
+  });
+});
 
 describe("parseApplicationsMarkdown", () => {
   it("parses legacy application table rows without a Via column", () => {

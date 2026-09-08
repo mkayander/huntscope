@@ -54,6 +54,20 @@ const outputFiles: RepoDataFile[] = [
 ];
 
 describe("buildOutputFileRows", () => {
+  it("links applications by prefixed pdf paths", () => {
+    const externalOutputFiles: RepoDataFile[] = [
+      {
+        path: "external-data/output/acme.pdf",
+        name: "acme.pdf",
+        type: "file",
+      },
+    ];
+
+    const rows = buildOutputFileRows(externalOutputFiles, applications);
+
+    expect(rows[0]?.linkedApplication).toMatchObject({ company: "Acme Corp" });
+  });
+
   it("links applications by pdf path and infers remaining files", () => {
     const rows = buildOutputFileRows(outputFiles, applications);
 

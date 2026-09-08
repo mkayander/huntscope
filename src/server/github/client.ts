@@ -1,9 +1,10 @@
 import { TRPCError } from "@trpc/server";
 
+import { buildCareerOpsRepoData } from "~/lib/career-ops/layout";
 import {
-  buildCareerOpsRepoData,
-  CAREER_OPS_PATHS,
-} from "~/lib/career-ops/layout";
+  repositoryHasCareerOpsLayout,
+  resolveCareerOpsLayout,
+} from "~/lib/career-ops/resolve-layout";
 import type {
   GitHubRepoSummary,
   RawCareerOpsRepoData,
@@ -62,16 +63,15 @@ async function getAuthorizedInstallation(userId: string, repo?: SelectedRepo) {
   return connection;
 }
 
-async function repositoryHasCareerOpsLayout(
+async function checkRepositoryHasCareerOpsLayout(
   installationId: number,
   fullName: string,
 ): Promise<boolean> {
-  const [applicationsContent, pipelineContent] = await Promise.all([
-    readRepositoryFile(installationId, fullName, CAREER_OPS_PATHS.applications),
-    readRepositoryFile(installationId, fullName, CAREER_OPS_PATHS.pipeline),
-  ]);
-
-  return Boolean(applicationsContent ?? pipelineContent);
+  return repositoryHasCareerOpsLayout({
+    readFile: (path) => readRepositoryFile(installationId, fullName, path),
+    listDirectory: (path) =>
+      listRepositoryContents(installationId, fullName, path),
+  });
 }
 
 export function isGitHubRateLimitError(error: unknown): boolean {
@@ -91,7 +91,7 @@ export async function listUserRepos(
         return null;
       }
 
-      const hasCareerOpsLayout = await repositoryHasCareerOpsLayout(
+      const hasCareerOpsLayout = await checkRepositoryHasCareerOpsLayout(
         connection.installationId,
         repository.fullName,
       );
@@ -128,41 +128,42 @@ export async function fetchCareerOpsRepoData(
 ): Promise<RawCareerOpsRepoData> {
   const connection = await getAuthorizedInstallation(userId, repo);
 
-  const [
-    applicationsContent,
-    pipelineContent,
-    dataDirectory,
-    reportsDirectory,
-    outputDirectory,
-    defaultBranch,
-  ] = await Promise.all([
-    readRepositoryFile(
-      connection.installationId,
-      repo.fullName,
-      CAREER_OPS_PATHS.applications,
-    ),
-    readRepositoryFile(
-      connection.installationId,
-      repo.fullName,
-      CAREER_OPS_PATHS.pipeline,
-    ),
-    listRepositoryContents(
-      connection.installationId,
-      repo.fullName,
-      CAREER_OPS_PATHS.dataDir,
-    ),
-    listRepositoryContents(
-      connection.installationId,
-      repo.fullName,
-      CAREER_OPS_PATHS.reportsDir,
-    ),
-    listRepositoryContents(
-      connection.installationId,
-      repo.fullName,
-      CAREER_OPS_PATHS.outputDir,
-    ),
-    getRepositoryDefaultBranch(connection.installationId, repo.fullName),
-  ]);
+  const resolved = await resolveCareerOpsLayout({
+    readFile: (path) =>
+      readRepositoryFile(connection.installationId, repo.fullName, path),
+    listDirectory: (path) =>
+      listRepositoryContents(connection.installationId, repo.fullName, path),
+  });
+
+  if (!resolved) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message:
+        "This repository does not look like a career-ops project or companion repo. Expected files such as data/applications.md or data/pipeline.md.",
+    });
+  }
+
+  const { applicationsMarkdown, pipelineMarkdown, ...layout } = resolved;
+
+  const [dataDirectory, reportsDirectory, outputDirectory, defaultBranch] =
+    await Promise.all([
+      listRepositoryContents(
+        connection.installationId,
+        repo.fullName,
+        layout.dataDir,
+      ),
+      listRepositoryContents(
+        connection.installationId,
+        repo.fullName,
+        layout.reportsDir,
+      ),
+      listRepositoryContents(
+        connection.installationId,
+        repo.fullName,
+        layout.outputDir,
+      ),
+      getRepositoryDefaultBranch(connection.installationId, repo.fullName),
+    ]);
 
   try {
     return buildCareerOpsRepoData({
@@ -170,8 +171,9 @@ export async function fetchCareerOpsRepoData(
       name: repo.name,
       fullName: repo.fullName,
       defaultBranch,
-      applicationsMarkdown: applicationsContent,
-      pipelineMarkdown: pipelineContent,
+      layout,
+      applicationsMarkdown,
+      pipelineMarkdown,
       dataDirectory,
       reportsDirectory,
       outputDirectory,

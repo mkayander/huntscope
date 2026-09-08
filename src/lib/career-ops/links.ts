@@ -1,5 +1,8 @@
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
-import { normalizeRepoRelativePath } from "~/lib/career-ops/repo-paths";
+import {
+  matchRepoFilePath,
+  normalizeRepoRelativePath,
+} from "~/lib/career-ops/repo-paths";
 
 export function extractMarkdownLink(
   value: string,
@@ -37,6 +40,7 @@ export function resolveDataSourceFileUrl(
   source: CareerOpsDataSource,
   path: string,
   defaultBranch: string | null = "main",
+  knownFiles: readonly { path: string }[] = [],
 ): string | null {
   if (source.kind === "github") {
     const trimmed = path.trim();
@@ -49,9 +53,14 @@ export function resolveDataSourceFileUrl(
       return trimmed;
     }
 
+    const resolvedPath = matchRepoFilePath(
+      normalizeRepoRelativePath(path),
+      knownFiles,
+    );
+
     return resolveRepoFileUrl(
       source.repo.fullName,
-      normalizeRepoRelativePath(path),
+      resolvedPath,
       defaultBranch ?? "main",
     );
   }
@@ -63,16 +72,56 @@ export function resolveArtifactLink(
   source: CareerOpsDataSource,
   value: string,
   defaultBranch: string | null = "main",
+  knownFiles: readonly { path: string }[] = [],
 ): { label: string; href: string | null; path: string | null } | null {
+  const trimmedValue = value.trim();
+  const directPath =
+    trimmedValue.includes("/") || trimmedValue.endsWith(".md")
+      ? matchRepoFilePath(normalizeRepoRelativePath(trimmedValue), knownFiles)
+      : trimmedValue.toLowerCase().endsWith(".pdf")
+        ? matchRepoFilePath(normalizeRepoRelativePath(trimmedValue), knownFiles)
+        : null;
+
+  if (
+    directPath &&
+    !trimmedValue.includes("[") &&
+    !trimmedValue.startsWith("http")
+  ) {
+    const label = trimmedValue.toLowerCase().endsWith(".pdf")
+      ? "PDF"
+      : "Report";
+
+    return {
+      label,
+      href: resolveDataSourceFileUrl(
+        source,
+        directPath,
+        defaultBranch,
+        knownFiles,
+      ),
+      path: directPath,
+    };
+  }
+
   const markdownLink = extractMarkdownLink(value);
 
   if (markdownLink) {
     const path = markdownLink.href.startsWith("http")
       ? null
-      : normalizeRepoRelativePath(markdownLink.href);
+      : matchRepoFilePath(
+          normalizeRepoRelativePath(markdownLink.href),
+          knownFiles,
+        );
     const href = markdownLink.href.startsWith("http")
       ? markdownLink.href
-      : resolveDataSourceFileUrl(source, markdownLink.href, defaultBranch);
+      : path
+        ? resolveDataSourceFileUrl(source, path, defaultBranch, knownFiles)
+        : resolveDataSourceFileUrl(
+            source,
+            markdownLink.href,
+            defaultBranch,
+            knownFiles,
+          );
 
     return {
       label: markdownLink.label,
@@ -84,19 +133,25 @@ export function resolveArtifactLink(
   const trimmed = value.trim();
 
   if (trimmed && (trimmed.includes("/") || trimmed.endsWith(".md"))) {
-    const path = normalizeRepoRelativePath(trimmed);
+    const path = matchRepoFilePath(
+      normalizeRepoRelativePath(trimmed),
+      knownFiles,
+    );
     return {
       label: "Report",
-      href: resolveDataSourceFileUrl(source, trimmed, defaultBranch),
+      href: resolveDataSourceFileUrl(source, path, defaultBranch, knownFiles),
       path,
     };
   }
 
   if (trimmed.toLowerCase().endsWith(".pdf")) {
-    const path = normalizeRepoRelativePath(trimmed);
+    const path = matchRepoFilePath(
+      normalizeRepoRelativePath(trimmed),
+      knownFiles,
+    );
     return {
       label: "PDF",
-      href: resolveDataSourceFileUrl(source, trimmed, defaultBranch),
+      href: resolveDataSourceFileUrl(source, path, defaultBranch, knownFiles),
       path,
     };
   }

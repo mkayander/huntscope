@@ -147,4 +147,22 @@ describe("career-ops fixture reports", () => {
       source: "linked",
     });
   });
+
+  it("matches report links against prefixed external-data paths", () => {
+    const applications = parseApplicationsMarkdown(
+      readFileSync(join(fixtureRoot, "data/applications.md"), "utf8"),
+    );
+    const acme = applications.find((entry) => entry.company === "Acme");
+    const externalReportFiles: RepoDataFile[] = [
+      {
+        path: "external-data/reports/001-acme-2026-06-20.md",
+        name: "001-acme-2026-06-20.md",
+        type: "file",
+      },
+    ];
+
+    expect(getApplicationReportRef(acme!, externalReportFiles)?.path).toBe(
+      "external-data/reports/001-acme-2026-06-20.md",
+    );
+  });
 });

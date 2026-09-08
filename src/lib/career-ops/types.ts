@@ -23,11 +23,23 @@ export type RepoDataFile = {
   type: "file" | "dir";
 };
 
+export type CareerOpsResolvedLayout = {
+  dataRoot: string;
+  applicationsPath: string;
+  pipelinePath: string;
+  applicationsWritePath: string;
+  pipelineWritePath: string;
+  dataDir: string;
+  reportsDir: string;
+  outputDir: string;
+};
+
 export type RawCareerOpsRepoData = {
   owner: string;
   name: string;
   fullName: string;
   defaultBranch: string | null;
+  layout: CareerOpsResolvedLayout;
   applicationsMarkdown: string | null;
   pipelineMarkdown: string | null;
   dataFiles: RepoDataFile[];

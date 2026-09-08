@@ -56,7 +56,10 @@ export function buildOutputFileRows(
   const linkedByPath = new Map<string, ApplicationEntry>();
 
   for (const application of applications) {
-    const pdfPath = getPdfPathFromApplicationValue(application.pdf);
+    const pdfPath = getPdfPathFromApplicationValue(
+      application.pdf,
+      outputFiles,
+    );
     if (pdfPath) {
       linkedByPath.set(pdfPath, application);
     }

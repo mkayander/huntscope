@@ -14,6 +14,7 @@ import {
 import { TrackerStatusSelect } from "~/app/_components/tracker-status-select";
 import { ApplicationDate } from "~/components/application-date";
 import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
+import { shouldShowViaColumn } from "~/lib/career-ops/parse-applications";
 import type {
   TrackerSortColumn,
   TrackerTableQuery,
@@ -22,9 +23,11 @@ import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
 const ROW_HEIGHT = 56;
 
-/** Shared column template for header + virtualized rows (inline style avoids Tailwind/HMR grid drift). */
-const TRACKER_GRID_TEMPLATE =
+const TRACKER_GRID_TEMPLATE_WITHOUT_VIA =
   "2.5rem 6rem minmax(5rem,7.5rem) minmax(8rem,1fr) 4.5rem minmax(5.5rem,6rem) minmax(5.75rem,7.25rem) minmax(8rem,1.5fr)";
+
+const TRACKER_GRID_TEMPLATE_WITH_VIA =
+  "2.5rem 6rem minmax(5rem,7.5rem) minmax(4rem,5.5rem) minmax(8rem,1fr) 4.5rem minmax(5.5rem,6rem) minmax(5.75rem,7.25rem) minmax(8rem,1.5fr)";
 
 /** Prevents columns from squashing/overlapping on narrow viewports; table scrolls horizontally instead. */
 const TRACKER_TABLE_MIN_WIDTH_CLASS = "min-w-[52rem]";
@@ -67,6 +70,10 @@ export function TrackerVirtualTable({
   });
 
   const virtualRows = rowVirtualizer.getVirtualItems();
+  const showViaColumn = shouldShowViaColumn(applications);
+  const gridTemplateColumns = showViaColumn
+    ? TRACKER_GRID_TEMPLATE_WITH_VIA
+    : TRACKER_GRID_TEMPLATE_WITHOUT_VIA;
 
   return (
     <div
@@ -79,7 +86,7 @@ export function TrackerVirtualTable({
           <div role="rowgroup">
             <div
               className="sticky top-0 z-10 grid shrink-0 border-b border-white/10 bg-[#15162c] px-2 text-sm"
-              style={{ gridTemplateColumns: TRACKER_GRID_TEMPLATE }}
+              style={{ gridTemplateColumns }}
               role="row"
             >
               <TrackerSortableHeader
@@ -109,6 +116,13 @@ export function TrackerVirtualTable({
                 onSort={onSort}
                 className="px-2 py-2"
               />
+              {showViaColumn ? (
+                <TrackerStaticHeader
+                  as="div"
+                  label="Via"
+                  className="px-2 py-2"
+                />
+              ) : null}
               <TrackerSortableHeader
                 as="div"
                 label="Role"
@@ -166,7 +180,7 @@ export function TrackerVirtualTable({
                   data-index={virtualRow.index}
                   className="absolute top-0 left-0 grid w-full border-b border-white/5 px-2 text-sm text-white/90"
                   style={{
-                    gridTemplateColumns: TRACKER_GRID_TEMPLATE,
+                    gridTemplateColumns,
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
@@ -188,6 +202,15 @@ export function TrackerVirtualTable({
                   >
                     {entry.company}
                   </div>
+                  {showViaColumn ? (
+                    <div
+                      className="flex items-center truncate px-2 py-2 text-white/70"
+                      title={entry.via}
+                      role="cell"
+                    >
+                      {entry.via}
+                    </div>
+                  ) : null}
                   <div className="flex items-center px-2 py-2" role="cell">
                     <ApplicationRoleLink
                       application={entry}
