@@ -1,5 +1,3 @@
-import type { RepoDataFile } from "~/lib/career-ops/types";
-
 export function normalizeRepoRelativePath(path: string): string {
   const trimmed = path.trim();
 
@@ -12,7 +10,7 @@ export function normalizeRepoRelativePath(path: string): string {
 
 export function matchRepoFilePath(
   normalizedPath: string,
-  files: readonly RepoDataFile[],
+  files: readonly { path: string }[],
 ): string {
   if (!normalizedPath) {
     return "";
@@ -24,9 +22,8 @@ export function matchRepoFilePath(
     return exactMatch.path;
   }
 
-  const suffixMatch = files.find(
-    (file) =>
-      file.path.endsWith(`/${normalizedPath}`) || file.name === normalizedPath,
+  const suffixMatch = files.find((file) =>
+    file.path.endsWith(`/${normalizedPath}`),
   );
 
   return suffixMatch?.path ?? normalizedPath;

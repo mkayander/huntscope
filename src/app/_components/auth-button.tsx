@@ -70,7 +70,7 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
   const isCompact = variant === "compact";
   const buttonSize = isCompact ? "pillSm" : "cta";
   const buttonClassName = isCompact
-    ? "max-w-[9.5rem] shrink-0 whitespace-nowrap"
+    ? "w-auto max-w-none shrink-0"
     : `w-full max-w-sm ${LANDING_CTA_BUTTON_CLASS}`;
   const stableButtonLabels = isCompact
     ? isAuthenticated
@@ -134,6 +134,7 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
         size={buttonSize}
         className={buttonClassName}
         disabled={isBusy}
+        aria-busy={isBusy}
         onClick={() => {
           if (isAuthenticated) {
             setSignOutError(null);

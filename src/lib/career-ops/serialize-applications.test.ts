@@ -3,7 +3,10 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { parseApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
+import {
+  hasViaColumnInApplicationsMarkdown,
+  parseApplicationsMarkdown,
+} from "~/lib/career-ops/parse-applications";
 import {
   serializeApplicationsMarkdown,
   updateApplicationStatus,
@@ -15,6 +18,9 @@ const SAMPLE_TABLE = `# Applications
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 2026-01-15 | Acme Corp | Backend Engineer | 4.2 | Applied | [cv](output/acme.pdf) | [report](reports/001-acme.md) | Strong fit |
 `;
+
+const CAREER_OPS_TABLE_HEADER = `| # | Date | Company | Via | Role | Score | Status | PDF | Report | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`;
 
 describe("serializeApplicationsMarkdown", () => {
   it("round-trips a simple applications table", () => {
@@ -35,6 +41,20 @@ describe("serializeApplicationsMarkdown", () => {
     const reparsed = parseApplicationsMarkdown(serialized);
 
     expect(reparsed).toEqual(parsed);
+  });
+
+  it("preserves an empty Via column when requested", () => {
+    const content = `${CAREER_OPS_TABLE_HEADER}
+| 1 | 2026-06-20 | Acme | | Engineer | 4.2/5 | Applied | | | |`;
+
+    const parsed = parseApplicationsMarkdown(content);
+    const serialized = serializeApplicationsMarkdown(parsed, {
+      includeViaColumn: hasViaColumnInApplicationsMarkdown(content),
+    });
+    const reparsed = parseApplicationsMarkdown(serialized);
+
+    expect(serialized).toContain("| Via |");
+    expect(reparsed[0]?.via).toBe("—");
   });
 
   it("updates status for one application", () => {

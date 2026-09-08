@@ -45,11 +45,19 @@ function prefixDataRoot(dataRoot: string, relativePath: string): string {
   return dataRoot ? joinRepoPath(dataRoot, relativePath) : relativePath;
 }
 
+function hasParentTraversalSegment(path: string): boolean {
+  return path.split("/").some((segment) => segment === "..");
+}
+
 export function parseDataRootMarker(content: string): string {
   const line = content.trim().split("\n")[0]?.trim() ?? "";
   const normalized = line.replace(/^\.\//, "").replace(/\/$/, "");
 
-  if (!normalized || normalized.startsWith("/") || normalized.includes("..")) {
+  if (
+    !normalized ||
+    normalized.startsWith("/") ||
+    hasParentTraversalSegment(normalized)
+  ) {
     return "";
   }
 
@@ -126,11 +134,49 @@ async function findExistingFile(
   return null;
 }
 
+async function resolveDataRoot(
+  readFile: (path: string) => Promise<string | null>,
+): Promise<string> {
+  const markerContent = await readFile(CAREER_OPS_DATA_ROOT_MARKER);
+  return markerContent ? parseDataRootMarker(markerContent) : "";
+}
+
+export async function repositoryHasCareerOpsLayout(
+  reader: CareerOpsLayoutReader,
+): Promise<boolean> {
+  const dataRoot = await resolveDataRoot(reader.readFile);
+
+  for (const candidate of APPLICATIONS_CANDIDATE_PATHS) {
+    const content = await reader.readFile(prefixDataRoot(dataRoot, candidate));
+
+    if (content !== null) {
+      return true;
+    }
+  }
+
+  for (const candidate of PIPELINE_CANDIDATE_PATHS) {
+    const content = await reader.readFile(prefixDataRoot(dataRoot, candidate));
+
+    if (content !== null) {
+      return true;
+    }
+  }
+
+  if (!reader.listDirectory) {
+    return false;
+  }
+
+  const dataDirectoryEntries = await reader.listDirectory(
+    prefixDataRoot(dataRoot, "data"),
+  );
+
+  return hasRecognizableCareerOpsDataFiles(dataDirectoryEntries);
+}
+
 export async function resolveCareerOpsLayout(
   reader: CareerOpsLayoutReader,
 ): Promise<ResolvedCareerOpsLayout | null> {
-  const markerContent = await reader.readFile(CAREER_OPS_DATA_ROOT_MARKER);
-  const dataRoot = markerContent ? parseDataRootMarker(markerContent) : "";
+  const dataRoot = await resolveDataRoot(reader.readFile);
 
   const [applicationsFile, pipelineFile] = await Promise.all([
     findExistingFile(reader.readFile, dataRoot, APPLICATIONS_CANDIDATE_PATHS),
@@ -160,13 +206,17 @@ export async function resolveCareerOpsLayout(
     pipelinePath,
   });
 
+  const resolvedApplicationsPath =
+    applicationsPath ?? prefixDataRoot(dataRoot, "data/applications.md");
+  const resolvedPipelinePath =
+    pipelinePath ?? prefixDataRoot(dataRoot, "data/pipeline.md");
+
   const layout: CareerOpsResolvedLayout = {
     dataRoot,
-    applicationsPath:
-      applicationsPath ?? prefixDataRoot(dataRoot, "data/applications.md"),
-    pipelinePath: pipelinePath ?? prefixDataRoot(dataRoot, "data/pipeline.md"),
-    applicationsWritePath: prefixDataRoot(dataRoot, "data/applications.md"),
-    pipelineWritePath: prefixDataRoot(dataRoot, "data/pipeline.md"),
+    applicationsPath: resolvedApplicationsPath,
+    pipelinePath: resolvedPipelinePath,
+    applicationsWritePath: resolvedApplicationsPath,
+    pipelineWritePath: resolvedPipelinePath,
     dataDir,
     reportsDir: prefixDataRoot(dataRoot, "reports"),
     outputDir: prefixDataRoot(dataRoot, "output"),
@@ -177,11 +227,4 @@ export async function resolveCareerOpsLayout(
     applicationsMarkdown: applicationsFile?.content ?? null,
     pipelineMarkdown: pipelineFile?.content ?? null,
   };
-}
-
-export async function repositoryHasCareerOpsLayout(
-  reader: CareerOpsLayoutReader,
-): Promise<boolean> {
-  const layout = await resolveCareerOpsLayout(reader);
-  return layout !== null;
 }

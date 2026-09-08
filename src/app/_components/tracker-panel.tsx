@@ -21,6 +21,7 @@ import {
   getBoardColumnOrder,
   sortStatuses,
 } from "~/lib/career-ops/status-meta";
+import { hasViaColumnInApplicationsMarkdown } from "~/lib/career-ops/parse-applications";
 import {
   serializeApplicationsMarkdown,
   updateApplicationStatus,
@@ -43,6 +44,7 @@ type TrackerView = "table" | "board";
 type TrackerPanelProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
+  applicationsMarkdown: string | null;
   applications: ApplicationEntry[];
   allApplications: ApplicationEntry[];
   totalApplications: number;
@@ -53,6 +55,7 @@ type TrackerPanelProps = {
 export function TrackerPanel({
   dataSource,
   defaultBranch,
+  applicationsMarkdown,
   applications,
   allApplications,
   totalApplications,
@@ -105,7 +108,10 @@ export function TrackerPanel({
       status,
     );
     await writeApplicationsMarkdown(
-      serializeApplicationsMarkdown(nextApplications),
+      serializeApplicationsMarkdown(nextApplications, {
+        includeViaColumn:
+          hasViaColumnInApplicationsMarkdown(applicationsMarkdown),
+      }),
     );
   };
 

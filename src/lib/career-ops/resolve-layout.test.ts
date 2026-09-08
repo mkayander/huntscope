@@ -18,9 +18,14 @@ describe("parseDataRootMarker", () => {
     expect(parseDataRootMarker("external-data/")).toBe("external-data");
   });
 
-  it("rejects parent traversal and absolute paths", () => {
+  it("rejects parent traversal segments in marker paths", () => {
     expect(parseDataRootMarker("../outside")).toBe("");
+    expect(parseDataRootMarker("external/../outside")).toBe("");
     expect(parseDataRootMarker("/absolute/path")).toBe("");
+  });
+
+  it("allows directory names that contain double dots", () => {
+    expect(parseDataRootMarker("my..data")).toBe("my..data");
   });
 });
 
@@ -145,6 +150,17 @@ describe("resolveCareerOpsLayout", () => {
     });
 
     expect(layout).toBeNull();
+  });
+
+  it("uses the read tracker path for writes", async () => {
+    const files = new Map([["applications.md", "# Applications"]]);
+
+    const layout = await resolveCareerOpsLayout({
+      readFile: async (path) => files.get(path) ?? null,
+    });
+
+    expect(layout?.applicationsPath).toBe("applications.md");
+    expect(layout?.applicationsWritePath).toBe("applications.md");
   });
 
   it("returns null when no career-ops files are present", async () => {

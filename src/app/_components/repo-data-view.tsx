@@ -233,6 +233,7 @@ function RepoDataContent({
         <TrackerPanel
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
+          applicationsMarkdown={raw.applicationsMarkdown}
           applications={filteredApplications}
           allApplications={parsed.applications}
           totalApplications={parsed.applications.length}

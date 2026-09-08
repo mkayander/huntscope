@@ -44,9 +44,9 @@ export function DataPreview({
             Preview
           </span>
         </div>
-        <p className="line-clamp-4 text-sm leading-relaxed break-words whitespace-pre-wrap text-white/70">
+        <pre className="max-h-24 overflow-y-auto text-sm leading-relaxed break-words whitespace-pre-wrap text-white/70">
           {preview}
-        </p>
+        </pre>
       </div>
     );
   }

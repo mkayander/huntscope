@@ -21,7 +21,7 @@ export function ButtonLoadingIcon({
           : "pointer-events-none opacity-0",
         className,
       )}
-      aria-hidden={!isLoading}
+      aria-hidden
     />
   );
 }

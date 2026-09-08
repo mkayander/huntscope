@@ -60,6 +60,28 @@ function parseHeaderColumns(
   return columns;
 }
 
+export function hasViaColumnInApplicationsMarkdown(
+  content: string | null,
+): boolean {
+  if (!content) {
+    return false;
+  }
+
+  for (const line of content.split("\n")) {
+    if (!line.startsWith("|")) {
+      continue;
+    }
+
+    const headerColumns = parseHeaderColumns(line);
+
+    if (headerColumns?.has("via")) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function getCell(
   parts: string[],
   columnMap: Map<ApplicationColumnKey, number> | null,
