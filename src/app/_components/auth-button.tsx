@@ -7,7 +7,9 @@ import { FeedbackRegion } from "~/app/_components/feedback-region";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import {
-  AUTH_BUTTON_LABEL_PLACEHOLDER,
+  AUTH_BUTTON_LABELS,
+  AUTH_BUTTON_LABELS_COMPACT_SIGNED_IN,
+  AUTH_BUTTON_LABELS_COMPACT_SIGNED_OUT,
   LANDING_CTA_BUTTON_CLASS,
   PanelButtonSkeleton,
 } from "~/app/_components/panel-loading-skeleton";
@@ -68,8 +70,13 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
   const isCompact = variant === "compact";
   const buttonSize = isCompact ? "pillSm" : "cta";
   const buttonClassName = isCompact
-    ? "whitespace-nowrap"
+    ? "w-auto max-w-none shrink-0"
     : `w-full max-w-sm ${LANDING_CTA_BUTTON_CLASS}`;
+  const stableButtonLabels = isCompact
+    ? isAuthenticated
+      ? AUTH_BUTTON_LABELS_COMPACT_SIGNED_IN
+      : AUTH_BUTTON_LABELS_COMPACT_SIGNED_OUT
+    : AUTH_BUTTON_LABELS;
 
   if (showAuthSkeleton && !isCompact) {
     return (
@@ -127,6 +134,7 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
         size={buttonSize}
         className={buttonClassName}
         disabled={isBusy}
+        aria-busy={isBusy}
         onClick={() => {
           if (isAuthenticated) {
             setSignOutError(null);
@@ -177,7 +185,7 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
         }}
       >
         <ButtonLoadingIcon isLoading={isBusy} />
-        <StableButtonLabel placeholder={AUTH_BUTTON_LABEL_PLACEHOLDER}>
+        <StableButtonLabel labels={stableButtonLabels}>
           {buttonLabel}
         </StableButtonLabel>
       </Button>

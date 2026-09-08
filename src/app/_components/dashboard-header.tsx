@@ -46,12 +46,12 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
     <header
       ref={headerRef}
       className={cn(
-        "sticky top-0 z-40 w-full border-b border-white/10 bg-[#0b0c1c]/85 backdrop-blur-md",
+        "sticky top-0 z-40 w-full border-b border-white/10 bg-[#0b0c1c]/85 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md",
         className,
       )}
     >
       <div className={DASHBOARD_SHELL_CLASS}>
-        <div className="flex min-h-11 items-center justify-between gap-3 py-2.5">
+        <div className="flex min-h-10 items-center justify-between gap-2 py-2 sm:min-h-11 sm:gap-3 sm:py-2.5">
           <div className="flex min-w-0 items-center gap-2">
             <Link
               href={LANDING_PATH}

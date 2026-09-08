@@ -7,19 +7,21 @@ type ButtonLoadingIconProps = {
   className?: string;
 };
 
-/** Spinner for async buttons; omitted when idle so label text stays centered. */
+/** Spinner for async buttons; always reserves icon space to avoid layout shift. */
 export function ButtonLoadingIcon({
   isLoading,
   className,
 }: ButtonLoadingIconProps) {
-  if (!isLoading) {
-    return null;
-  }
-
   return (
     <Loader2
-      className={cn("size-4 shrink-0 animate-spin", className)}
-      aria-hidden="true"
+      className={cn(
+        "size-4 shrink-0",
+        isLoading
+          ? "animate-spin opacity-100"
+          : "pointer-events-none opacity-0",
+        className,
+      )}
+      aria-hidden
     />
   );
 }

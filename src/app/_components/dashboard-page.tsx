@@ -8,7 +8,7 @@ export function DashboardPage() {
   usePageShellTheme("dashboard");
 
   return (
-    <main className="relative isolate flex min-h-screen flex-col text-white">
+    <main className="min-h-app-viewport relative isolate flex flex-col text-white">
       <DashboardAmbientBackground />
 
       <div className="relative z-10 w-full">

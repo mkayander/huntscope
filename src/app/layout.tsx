@@ -5,6 +5,7 @@ import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 
 import { PwaRegister } from "~/app/_components/pwa-register";
+import { VisualViewportSync } from "~/app/_components/visual-viewport-sync";
 import { LocaleProvider } from "~/lib/i18n/locale-context";
 import { APP_LOCALE } from "~/lib/i18n/locale";
 import { PAGE_SHELL_LANDING_BACKGROUND } from "~/lib/page-shell-background";
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#2e026d",
   colorScheme: "dark",
+  viewportFit: "cover",
 };
 
 const geist = Geist({
@@ -62,6 +64,7 @@ export default async function RootLayout({
         <meta name="darkreader-lock" />
       </head>
       <body className={`${geist.className} antialiased`}>
+        <VisualViewportSync />
         <PwaRegister />
         <LocaleProvider>
           <TRPCReactProvider>{children}</TRPCReactProvider>

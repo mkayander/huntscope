@@ -19,12 +19,12 @@ export function MobileSectionNav() {
   return (
     <nav
       aria-label="Dashboard sections"
-      className="border-t border-white/10 py-2 xl:hidden"
+      className="border-t border-white/10 pb-1.5 xl:hidden"
     >
       <div
         className={cn(
-          "flex [scrollbar-width:none] gap-2 overflow-x-auto pb-0.5",
-          "[&::-webkit-scrollbar]:hidden",
+          "flex gap-1.5 overflow-x-auto overflow-y-visible py-1.5",
+          "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         )}
       >
         {navigableSections.map((section) => {
@@ -38,9 +38,9 @@ export function MobileSectionNav() {
               aria-current={isActive ? "true" : undefined}
               className={cn(
                 clickablePillClassName,
-                "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium",
+                "shrink-0 rounded-full px-2.5 py-1 text-[11px] leading-tight font-medium",
                 isActive
-                  ? "bg-violet-500/20 text-violet-100 ring-1 ring-violet-400/40"
+                  ? "bg-violet-500/20 text-violet-100 shadow-[inset_0_0_0_1px_rgba(167,139,250,0.35)]"
                   : "bg-white/5 text-white/70 hover:text-white",
               )}
             >
