@@ -348,7 +348,7 @@ export function RepoSelector() {
                   variant="outline"
                   size="pill"
                   loadingLabel="Opening GitHub…"
-                  labelPlaceholder="Opening GitHub…"
+                  labelPlaceholder="Change installation"
                 >
                   Change installation
                 </GitHubInstallButton>

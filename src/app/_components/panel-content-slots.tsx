@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { longestLabel } from "~/lib/ui/longest-label";
 import { cn } from "~/lib/utils";
 
 /** ~4–5 lines of `text-sm` copy on the landing panels. */
@@ -86,7 +87,10 @@ export function PanelPrimaryActionSlot({
 
 type StableButtonLabelProps = {
   children: ReactNode;
-  placeholder: string;
+  /** @deprecated Prefer `labels` so width covers every state. */
+  placeholder?: string;
+  /** All label strings this button may show; width is reserved for the longest. */
+  labels?: readonly string[];
   className?: string;
 };
 
@@ -94,8 +98,14 @@ type StableButtonLabelProps = {
 export function StableButtonLabel({
   children,
   placeholder,
+  labels,
   className,
 }: StableButtonLabelProps) {
+  const widthAnchor = longestLabel([
+    ...(labels ?? []),
+    ...(placeholder ? [placeholder] : []),
+  ]);
+
   return (
     <span
       className={cn(
@@ -104,7 +114,7 @@ export function StableButtonLabel({
       )}
     >
       <span aria-hidden className="invisible">
-        {placeholder}
+        {widthAnchor}
       </span>
       <span>{children}</span>
     </span>

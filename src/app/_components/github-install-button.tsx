@@ -7,6 +7,7 @@ import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import { AUTH_BUTTON_LABEL_PLACEHOLDER } from "~/app/_components/panel-loading-skeleton";
 import { GitHubInstallLink } from "~/app/_components/github-install-link";
 import { Button } from "~/components/ui/button";
+import { longestLabel } from "~/lib/ui/longest-label";
 import { cn } from "~/lib/utils";
 
 type GitHubInstallButtonProps = Omit<
@@ -19,6 +20,20 @@ type GitHubInstallButtonProps = Omit<
   labelPlaceholder?: string;
 };
 
+function getInstallButtonLabels(
+  children: ReactNode,
+  loadingLabel: string,
+  labelPlaceholder: string,
+): string[] {
+  const labels = [loadingLabel, labelPlaceholder];
+
+  if (typeof children === "string") {
+    labels.push(children);
+  }
+
+  return labels;
+}
+
 export function GitHubInstallButton({
   children,
   href,
@@ -30,6 +45,9 @@ export function GitHubInstallButton({
 }: GitHubInstallButtonProps) {
   const [isNavigating, setIsNavigating] = useState(false);
   const isInactive = Boolean(disabled) || isNavigating;
+  const labelWidthAnchor = longestLabel(
+    getInstallButtonLabels(children, loadingLabel, labelPlaceholder),
+  );
 
   return (
     <Button
@@ -64,7 +82,7 @@ export function GitHubInstallButton({
         aria-disabled={isInactive || undefined}
       >
         <ButtonLoadingIcon isLoading={isNavigating} />
-        <StableButtonLabel placeholder={labelPlaceholder}>
+        <StableButtonLabel labels={[labelWidthAnchor]}>
           {isNavigating ? loadingLabel : children}
         </StableButtonLabel>
       </GitHubInstallLink>

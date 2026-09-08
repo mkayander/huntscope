@@ -13,6 +13,14 @@ export const LANDING_CTA_BUTTON_CLASS =
 /** Widest auth button label so width stays stable while loading. */
 export const AUTH_BUTTON_LABEL_PLACEHOLDER = "Redirecting to GitHub";
 
+export const AUTH_BUTTON_LABELS = [
+  "Sign in with GitHub",
+  AUTH_BUTTON_LABEL_PLACEHOLDER,
+  "Loading session",
+  "Sign out",
+  "Signing out",
+] as const;
+
 type PanelDescriptionSkeletonProps = {
   centered?: boolean;
   className?: string;

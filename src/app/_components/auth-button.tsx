@@ -8,6 +8,7 @@ import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { StableButtonLabel } from "~/app/_components/panel-content-slots";
 import {
   AUTH_BUTTON_LABEL_PLACEHOLDER,
+  AUTH_BUTTON_LABELS,
   LANDING_CTA_BUTTON_CLASS,
   PanelButtonSkeleton,
 } from "~/app/_components/panel-loading-skeleton";
@@ -177,7 +178,7 @@ export function AuthButton({ variant = "landing" }: AuthButtonProps) {
         }}
       >
         <ButtonLoadingIcon isLoading={isBusy} />
-        <StableButtonLabel placeholder={AUTH_BUTTON_LABEL_PLACEHOLDER}>
+        <StableButtonLabel labels={AUTH_BUTTON_LABELS}>
           {buttonLabel}
         </StableButtonLabel>
       </Button>

@@ -94,7 +94,7 @@ function GitHubRepoConnected() {
             size="pill"
             className="w-full min-w-0"
             loadingLabel="Opening GitHub…"
-            labelPlaceholder="Opening GitHub…"
+            labelPlaceholder="Change repository"
           >
             Change repository
           </GitHubInstallButton>
@@ -107,7 +107,7 @@ function GitHubRepoConnected() {
             onClick={() => disconnect.mutate()}
           >
             <ButtonLoadingIcon isLoading={disconnect.isPending} />
-            <StableButtonLabel placeholder="Disconnecting…">
+            <StableButtonLabel labels={["Disconnect", "Disconnecting…"]}>
               {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
             </StableButtonLabel>
           </Button>

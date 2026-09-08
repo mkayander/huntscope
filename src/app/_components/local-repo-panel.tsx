@@ -8,6 +8,7 @@ import { DataPreview } from "~/app/_components/data-preview";
 import {
   PanelDescriptionSlot,
   PanelPrimaryActionSlot,
+  StableButtonLabel,
 } from "~/app/_components/panel-content-slots";
 import {
   PanelButtonSkeleton,
@@ -85,14 +86,10 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
                   disabled={isRefreshing}
                   onClick={() => void refresh()}
                 >
-                  {isRefreshing ? (
-                    <>
-                      <ButtonLoadingIcon isLoading />
-                      Refreshing…
-                    </>
-                  ) : (
-                    "Refresh"
-                  )}
+                  <ButtonLoadingIcon isLoading={isRefreshing} />
+                  <StableButtonLabel labels={["Refresh", "Refreshing…"]}>
+                    {isRefreshing ? "Refreshing…" : "Refresh"}
+                  </StableButtonLabel>
                 </Button>
                 <Button
                   type="button"
@@ -131,14 +128,10 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
               disabled={isRefreshing}
               onClick={() => void refresh()}
             >
-              {isRefreshing ? (
-                <>
-                  <ButtonLoadingIcon isLoading />
-                  Refreshing…
-                </>
-              ) : (
-                "Refresh"
-              )}
+              <ButtonLoadingIcon isLoading={isRefreshing} />
+              <StableButtonLabel labels={["Refresh", "Refreshing…"]}>
+                {isRefreshing ? "Refreshing…" : "Refresh"}
+              </StableButtonLabel>
             </Button>
             <Button
               type="button"
