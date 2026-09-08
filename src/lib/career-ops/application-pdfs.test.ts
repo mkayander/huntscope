@@ -12,6 +12,7 @@ const application: ApplicationEntry = {
   num: 2,
   date: "2026-02-03",
   company: "Example Inc",
+  via: "",
   role: "Platform Engineer",
   score: "3.8",
   status: "Interview",

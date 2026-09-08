@@ -2,6 +2,7 @@ export type ApplicationEntry = {
   num: number;
   date: string;
   company: string;
+  via: string;
   role: string;
   score: string;
   status: string;
