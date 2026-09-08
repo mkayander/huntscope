@@ -1,6 +1,5 @@
 "use client";
 
-import { ActionButtonRow } from "~/app/_components/action-button-row";
 import { ButtonLoadingIcon } from "~/app/_components/button-loading-icon";
 import { DataPreview } from "~/app/_components/data-preview";
 import { GitHubInstallButton } from "~/app/_components/github-install-button";
@@ -26,7 +25,10 @@ import {
 import { Button } from "~/components/ui/button";
 import { useHasMounted } from "~/hooks/use-has-mounted";
 import { authClient } from "~/lib/auth-client";
+import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+
+const CONNECTED_PANEL_WIDTH_CLASS = "w-full max-w-sm";
 
 function GitHubRepoConnected() {
   const { data: connection, isLoading } = api.github.getConnection.useQuery();
@@ -44,7 +46,12 @@ function GitHubRepoConnected() {
   const primaryRepository = connection.repositories[0];
 
   return (
-    <>
+    <div
+      className={cn(
+        "mx-auto flex flex-col items-stretch gap-4",
+        CONNECTED_PANEL_WIDTH_CLASS,
+      )}
+    >
       {connection.repositories.length > 1 ? (
         <p className="text-center text-sm text-amber-200">
           Multiple repositories were selected during install. Huntscope
@@ -53,50 +60,60 @@ function GitHubRepoConnected() {
         </p>
       ) : null}
 
-      <p className="text-center text-sm text-white/80">
-        Connected repository
-        {connection.repositories.length === 1 ? "" : "ies"}
-      </p>
-      <ul className="w-full space-y-2 text-center text-white/80">
-        {connection.repositories.map((repository) => (
-          <li key={repository.id} className="font-mono text-sm">
-            {repository.fullName}
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col gap-1 text-center">
+        <p className="text-xs text-white/50">
+          Connected repository
+          {connection.repositories.length === 1 ? "" : "ies"}
+        </p>
+        <ul className="space-y-1">
+          {connection.repositories.map((repository) => (
+            <li
+              key={repository.id}
+              className="truncate font-mono text-sm text-white/90"
+            >
+              {repository.fullName}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {preview ? (
         <DataPreview
           filePath={preview.filePath}
           preview={preview.preview}
           sourceLabel={preview.repositoryFullName}
+          className="max-w-none"
         />
       ) : null}
 
-      <ActionButtonRow centered>
-        <OpenDashboardButton className="w-full max-w-sm" />
-        <GitHubInstallButton
-          variant="brandSecondary"
-          size="pill"
-          loadingLabel="Opening GitHub…"
-          labelPlaceholder="Opening GitHub…"
-        >
-          Change repository
-        </GitHubInstallButton>
-        <Button
-          type="button"
-          variant="brandSecondary"
-          size="pill"
-          disabled={disconnect.isPending}
-          onClick={() => disconnect.mutate()}
-        >
-          <ButtonLoadingIcon isLoading={disconnect.isPending} />
-          <StableButtonLabel placeholder="Disconnecting…">
-            {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
-          </StableButtonLabel>
-        </Button>
-      </ActionButtonRow>
-    </>
+      <div className="flex flex-col gap-3">
+        <OpenDashboardButton className="w-full min-w-0" />
+        <div className="grid grid-cols-2 gap-3">
+          <GitHubInstallButton
+            variant="brandSecondary"
+            size="pill"
+            className="w-full min-w-0"
+            loadingLabel="Opening GitHub…"
+            labelPlaceholder="Opening GitHub…"
+          >
+            Change repository
+          </GitHubInstallButton>
+          <Button
+            type="button"
+            variant="brandSecondary"
+            size="pill"
+            className="w-full min-w-0"
+            disabled={disconnect.isPending}
+            onClick={() => disconnect.mutate()}
+          >
+            <ButtonLoadingIcon isLoading={disconnect.isPending} />
+            <StableButtonLabel placeholder="Disconnecting…">
+              {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
+            </StableButtonLabel>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -74,9 +74,46 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
               preview={state.preview.preview}
               sourceLabel="local disk"
             />
-            <PanelPrimaryActionSlot centered>
-              <OpenDashboardButton />
-            </PanelPrimaryActionSlot>
+            <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
+              <OpenDashboardButton className="w-full min-w-0" />
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant="brandSecondary"
+                  size="pill"
+                  className="w-full min-w-0"
+                  disabled={isRefreshing}
+                  onClick={() => void refresh()}
+                >
+                  {isRefreshing ? (
+                    <>
+                      <ButtonLoadingIcon isLoading />
+                      Refreshing…
+                    </>
+                  ) : (
+                    "Refresh"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="brandSecondary"
+                  size="pill"
+                  className="w-full min-w-0"
+                  onClick={() => void pickDirectory()}
+                >
+                  Change folder
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="brandSecondary"
+                size="pill"
+                className="w-full min-w-0"
+                onClick={() => void disconnect()}
+              >
+                Disconnect
+              </Button>
+            </div>
           </>
         ) : (
           <p className="text-sm text-white/60">
@@ -85,40 +122,42 @@ export function LocalRepoPanel({ variant = "landing" }: LocalRepoPanelProps) {
           </p>
         )}
 
-        <ActionButtonRow centered={isLanding}>
-          <Button
-            type="button"
-            variant="brandSecondary"
-            size="pill"
-            disabled={isRefreshing}
-            onClick={() => void refresh()}
-          >
-            {isRefreshing ? (
-              <>
-                <ButtonLoadingIcon isLoading />
-                Refreshing…
-              </>
-            ) : (
-              "Refresh"
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="brandSecondary"
-            size="pill"
-            onClick={() => void pickDirectory()}
-          >
-            Change folder
-          </Button>
-          <Button
-            type="button"
-            variant="brandSecondary"
-            size="pill"
-            onClick={() => void disconnect()}
-          >
-            Disconnect
-          </Button>
-        </ActionButtonRow>
+        {!isLanding ? (
+          <ActionButtonRow>
+            <Button
+              type="button"
+              variant="brandSecondary"
+              size="pill"
+              disabled={isRefreshing}
+              onClick={() => void refresh()}
+            >
+              {isRefreshing ? (
+                <>
+                  <ButtonLoadingIcon isLoading />
+                  Refreshing…
+                </>
+              ) : (
+                "Refresh"
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="brandSecondary"
+              size="pill"
+              onClick={() => void pickDirectory()}
+            >
+              Change folder
+            </Button>
+            <Button
+              type="button"
+              variant="brandSecondary"
+              size="pill"
+              onClick={() => void disconnect()}
+            >
+              Disconnect
+            </Button>
+          </ActionButtonRow>
+        ) : null}
       </PanelSection>
     );
   }
