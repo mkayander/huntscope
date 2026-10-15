@@ -1,25 +1,47 @@
 import type { PipelineSummary } from "~/lib/career-ops/types";
 
-function extractSectionLines(content: string, heading: string): string[] {
+const PENDING_SECTION_HEADINGS = [
+  "## Pending",
+  "## Pendientes",
+  "## Offen",
+  "## En attente",
+] as const;
+
+const PROCESSED_SECTION_HEADINGS = [
+  "## Processed",
+  "## Procesadas",
+  "## Verarbeitet",
+  "## Traitées",
+] as const;
+
+function extractSectionLines(
+  content: string,
+  headings: readonly string[],
+): string[] {
   const lines = content.split("\n");
-  const startIndex = lines.findIndex(
-    (line) => line.trim().toLowerCase() === heading.toLowerCase(),
-  );
 
-  if (startIndex === -1) {
-    return [];
-  }
+  for (const heading of headings) {
+    const startIndex = lines.findIndex(
+      (line) => line.trim().toLowerCase() === heading.toLowerCase(),
+    );
 
-  const sectionLines: string[] = [];
-  for (let index = startIndex + 1; index < lines.length; index += 1) {
-    const line = lines[index] ?? "";
-    if (line.startsWith("## ")) {
-      break;
+    if (startIndex === -1) {
+      continue;
     }
-    sectionLines.push(line);
+
+    const sectionLines: string[] = [];
+    for (let index = startIndex + 1; index < lines.length; index += 1) {
+      const line = lines[index] ?? "";
+      if (line.startsWith("## ")) {
+        break;
+      }
+      sectionLines.push(line);
+    }
+
+    return sectionLines;
   }
 
-  return sectionLines;
+  return [];
 }
 
 function countMeaningfulLines(lines: string[]): number {
@@ -37,8 +59,11 @@ function extractPendingPreview(lines: string[]): string[] {
 }
 
 export function parsePipelineMarkdown(content: string): PipelineSummary {
-  const pendingLines = extractSectionLines(content, "## Pending");
-  const processedLines = extractSectionLines(content, "## Processed");
+  const pendingLines = extractSectionLines(content, PENDING_SECTION_HEADINGS);
+  const processedLines = extractSectionLines(
+    content,
+    PROCESSED_SECTION_HEADINGS,
+  );
 
   return {
     pendingCount: countMeaningfulLines(pendingLines),

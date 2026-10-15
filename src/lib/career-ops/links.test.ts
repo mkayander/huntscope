@@ -58,4 +58,21 @@ describe("resolveArtifactLink", () => {
       path: null,
     });
   });
+
+  it("resolves prefixed repo paths using known file listings", () => {
+    const knownFiles = [{ path: "external-data/reports/foo.md" }];
+
+    expect(
+      resolveArtifactLink(
+        githubSource,
+        "reports/foo.md",
+        "develop",
+        knownFiles,
+      ),
+    ).toEqual({
+      label: "Report",
+      href: "https://github.com/acme/career-ops/blob/develop/external-data/reports/foo.md",
+      path: "external-data/reports/foo.md",
+    });
+  });
 });

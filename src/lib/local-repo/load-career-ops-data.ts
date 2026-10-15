@@ -2,6 +2,10 @@ import {
   buildCareerOpsRepoData,
   CAREER_OPS_PATHS,
 } from "~/lib/career-ops/layout";
+import {
+  deriveDataDirFromTrackerPath,
+  resolveCareerOpsLayout,
+} from "~/lib/career-ops/resolve-layout";
 import type { RawCareerOpsRepoData } from "~/lib/career-ops/types";
 
 async function readTextFile(
@@ -102,18 +106,23 @@ async function listDirectoryEntries(
 export async function loadCareerOpsFromDirectory(
   directoryHandle: FileSystemDirectoryHandle,
 ): Promise<RawCareerOpsRepoData> {
-  const [
-    applicationsContent,
-    pipelineContent,
-    dataDirectory,
-    reportsDirectory,
-    outputDirectory,
-  ] = await Promise.all([
-    readTextFile(directoryHandle, CAREER_OPS_PATHS.applications),
-    readTextFile(directoryHandle, CAREER_OPS_PATHS.pipeline),
-    listDirectoryEntries(directoryHandle, CAREER_OPS_PATHS.dataDir),
-    listDirectoryEntries(directoryHandle, CAREER_OPS_PATHS.reportsDir),
-    listDirectoryEntries(directoryHandle, CAREER_OPS_PATHS.outputDir),
+  const resolved = await resolveCareerOpsLayout({
+    readFile: (path) => readTextFile(directoryHandle, path),
+    listDirectory: (path) => listDirectoryEntries(directoryHandle, path),
+  });
+
+  if (!resolved) {
+    throw new Error(
+      "This folder does not look like a career-ops project or companion repo. Expected files such as data/applications.md or data/pipeline.md.",
+    );
+  }
+
+  const { applicationsMarkdown, pipelineMarkdown, ...layout } = resolved;
+
+  const [dataDirectory, reportsDirectory, outputDirectory] = await Promise.all([
+    listDirectoryEntries(directoryHandle, layout.dataDir),
+    listDirectoryEntries(directoryHandle, layout.reportsDir),
+    listDirectoryEntries(directoryHandle, layout.outputDir),
   ]);
 
   return buildCareerOpsRepoData({
@@ -121,8 +130,9 @@ export async function loadCareerOpsFromDirectory(
     name: directoryHandle.name,
     fullName: `local://${directoryHandle.name}`,
     defaultBranch: null,
-    applicationsMarkdown: applicationsContent,
-    pipelineMarkdown: pipelineContent,
+    layout,
+    applicationsMarkdown,
+    pipelineMarkdown,
     dataDirectory,
     reportsDirectory,
     outputDirectory,
@@ -142,20 +152,42 @@ export async function loadCareerOpsFromLaunchedFile(
     normalizedName === "pipeline.md" ||
     file.name.endsWith(CAREER_OPS_PATHS.pipeline);
 
+  const trackerPath = isApplicationsFile
+    ? file.name.endsWith(CAREER_OPS_PATHS.applications)
+      ? CAREER_OPS_PATHS.applications
+      : "applications.md"
+    : isPipelineFile
+      ? file.name.endsWith(CAREER_OPS_PATHS.pipeline)
+        ? CAREER_OPS_PATHS.pipeline
+        : "pipeline.md"
+      : CAREER_OPS_PATHS.applications;
+  const dataDir = deriveDataDirFromTrackerPath(trackerPath);
+  const layout = {
+    dataRoot: "",
+    applicationsPath: isApplicationsFile
+      ? trackerPath
+      : CAREER_OPS_PATHS.applications,
+    pipelinePath: isPipelineFile ? trackerPath : CAREER_OPS_PATHS.pipeline,
+    applicationsWritePath: CAREER_OPS_PATHS.applications,
+    pipelineWritePath: CAREER_OPS_PATHS.pipeline,
+    dataDir,
+    reportsDir: CAREER_OPS_PATHS.reportsDir,
+    outputDir: CAREER_OPS_PATHS.outputDir,
+  };
+
   return buildCareerOpsRepoData({
     owner: "local",
     name: fileHandle.name,
     fullName: `local://${fileHandle.name}`,
     defaultBranch: null,
+    layout,
     applicationsMarkdown: isApplicationsFile ? content : null,
     pipelineMarkdown: isPipelineFile ? content : null,
     dataDirectory:
       isApplicationsFile || isPipelineFile
         ? [
             {
-              path: isApplicationsFile
-                ? CAREER_OPS_PATHS.applications
-                : CAREER_OPS_PATHS.pipeline,
+              path: trackerPath,
               name: file.name,
               type: "file",
             },

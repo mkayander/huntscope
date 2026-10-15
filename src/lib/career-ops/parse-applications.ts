@@ -60,6 +60,20 @@ function parseHeaderColumns(
   return columns;
 }
 
+export function hasMeaningfulViaValue(via: string): boolean {
+  const trimmed = via.trim();
+
+  return trimmed.length > 0 && trimmed !== "—" && trimmed !== "-";
+}
+
+export function shouldShowViaColumn(
+  applications: readonly ApplicationEntry[],
+): boolean {
+  return applications.some((application) =>
+    hasMeaningfulViaValue(application.via),
+  );
+}
+
 function getCell(
   parts: string[],
   columnMap: Map<ApplicationColumnKey, number> | null,

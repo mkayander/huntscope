@@ -48,7 +48,7 @@ export function ApplicationArtifactButton({
 
   const artifact = resolveArtifactLink(
     dataSource,
-    artifactRef.value,
+    artifactRef.path,
     defaultBranch,
   );
 

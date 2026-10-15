@@ -2,8 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildCareerOpsRepoData,
+  CAREER_OPS_PATHS,
   hasCareerOpsLayoutData,
 } from "~/lib/career-ops/layout";
+
+const defaultLayout = {
+  dataRoot: "",
+  applicationsPath: CAREER_OPS_PATHS.applications,
+  pipelinePath: CAREER_OPS_PATHS.pipeline,
+  applicationsWritePath: CAREER_OPS_PATHS.applications,
+  pipelineWritePath: CAREER_OPS_PATHS.pipeline,
+  dataDir: CAREER_OPS_PATHS.dataDir,
+  reportsDir: CAREER_OPS_PATHS.reportsDir,
+  outputDir: CAREER_OPS_PATHS.outputDir,
+};
 
 describe("hasCareerOpsLayoutData", () => {
   it("detects career-ops layout from applications markdown", () => {
@@ -24,6 +36,7 @@ describe("buildCareerOpsRepoData", () => {
       name: "career-ops",
       fullName: "acme/career-ops",
       defaultBranch: "develop",
+      layout: defaultLayout,
       applicationsMarkdown: "# Applications",
       pipelineMarkdown: null,
       dataDirectory: [],
@@ -41,6 +54,7 @@ describe("buildCareerOpsRepoData", () => {
         owner: "acme",
         name: "empty",
         fullName: "acme/empty",
+        layout: defaultLayout,
         applicationsMarkdown: null,
         pipelineMarkdown: null,
         dataDirectory: [],

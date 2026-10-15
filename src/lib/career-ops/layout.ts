@@ -1,4 +1,5 @@
 import type {
+  CareerOpsResolvedLayout,
   RawCareerOpsRepoData,
   RepoDataFile,
 } from "~/lib/career-ops/types";
@@ -45,6 +46,7 @@ export function buildCareerOpsRepoData(input: {
   name: string;
   fullName: string;
   defaultBranch?: string | null;
+  layout: CareerOpsResolvedLayout;
   applicationsMarkdown: string | null;
   pipelineMarkdown: string | null;
   dataDirectory: Array<{ path: string; name: string; type: string }>;
@@ -72,6 +74,7 @@ export function buildCareerOpsRepoData(input: {
     name: input.name,
     fullName: input.fullName,
     defaultBranch: input.defaultBranch ?? null,
+    layout: input.layout,
     applicationsMarkdown: input.applicationsMarkdown,
     pipelineMarkdown: input.pipelineMarkdown,
     dataFiles,

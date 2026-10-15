@@ -7,7 +7,10 @@ import {
 } from "~/lib/career-ops/application-artifact-inference";
 import type { ApplicationArtifactRef } from "~/lib/career-ops/application-artifacts";
 import { extractMarkdownLink } from "~/lib/career-ops/links";
-import { normalizeRepoRelativePath } from "~/lib/career-ops/repo-paths";
+import {
+  matchRepoFilePath,
+  normalizeRepoRelativePath,
+} from "~/lib/career-ops/repo-paths";
 import type { ApplicationEntry, RepoDataFile } from "~/lib/career-ops/types";
 
 export type ApplicationPdfSource = ApplicationArtifactRef["source"];
@@ -19,15 +22,21 @@ export {
   hasLinkedArtifactValue as hasLinkedPdfValue,
 };
 
-export function getPdfPathFromApplicationValue(value: string): string | null {
+export function getPdfPathFromApplicationValue(
+  value: string,
+  outputFiles: readonly RepoDataFile[] = [],
+): string | null {
   const markdownLink = extractMarkdownLink(value);
   if (markdownLink && !markdownLink.href.startsWith("http")) {
-    return normalizeRepoRelativePath(markdownLink.href);
+    return matchRepoFilePath(
+      normalizeRepoRelativePath(markdownLink.href),
+      outputFiles,
+    );
   }
 
   const trimmed = value.trim();
   if (trimmed.toLowerCase().endsWith(".pdf")) {
-    return normalizeRepoRelativePath(trimmed);
+    return matchRepoFilePath(normalizeRepoRelativePath(trimmed), outputFiles);
   }
 
   return null;
@@ -64,6 +73,7 @@ export function applicationHasPdf(
 function getPdfLabel(
   value: string,
   application: ApplicationEntry,
+  outputFiles: readonly RepoDataFile[] = [],
   fileName?: string,
 ): string {
   const markdownLink = extractMarkdownLink(value);
@@ -77,7 +87,7 @@ function getPdfLabel(
     return fileName.replace(/\.pdf$/i, "");
   }
 
-  const path = getPdfPathFromApplicationValue(value);
+  const path = getPdfPathFromApplicationValue(value, outputFiles);
   if (path) {
     const basename =
       path
@@ -97,7 +107,7 @@ export function getApplicationPdfRef(
   outputFiles: readonly RepoDataFile[] = [],
 ): ApplicationPdfRef | null {
   if (hasLinkedArtifactValue(application.pdf)) {
-    const path = getPdfPathFromApplicationValue(application.pdf);
+    const path = getPdfPathFromApplicationValue(application.pdf, outputFiles);
 
     if (!path) {
       return null;
@@ -106,7 +116,7 @@ export function getApplicationPdfRef(
     return {
       value: application.pdf,
       path,
-      label: getPdfLabel(application.pdf, application),
+      label: getPdfLabel(application.pdf, application, outputFiles),
       source: "linked",
     };
   }
@@ -119,7 +129,7 @@ export function getApplicationPdfRef(
   return {
     value: inferred.path,
     path: inferred.path,
-    label: getPdfLabel(inferred.path, application, inferred.name),
+    label: getPdfLabel(inferred.path, application, outputFiles, inferred.name),
     source: "inferred",
   };
 }
