@@ -5,6 +5,11 @@ import {
   PENDING_SECTION_HEADINGS,
   PROCESSED_SECTION_HEADINGS,
 } from "~/lib/career-ops/pipeline-sections";
+import {
+  pendingSectionUsesChecklistRows,
+  pendingSectionUsesFence,
+} from "~/lib/career-ops/pipeline-line-url";
+import { collectPipelineSectionUrls } from "~/lib/career-ops/pipeline-section-urls";
 
 function normalizePipelineUrl(url: string): string {
   return url.trim();
@@ -14,14 +19,14 @@ export function parsePipelineSections(content: string): {
   pending: string[];
   processed: string[];
 } {
-  const pending = extractSectionLines(content, PENDING_SECTION_HEADINGS)
-    .map(normalizePipelineUrl)
-    .filter((line) => line.length > 0);
-  const processed = extractSectionLines(content, PROCESSED_SECTION_HEADINGS)
-    .map(normalizePipelineUrl)
-    .filter((line) => line.length > 0);
-
-  return { pending, processed };
+  return {
+    pending: collectPipelineSectionUrls(
+      extractSectionLines(content, PENDING_SECTION_HEADINGS),
+    ),
+    processed: collectPipelineSectionUrls(
+      extractSectionLines(content, PROCESSED_SECTION_HEADINGS),
+    ),
+  };
 }
 
 export function serializePipelineMarkdown(input: {
@@ -75,6 +80,28 @@ export function appendPendingPipelineUrl(
   }
 
   const pendingEnd = findSectionEnd(lines, pendingStart);
+  const pendingSectionText = lines
+    .slice(pendingStart + 1, pendingEnd)
+    .join(newline);
+
+  let newLine = normalizedUrl;
+  if (pendingSectionUsesChecklistRows(pendingSectionText)) {
+    newLine = `- [ ] ${normalizedUrl}`;
+  } else if (pendingSectionUsesFence(pendingSectionText)) {
+    const sectionLines = lines.slice(pendingStart + 1, pendingEnd);
+    const openFenceIndex = sectionLines.findIndex(
+      (line) => line.trim() === "```",
+    );
+    const closeFenceIndex = sectionLines.findIndex(
+      (line, index) => index > openFenceIndex && line.trim() === "```",
+    );
+
+    if (openFenceIndex >= 0 && closeFenceIndex >= 0) {
+      lines.splice(pendingStart + 1 + closeFenceIndex, 0, normalizedUrl);
+      return lines.join(newline);
+    }
+  }
+
   let insertIndex = pendingEnd;
 
   while (
@@ -84,6 +111,6 @@ export function appendPendingPipelineUrl(
     insertIndex -= 1;
   }
 
-  lines.splice(insertIndex, 0, normalizedUrl);
+  lines.splice(insertIndex, 0, newLine);
   return lines.join(newline);
 }

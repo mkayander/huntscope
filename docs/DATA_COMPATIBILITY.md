@@ -24,18 +24,22 @@ A directory can also be recognized from known files in `data/`, including
 ## Applications table
 
 The applications table must contain `#`, `Company`, and `Role` columns.
-Huntscope recognizes the following columns by header name:
+Huntscope recognizes the following columns by header name (English labels plus
+career-ops localized aliases such as Spanish `Empresa` / `Puesto` / `Estado` and
+English variants `Position` / `Stage` / `Link`):
 
 - `#`
 - `Date`
 - `Company`
 - `Via`
 - `Role`
+- `Location`
 - `Score`
 - `Status`
 - `PDF`
 - `Report`
 - `Notes`
+- `URL`
 
 Columns may be reordered. The optional `Via` column is displayed only when at
 least one row has a meaningful value.
@@ -56,8 +60,10 @@ French:
 | German   | `Offen`      | `Verarbeitet` |
 | French   | `En attente` | `Traitées`    |
 
-Adding a local URL preserves the existing heading language, comments, unrelated
-sections, and line endings. An existing URL is not added twice.
+Pending sections may use plain URL lines, fenced code blocks, or checklist rows
+(`- [ ] url | company | title | …`). Adding a local URL preserves that shape,
+heading language, comments, unrelated sections, and line endings. An existing URL
+is not added twice.
 
 ## Local write safety
 

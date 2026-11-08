@@ -14,6 +14,8 @@ const application: ApplicationEntry = {
   company: "Example Inc",
   via: "",
   role: "Platform Engineer",
+  location: "",
+  url: "",
   score: "3.8",
   status: "Interview",
   pdf: "",

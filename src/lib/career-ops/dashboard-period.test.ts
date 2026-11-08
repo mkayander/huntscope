@@ -24,6 +24,8 @@ function createApplication(date: string, company = "Acme"): ApplicationEntry {
     company,
     via: "",
     role: "Engineer",
+    location: "",
+    url: "",
     score: "4.0",
     status: "Applied",
     pdf: "",

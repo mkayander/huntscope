@@ -64,11 +64,7 @@ Do not rewrite this section.
       ),
     );
     expect(parsePipelineSections(updated)).toEqual({
-      pending: [
-        "https://example.com/jobs/1",
-        "<!-- keep this comment -->",
-        "https://example.com/jobs/2",
-      ],
+      pending: ["https://example.com/jobs/1", "https://example.com/jobs/2"],
       processed: ["https://example.com/jobs/done"],
     });
   });
@@ -78,6 +74,50 @@ Do not rewrite this section.
 
     expect(appendPendingPipelineUrl(initial, "https://example.com/job")).toBe(
       "# Pipeline\r\n\r\n## Pending\r\n\r\nhttps://example.com/job\r\n## Processed\r\n\r\n",
+    );
+  });
+
+  it("appends checklist rows when the pending section uses checkboxes", () => {
+    const initial = `# Pipeline
+
+## Pending
+
+- [ ] https://example.com/jobs/1 | Acme | Engineer
+
+## Processed
+
+`;
+    const updated = appendPendingPipelineUrl(
+      initial,
+      "https://example.com/jobs/2",
+    );
+
+    expect(updated).toContain("- [ ] https://example.com/jobs/2");
+    expect(parsePipelineSections(updated).pending).toEqual([
+      "https://example.com/jobs/1",
+      "https://example.com/jobs/2",
+    ]);
+  });
+
+  it("appends inside a fenced pending block", () => {
+    const initial = `# Pipeline
+
+## Pending
+
+\`\`\`
+https://example.com/jobs/1
+\`\`\`
+
+## Processed
+
+`;
+    const updated = appendPendingPipelineUrl(
+      initial,
+      "https://example.com/jobs/2",
+    );
+
+    expect(updated).toMatch(
+      /```\nhttps:\/\/example\.com\/jobs\/1\nhttps:\/\/example\.com\/jobs\/2\n```/,
     );
   });
 

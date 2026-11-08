@@ -77,7 +77,9 @@ export function buildScoreHistogramData(
   }));
 }
 
-export function buildTimelineData(applications: ApplicationEntry[]): TimelineDatum[] {
+export function buildTimelineData(
+  applications: ApplicationEntry[],
+): TimelineDatum[] {
   const countsByMonth = new Map<string, number>();
 
   for (const application of applications) {
@@ -98,7 +100,11 @@ export function buildTimelineData(applications: ApplicationEntry[]): TimelineDat
     cumulative += count;
 
     const [year, month] = monthKey.split("-");
-    const label = new Date(Number(year), Number(month) - 1, 1).toLocaleDateString("en", {
+    const label = new Date(
+      Number(year),
+      Number(month) - 1,
+      1,
+    ).toLocaleDateString("en", {
       month: "short",
       year: "2-digit",
     });
@@ -112,7 +118,9 @@ export function buildTimelineData(applications: ApplicationEntry[]): TimelineDat
   });
 }
 
-export function buildScoreScatterData(applications: ApplicationEntry[]): ScoreScatterDatum[] {
+export function buildScoreScatterData(
+  applications: ApplicationEntry[],
+): ScoreScatterDatum[] {
   const points: ScoreScatterDatum[] = [];
 
   for (const application of applications) {
@@ -141,7 +149,9 @@ export function buildScoreScatterData(applications: ApplicationEntry[]): ScoreSc
     });
   }
 
-  return points.sort((left, right) => left.date.getTime() - right.date.getTime());
+  return points.sort(
+    (left, right) => left.date.getTime() - right.date.getTime(),
+  );
 }
 
 export function hasAnalyticsChartData(

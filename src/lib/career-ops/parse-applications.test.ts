@@ -34,6 +34,8 @@ describe("shouldShowViaColumn", () => {
           company: "Acme",
           via: "—",
           role: "Engineer",
+          location: "",
+          url: "",
           score: "4",
           status: "Applied",
           pdf: "",
@@ -53,6 +55,8 @@ describe("shouldShowViaColumn", () => {
           company: "Acme",
           via: "—",
           role: "Engineer",
+          location: "",
+          url: "",
           score: "4",
           status: "Applied",
           pdf: "",
@@ -65,6 +69,8 @@ describe("shouldShowViaColumn", () => {
           company: "Globex",
           via: "Hays",
           role: "Staff Engineer",
+          location: "",
+          url: "",
           score: "4.5",
           status: "Interview",
           pdf: "",
@@ -82,10 +88,10 @@ describe("parseApplicationsMarkdown", () => {
 | 1 | 2026-01-15 | Acme \\| Labs | Engineer | 4.2 | Applied | — | — | Remote \\| flexible |`);
 
     expect(applications[0]).toMatchObject({
-      company: "Acme \\| Labs",
+      company: "Acme | Labs",
       role: "Engineer",
       status: "Applied",
-      notes: "Remote \\| flexible",
+      notes: "Remote | flexible",
     });
   });
 
@@ -100,6 +106,8 @@ describe("parseApplicationsMarkdown", () => {
         company: "Acme",
         via: "",
         role: "Engineer",
+        location: "",
+        url: "",
         score: "4.5",
         status: "Applied",
         pdf: "cv.pdf",
@@ -107,6 +115,37 @@ describe("parseApplicationsMarkdown", () => {
         notes: "Strong fit",
       },
     ]);
+  });
+
+  it("parses Spanish tracker headers via aliases", () => {
+    const content = `| # | Fecha | Empresa | Puesto | Estado | Score |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 2026-01-01 | Acme | Ingeniero | Applied | 4.2 |`;
+
+    expect(parseApplicationsMarkdown(content)[0]).toMatchObject({
+      company: "Acme",
+      role: "Ingeniero",
+      status: "Applied",
+    });
+  });
+
+  it("extracts posting URLs from a URL column", () => {
+    const content = `| # | Company | Role | URL | Status |
+| --- | --- | --- | --- | --- |
+| 3 | Globex | Staff Engineer | [posting](https://jobs.globex.com/123) | Applied |`;
+
+    expect(parseApplicationsMarkdown(content)[0]?.url).toBe(
+      "https://jobs.globex.com/123",
+    );
+  });
+
+  it("restores escaped backslashes in company cells", () => {
+    const content = `${LEGACY_TABLE_HEADER}
+| 1 | 2026-01-01 | C:\\\\Users\\\\Ivan | Engineer | 4 | Applied | — | — | — |`;
+
+    expect(parseApplicationsMarkdown(content)[0]?.company).toBe(
+      "C:\\Users\\Ivan",
+    );
   });
 
   it("parses career-ops application tables with a Via column", () => {
@@ -121,6 +160,8 @@ describe("parseApplicationsMarkdown", () => {
         company: "Acme",
         via: "—",
         role: "Senior Platform Engineer",
+        location: "",
+        url: "",
         score: "4.2/5",
         status: "Applied",
         pdf: "✅",
@@ -133,6 +174,8 @@ describe("parseApplicationsMarkdown", () => {
         company: "Globex",
         via: "Hays",
         role: "Staff DevOps Engineer",
+        location: "",
+        url: "",
         score: "4.5/5",
         status: "Interview",
         pdf: "✅",

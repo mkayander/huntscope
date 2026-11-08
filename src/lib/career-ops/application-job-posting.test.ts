@@ -23,6 +23,8 @@ const application: ApplicationEntry = {
   company: "Acme Corp",
   via: "",
   role: "Backend Engineer",
+  location: "",
+  url: "",
   score: "4.2",
   status: "Applied",
   pdf: "",
@@ -63,8 +65,20 @@ describe("getInlineJobPostingUrl", () => {
       getInlineJobPostingUrl({
         ...application,
         role: "[Backend Engineer](https://example.com/jobs/acme-backend)",
+        location: "",
+        url: "",
       }),
     ).toBe("https://example.com/jobs/acme-backend");
+  });
+
+  it("prefers the dedicated URL column over notes", () => {
+    expect(
+      getInlineJobPostingUrl({
+        ...application,
+        url: "https://jobs.example.com/from-column",
+        notes: "https://jobs.example.com/from-notes",
+      }),
+    ).toBe("https://jobs.example.com/from-column");
   });
 
   it("reads a bare url from the notes column", () => {
@@ -112,6 +126,8 @@ describe("resolveJobPostingUrl", () => {
         {
           ...application,
           role: "[Backend Engineer](https://example.com/jobs/inline)",
+          location: "",
+          url: "",
         },
         "https://example.com/jobs/report",
       ),
