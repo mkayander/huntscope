@@ -1,48 +1,9 @@
 import type { PipelineSummary } from "~/lib/career-ops/types";
-
-const PENDING_SECTION_HEADINGS = [
-  "## Pending",
-  "## Pendientes",
-  "## Offen",
-  "## En attente",
-] as const;
-
-const PROCESSED_SECTION_HEADINGS = [
-  "## Processed",
-  "## Procesadas",
-  "## Verarbeitet",
-  "## Traitées",
-] as const;
-
-function extractSectionLines(
-  content: string,
-  headings: readonly string[],
-): string[] {
-  const lines = content.split("\n");
-
-  for (const heading of headings) {
-    const startIndex = lines.findIndex(
-      (line) => line.trim().toLowerCase() === heading.toLowerCase(),
-    );
-
-    if (startIndex === -1) {
-      continue;
-    }
-
-    const sectionLines: string[] = [];
-    for (let index = startIndex + 1; index < lines.length; index += 1) {
-      const line = lines[index] ?? "";
-      if (line.startsWith("## ")) {
-        break;
-      }
-      sectionLines.push(line);
-    }
-
-    return sectionLines;
-  }
-
-  return [];
-}
+import {
+  extractSectionLines,
+  PENDING_SECTION_HEADINGS,
+  PROCESSED_SECTION_HEADINGS,
+} from "~/lib/career-ops/pipeline-sections";
 
 function countMeaningfulLines(lines: string[]): number {
   return lines.filter((line) => {

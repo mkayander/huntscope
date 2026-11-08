@@ -1,3 +1,4 @@
+import { parseMarkdownTableCells } from "~/lib/career-ops/markdown-table";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
 type ApplicationColumnKey =
@@ -26,25 +27,24 @@ const COLUMN_ALIASES: Record<string, ApplicationColumnKey> = {
 };
 
 const LEGACY_COLUMN_INDICES: Record<ApplicationColumnKey, number> = {
-  num: 1,
-  date: 2,
-  company: 3,
+  num: 0,
+  date: 1,
+  company: 2,
   via: -1,
-  role: 4,
-  score: 5,
-  status: 6,
-  pdf: 7,
-  report: 8,
-  notes: 9,
+  role: 3,
+  score: 4,
+  status: 5,
+  pdf: 6,
+  report: 7,
+  notes: 8,
 };
 
 function parseHeaderColumns(
-  line: string,
+  parts: string[],
 ): Map<ApplicationColumnKey, number> | null {
-  const parts = line.split("|").map((part) => part.trim());
   const columns = new Map<ApplicationColumnKey, number>();
 
-  for (let index = 1; index < parts.length; index += 1) {
+  for (let index = 0; index < parts.length; index += 1) {
     const label = parts[index]?.toLowerCase() ?? "";
     const key = COLUMN_ALIASES[label];
 
@@ -121,10 +121,14 @@ export function parseApplicationsMarkdown(content: string): ApplicationEntry[] {
       continue;
     }
 
-    const parts = line.split("|").map((part) => part.trim());
+    const parts = parseMarkdownTableCells(line);
+
+    if (!parts) {
+      continue;
+    }
 
     if (!columnMap) {
-      const headerColumns = parseHeaderColumns(line);
+      const headerColumns = parseHeaderColumns(parts);
 
       if (headerColumns) {
         columnMap = headerColumns;

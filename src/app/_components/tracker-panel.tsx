@@ -21,10 +21,7 @@ import {
   getBoardColumnOrder,
   sortStatuses,
 } from "~/lib/career-ops/status-meta";
-import {
-  serializeApplicationsMarkdown,
-  updateApplicationStatus,
-} from "~/lib/career-ops/serialize-applications";
+import { updateApplicationStatusInMarkdown } from "~/lib/career-ops/serialize-applications";
 import {
   getTrackerSortLabel,
   queryTrackerApplications,
@@ -44,7 +41,7 @@ type TrackerPanelProps = {
   dataSource: CareerOpsDataSource;
   defaultBranch: string | null;
   applications: ApplicationEntry[];
-  allApplications: ApplicationEntry[];
+  applicationsMarkdown: string | null;
   totalApplications: number;
   reportFiles: RepoDataFile[];
   outputFiles: RepoDataFile[];
@@ -54,7 +51,7 @@ export function TrackerPanel({
   dataSource,
   defaultBranch,
   applications,
-  allApplications,
+  applicationsMarkdown,
   totalApplications,
   reportFiles,
   outputFiles,
@@ -99,13 +96,16 @@ export function TrackerPanel({
   );
 
   const handleStatusChange = async (applicationNum: number, status: string) => {
-    const nextApplications = updateApplicationStatus(
-      allApplications,
-      applicationNum,
-      status,
-    );
+    if (applicationsMarkdown === null) {
+      throw new Error("The applications file is not available.");
+    }
+
     await writeApplicationsMarkdown(
-      serializeApplicationsMarkdown(nextApplications),
+      updateApplicationStatusInMarkdown(
+        applicationsMarkdown,
+        applicationNum,
+        status,
+      ),
     );
   };
 

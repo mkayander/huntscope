@@ -1,3 +1,8 @@
+import {
+  escapeMarkdownTableCell,
+  parseMarkdownTableCells,
+  replaceMarkdownTableCell,
+} from "~/lib/career-ops/markdown-table";
 import { shouldShowViaColumn } from "~/lib/career-ops/parse-applications";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
@@ -13,13 +18,9 @@ const CAREER_OPS_TABLE_HEADER = `# Applications
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 `;
 
-function escapeTableCell(value: string): string {
-  return value.replace(/\|/g, "\\|").replace(/\n/g, " ");
-}
-
 function formatTableCell(value: string): string {
   const trimmed = value.trim();
-  return trimmed.length > 0 ? escapeTableCell(trimmed) : "—";
+  return trimmed.length > 0 ? escapeMarkdownTableCell(trimmed) : "—";
 }
 
 function shouldIncludeViaColumn(applications: ApplicationEntry[]): boolean {
@@ -73,6 +74,52 @@ export function updateApplicationStatus(
     application.num === applicationNum
       ? { ...application, status }
       : application,
+  );
+}
+
+export function updateApplicationStatusInMarkdown(
+  content: string,
+  applicationNum: number,
+  status: string,
+): string {
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const lines = content.split(/\r?\n/);
+  let numberColumnIndex = -1;
+  let statusColumnIndex = -1;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+
+    if (!line) {
+      continue;
+    }
+
+    const cells = parseMarkdownTableCells(line);
+
+    if (!cells) {
+      continue;
+    }
+
+    if (numberColumnIndex === -1 || statusColumnIndex === -1) {
+      numberColumnIndex = cells.findIndex((cell) => cell === "#");
+      statusColumnIndex = cells.findIndex(
+        (cell) => cell.toLowerCase() === "status",
+      );
+      continue;
+    }
+
+    const rowNumber = Number.parseInt(cells[numberColumnIndex] ?? "", 10);
+
+    if (rowNumber !== applicationNum) {
+      continue;
+    }
+
+    lines[index] = replaceMarkdownTableCell(line, statusColumnIndex, status);
+    return lines.join(newline);
+  }
+
+  throw new Error(
+    `Could not find application #${applicationNum} in the applications table.`,
   );
 }
 

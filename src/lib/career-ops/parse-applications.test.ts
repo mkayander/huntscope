@@ -77,6 +77,18 @@ describe("shouldShowViaColumn", () => {
 });
 
 describe("parseApplicationsMarkdown", () => {
+  it("keeps escaped pipes inside their table cell", () => {
+    const applications = parseApplicationsMarkdown(`${LEGACY_TABLE_HEADER}
+| 1 | 2026-01-15 | Acme \\| Labs | Engineer | 4.2 | Applied | — | — | Remote \\| flexible |`);
+
+    expect(applications[0]).toMatchObject({
+      company: "Acme \\| Labs",
+      role: "Engineer",
+      status: "Applied",
+      notes: "Remote \\| flexible",
+    });
+  });
+
   it("parses legacy application table rows without a Via column", () => {
     const content = `${LEGACY_TABLE_HEADER}
 | 1 | 2025-01-01 | Acme | Engineer | 4.5 | Applied | cv.pdf | reports/acme.md | Strong fit |`;

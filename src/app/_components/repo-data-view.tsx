@@ -234,7 +234,7 @@ function RepoDataContent({
           dataSource={activeSource}
           defaultBranch={raw.defaultBranch}
           applications={filteredApplications}
-          allApplications={parsed.applications}
+          applicationsMarkdown={raw.applicationsMarkdown}
           totalApplications={parsed.applications.length}
           reportFiles={raw.reportFiles}
           outputFiles={raw.outputFiles}

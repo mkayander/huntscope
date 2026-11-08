@@ -5,6 +5,13 @@
 **Primary benchmark:** [career-ops-ui](https://github.com/Fighter90/career-ops-ui) v1.231.3  
 **Related:** [Positioning](./PRODUCT_POSITIONING.md) · [Comparison matrix](./COMPARISON_CAREER_OPS_UI.md)
 
+> **Status update (November 2026):** This document records the original v1.1
+> planning baseline. Report/PDF preview, report browsing, funnel analytics,
+> keyboard shortcuts, local status write-back, and local pipeline URL additions
+> have since shipped. Full UI internationalization and GitHub write-back remain
+> pending. See [data compatibility](./DATA_COMPATIBILITY.md) for the current
+> layout and local-write contract.
+
 ---
 
 ## Executive summary

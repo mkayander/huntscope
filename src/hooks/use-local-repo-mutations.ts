@@ -6,7 +6,9 @@ import { useCallback, useState } from "react";
 import { useCareerOpsDataSource } from "~/hooks/use-career-ops-data-source";
 import { CAREER_OPS_PATHS } from "~/lib/career-ops/layout";
 import {
+  assertLocalTextFileUnchanged,
   ensureWritePermission,
+  readLocalRepoFile,
   writeLocalRepoTextFile,
 } from "~/lib/local-repo/repo-file-access";
 
@@ -37,7 +39,11 @@ export function useLocalRepoMutations() {
   }, [activeSource, localDataQuery, queryClient]);
 
   const writeTextFile = useCallback(
-    async (relativePath: string, content: string) => {
+    async (
+      relativePath: string,
+      content: string,
+      expectedContent: string | null,
+    ) => {
       if (!canWrite || !activeSource?.directoryHandle) {
         throw new Error(
           "Local folder write is only available for directory connections.",
@@ -55,6 +61,12 @@ export function useLocalRepoMutations() {
         if (!granted) {
           throw new Error("Write permission was not granted for this folder.");
         }
+
+        const currentFile = await readLocalRepoFile(
+          activeSource.directoryHandle,
+          relativePath,
+        );
+        assertLocalTextFileUnchanged(expectedContent, currentFile);
 
         await writeLocalRepoTextFile(
           activeSource.directoryHandle,
@@ -76,24 +88,24 @@ export function useLocalRepoMutations() {
     [activeSource, canWrite, invalidateLocalData],
   );
 
+  const applicationsWritePath =
+    localDataQuery.data?.layout.applicationsWritePath ??
+    CAREER_OPS_PATHS.applications;
+  const loadedApplicationsMarkdown =
+    localDataQuery.data?.applicationsMarkdown ?? null;
   const writeApplicationsMarkdown = useCallback(
     async (content: string) =>
-      writeTextFile(
-        localDataQuery.data?.layout.applicationsWritePath ??
-          CAREER_OPS_PATHS.applications,
-        content,
-      ),
-    [localDataQuery.data?.layout.applicationsWritePath, writeTextFile],
+      writeTextFile(applicationsWritePath, content, loadedApplicationsMarkdown),
+    [applicationsWritePath, loadedApplicationsMarkdown, writeTextFile],
   );
 
+  const pipelineWritePath =
+    localDataQuery.data?.layout.pipelineWritePath ?? CAREER_OPS_PATHS.pipeline;
+  const loadedPipelineMarkdown = localDataQuery.data?.pipelineMarkdown ?? null;
   const writePipelineMarkdown = useCallback(
     async (content: string) =>
-      writeTextFile(
-        localDataQuery.data?.layout.pipelineWritePath ??
-          CAREER_OPS_PATHS.pipeline,
-        content,
-      ),
-    [localDataQuery.data?.layout.pipelineWritePath, writeTextFile],
+      writeTextFile(pipelineWritePath, content, loadedPipelineMarkdown),
+    [loadedPipelineMarkdown, pipelineWritePath, writeTextFile],
   );
 
   return {

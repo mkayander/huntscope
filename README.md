@@ -13,7 +13,7 @@ A career-ops dashboard for visualizing repository data. Connect a GitHub reposit
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - pnpm
 
 ### Environment Variables
@@ -58,6 +58,8 @@ pnpm vercel:env
 ## Local Repository
 
 On supported browsers (Chrome, Edge), use the folder picker on the landing page to open a local career-ops directory. Install the PWA for better persistence of folder access across sessions.
+
+Huntscope supports full career-ops projects, companion data repositories, root-level legacy trackers, and repository-relative `.career-ops-data` roots. See the [data compatibility guide](./docs/DATA_COMPATIBILITY.md) for supported layouts and local write guarantees.
 
 ## Scripts
 

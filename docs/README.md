@@ -4,6 +4,7 @@ Strategic and competitive documentation for Huntscope.
 
 | Document                                                     | Description                                                     |
 | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| [Data compatibility](./DATA_COMPATIBILITY.md)                | Supported layouts, columns, locales, and local write guarantees |
 | [Product positioning](./PRODUCT_POSITIONING.md)              | Category, target users, messaging, and competitive framing      |
 | [Comparison vs career-ops-ui](./COMPARISON_CAREER_OPS_UI.md) | Feature-by-feature matrix against career-ops-ui v1.231.3        |
 | [Comparison vs job trackers](./COMPARISON_JOB_TRACKERS.md)   | Huntscope vs Teal, Huntr, Simplify, Jobscan, and DIY tools      |
