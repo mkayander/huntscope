@@ -1,24 +1,10 @@
-function extractSectionLines(content: string, heading: string): string[] {
-  const lines = content.split("\n");
-  const startIndex = lines.findIndex(
-    (line) => line.trim().toLowerCase() === heading.toLowerCase(),
-  );
-
-  if (startIndex === -1) {
-    return [];
-  }
-
-  const sectionLines: string[] = [];
-  for (let index = startIndex + 1; index < lines.length; index += 1) {
-    const line = lines[index] ?? "";
-    if (line.startsWith("## ")) {
-      break;
-    }
-    sectionLines.push(line);
-  }
-
-  return sectionLines;
-}
+import {
+  extractSectionLines,
+  findSectionEnd,
+  findSectionStart,
+  PENDING_SECTION_HEADINGS,
+  PROCESSED_SECTION_HEADINGS,
+} from "~/lib/career-ops/pipeline-sections";
 
 function normalizePipelineUrl(url: string): string {
   return url.trim();
@@ -28,10 +14,10 @@ export function parsePipelineSections(content: string): {
   pending: string[];
   processed: string[];
 } {
-  const pending = extractSectionLines(content, "## Pending")
+  const pending = extractSectionLines(content, PENDING_SECTION_HEADINGS)
     .map(normalizePipelineUrl)
     .filter((line) => line.length > 0);
-  const processed = extractSectionLines(content, "## Processed")
+  const processed = extractSectionLines(content, PROCESSED_SECTION_HEADINGS)
     .map(normalizePipelineUrl)
     .filter((line) => line.length > 0);
 
@@ -62,23 +48,42 @@ export function appendPendingPipelineUrl(
   url: string,
 ): string {
   const normalizedUrl = normalizePipelineUrl(url);
-  const sections = parsePipelineSections(
+  const existingContent =
     content ??
-      `# Pipeline
+    `# Pipeline
 
 ## Pending
 
 ## Processed
 
-`,
-  );
+`;
+  const sections = parsePipelineSections(existingContent);
 
   if (sections.pending.includes(normalizedUrl)) {
-    return serializePipelineMarkdown(sections);
+    return existingContent;
   }
 
-  return serializePipelineMarkdown({
-    pending: [...sections.pending, normalizedUrl],
-    processed: sections.processed,
-  });
+  const newline = existingContent.includes("\r\n") ? "\r\n" : "\n";
+  const lines = existingContent.split(/\r?\n/);
+  const pendingStart = findSectionStart(lines, PENDING_SECTION_HEADINGS);
+
+  if (pendingStart === -1) {
+    const separator = existingContent.endsWith(newline)
+      ? newline
+      : `${newline}${newline}`;
+    return `${existingContent}${separator}## Pending${newline}${newline}${normalizedUrl}${newline}`;
+  }
+
+  const pendingEnd = findSectionEnd(lines, pendingStart);
+  let insertIndex = pendingEnd;
+
+  while (
+    insertIndex > pendingStart + 2 &&
+    lines[insertIndex - 1]?.trim().length === 0
+  ) {
+    insertIndex -= 1;
+  }
+
+  lines.splice(insertIndex, 0, normalizedUrl);
+  return lines.join(newline);
 }

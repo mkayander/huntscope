@@ -32,4 +32,61 @@ https://example.com/jobs/1
     ]);
     expect(second).toBe(first);
   });
+
+  it("preserves localized headings, comments, and unrelated sections", () => {
+    const initial = `# Pipeline
+
+Introducción
+
+## Pendientes
+
+https://example.com/jobs/1
+
+<!-- keep this comment -->
+
+## Procesadas
+
+https://example.com/jobs/done
+
+## Notes
+
+Do not rewrite this section.
+`;
+    const updated = appendPendingPipelineUrl(
+      initial,
+      "https://example.com/jobs/2",
+    );
+
+    expect(updated).toBe(
+      initial.replace(
+        "\n\n## Procesadas",
+        "\nhttps://example.com/jobs/2\n\n## Procesadas",
+      ),
+    );
+    expect(parsePipelineSections(updated)).toEqual({
+      pending: [
+        "https://example.com/jobs/1",
+        "<!-- keep this comment -->",
+        "https://example.com/jobs/2",
+      ],
+      processed: ["https://example.com/jobs/done"],
+    });
+  });
+
+  it("preserves CRLF line endings", () => {
+    const initial = "# Pipeline\r\n\r\n## Pending\r\n\r\n## Processed\r\n\r\n";
+
+    expect(appendPendingPipelineUrl(initial, "https://example.com/job")).toBe(
+      "# Pipeline\r\n\r\n## Pending\r\n\r\nhttps://example.com/job\r\n## Processed\r\n\r\n",
+    );
+  });
+
+  it("leaves duplicate localized URLs byte-for-byte unchanged", () => {
+    const initial =
+      "# Pipeline\n\n## Offen\n\nhttps://example.com/job\n\n## Verarbeitet\n";
+
+    expect(appendPendingPipelineUrl(initial, "https://example.com/job")).toBe(
+      initial,
+    );
+  });
 });

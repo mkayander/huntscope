@@ -7,6 +7,20 @@ export type RepoFilePayload = {
   mimeType: string;
 };
 
+export function assertLocalTextFileUnchanged(
+  expectedContent: string | null,
+  currentFile: RepoFilePayload | null,
+): void {
+  const currentContent =
+    currentFile?.encoding === "utf-8" ? currentFile.content : null;
+
+  if (currentContent !== expectedContent) {
+    throw new Error(
+      "This file changed after Huntscope loaded it. Reload the folder and try again so newer changes are not overwritten.",
+    );
+  }
+}
+
 function guessMimeType(path: string): string {
   const lower = path.toLowerCase();
 
