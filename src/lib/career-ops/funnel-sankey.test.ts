@@ -13,6 +13,8 @@ function createApplication(num: number, status: string): ApplicationEntry {
     company: `Company ${num}`,
     via: "",
     role: "Engineer",
+    location: "",
+    url: "",
     score: "4.0",
     status,
     pdf: "",

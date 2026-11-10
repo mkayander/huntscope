@@ -18,6 +18,8 @@ function createApplication(
     company: `Company ${num}`,
     via: "",
     role: "Engineer",
+    location: "",
+    url: "",
     score: "4.2",
     status: "Applied",
     pdf: "",

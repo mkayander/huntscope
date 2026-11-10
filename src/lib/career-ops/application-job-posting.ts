@@ -57,6 +57,10 @@ export function getRoleDisplayLabel(role: string): string {
 export function getInlineJobPostingUrl(
   application: ApplicationEntry,
 ): string | null {
+  if (application.url && isHttpUrl(application.url)) {
+    return application.url;
+  }
+
   const roleLink = extractMarkdownLink(application.role);
   if (roleLink && isHttpUrl(roleLink.href)) {
     return roleLink.href;

@@ -27,6 +27,10 @@ export function escapeMarkdownTableCell(value: string): string {
   return value.replace(/\|/g, "\\|").replace(/\n/g, " ");
 }
 
+export function unescapeMarkdownTableCell(cell: string): string {
+  return cell.replace(/\\\|/g, "|").replace(/\\\\/g, "\\");
+}
+
 export function parseMarkdownTableCells(line: string): string[] | null {
   const pipeOffsets = getUnescapedPipeOffsets(line);
 
@@ -34,11 +38,10 @@ export function parseMarkdownTableCells(line: string): string[] | null {
     return null;
   }
 
-  return pipeOffsets
-    .slice(0, -1)
-    .map((offset, index) =>
-      line.slice(offset + 1, pipeOffsets[index + 1]).trim(),
-    );
+  return pipeOffsets.slice(0, -1).map((offset, index) => {
+    const endOffset = pipeOffsets[index + 1] ?? line.length;
+    return line.slice(offset + 1, endOffset).trim();
+  });
 }
 
 export function replaceMarkdownTableCell(

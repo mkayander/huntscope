@@ -51,7 +51,9 @@ export function useParsedRepoData(
         setParsed(null);
         setIsParsing(false);
         setParseError(
-          error instanceof Error ? error.message : "Could not parse repository data",
+          error instanceof Error
+            ? error.message
+            : "Could not parse repository data",
         );
       });
 

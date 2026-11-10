@@ -4,11 +4,13 @@ export type ApplicationEntry = {
   company: string;
   via: string;
   role: string;
+  location: string;
   score: string;
   status: string;
   pdf: string;
   report: string;
   notes: string;
+  url: string;
 };
 
 export type PipelineSummary = {

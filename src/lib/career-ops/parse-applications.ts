@@ -1,30 +1,13 @@
-import { parseMarkdownTableCells } from "~/lib/career-ops/markdown-table";
+import { resolveApplicationHeaderKey } from "~/lib/career-ops/application-header-aliases";
+import { extractCellUrl } from "~/lib/career-ops/extract-cell-url";
+import {
+  parseMarkdownTableCells,
+  unescapeMarkdownTableCell,
+} from "~/lib/career-ops/markdown-table";
+import type { ApplicationColumnKey } from "~/lib/career-ops/parse-applications-types";
 import type { ApplicationEntry } from "~/lib/career-ops/types";
 
-type ApplicationColumnKey =
-  | "num"
-  | "date"
-  | "company"
-  | "via"
-  | "role"
-  | "score"
-  | "status"
-  | "pdf"
-  | "report"
-  | "notes";
-
-const COLUMN_ALIASES: Record<string, ApplicationColumnKey> = {
-  "#": "num",
-  date: "date",
-  company: "company",
-  via: "via",
-  role: "role",
-  score: "score",
-  status: "status",
-  pdf: "pdf",
-  report: "report",
-  notes: "notes",
-};
+export type { ApplicationColumnKey } from "~/lib/career-ops/parse-applications-types";
 
 const LEGACY_COLUMN_INDICES: Record<ApplicationColumnKey, number> = {
   num: 0,
@@ -32,12 +15,18 @@ const LEGACY_COLUMN_INDICES: Record<ApplicationColumnKey, number> = {
   company: 2,
   via: -1,
   role: 3,
+  location: -1,
   score: 4,
   status: 5,
   pdf: 6,
   report: 7,
   notes: 8,
+  url: -1,
 };
+
+function isTableSeparatorRow(cells: string[]): boolean {
+  return cells.length > 0 && cells.every((cell) => /^:?-+:?$/.test(cell));
+}
 
 function parseHeaderColumns(
   parts: string[],
@@ -45,8 +34,8 @@ function parseHeaderColumns(
   const columns = new Map<ApplicationColumnKey, number>();
 
   for (let index = 0; index < parts.length; index += 1) {
-    const label = parts[index]?.toLowerCase() ?? "";
-    const key = COLUMN_ALIASES[label];
+    const label = parts[index] ?? "";
+    const key = resolveApplicationHeaderKey(label);
 
     if (key) {
       columns.set(key, index);
@@ -85,7 +74,7 @@ function getCell(
     return "";
   }
 
-  return parts[index] ?? "";
+  return unescapeMarkdownTableCell(parts[index] ?? "");
 }
 
 function parseApplicationRow(
@@ -98,17 +87,21 @@ function parseApplicationRow(
     return null;
   }
 
+  const urlCell = getCell(parts, columnMap, "url");
+
   return {
     num,
     date: getCell(parts, columnMap, "date"),
     company: getCell(parts, columnMap, "company"),
     via: getCell(parts, columnMap, "via"),
     role: getCell(parts, columnMap, "role"),
+    location: getCell(parts, columnMap, "location"),
     score: getCell(parts, columnMap, "score"),
     status: getCell(parts, columnMap, "status"),
     pdf: getCell(parts, columnMap, "pdf"),
     report: getCell(parts, columnMap, "report"),
     notes: getCell(parts, columnMap, "notes"),
+    url: urlCell ? extractCellUrl(urlCell) : "",
   };
 }
 
@@ -127,8 +120,10 @@ export function parseApplicationsMarkdown(content: string): ApplicationEntry[] {
       continue;
     }
 
+    const cells = parts.map((cell) => unescapeMarkdownTableCell(cell));
+
     if (!columnMap) {
-      const headerColumns = parseHeaderColumns(parts);
+      const headerColumns = parseHeaderColumns(cells);
 
       if (headerColumns) {
         columnMap = headerColumns;
@@ -136,7 +131,11 @@ export function parseApplicationsMarkdown(content: string): ApplicationEntry[] {
       }
     }
 
-    const entry = parseApplicationRow(parts, columnMap);
+    if (isTableSeparatorRow(cells)) {
+      continue;
+    }
+
+    const entry = parseApplicationRow(cells, columnMap);
 
     if (entry) {
       entries.push(entry);
