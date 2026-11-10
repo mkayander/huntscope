@@ -2,28 +2,40 @@
 
 import { useState } from "react";
 
+import { LocalDataWriteAlert } from "~/app/_components/local-data-write-alert";
+import { LocalWriteModeHint } from "~/app/_components/local-write-mode-hint";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { GlowPanel } from "~/components/ui/glow-panel";
 import { DASHBOARD_SECTION_IDS } from "~/lib/dashboard/sections";
 import { glassCardSurfaceClassName } from "~/components/ui/glass-surface";
+import type { CareerOpsDataSource } from "~/lib/career-ops/data-source";
 import type { PipelineSummary } from "~/lib/career-ops/types";
 import { appendPendingPipelineUrl } from "~/lib/career-ops/serialize-pipeline";
 import { cn } from "~/lib/utils";
 import { useLocalRepoMutations } from "~/hooks/use-local-repo-mutations";
 
 type PipelinePanelProps = {
+  dataSource: CareerOpsDataSource;
   pipeline: PipelineSummary;
   pipelineMarkdown: string | null;
 };
 
 export function PipelinePanel({
+  dataSource,
   pipeline,
   pipelineMarkdown,
 }: PipelinePanelProps) {
-  const { canWrite, isSaving, writePipelineMarkdown } = useLocalRepoMutations();
+  const {
+    canWrite,
+    isSavingPipeline,
+    error,
+    isRefreshing,
+    clearError,
+    refreshLoadedData,
+    writePipelineMarkdown,
+  } = useLocalRepoMutations();
   const [url, setUrl] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const handleAddUrl = async () => {
     const trimmed = url.trim();
@@ -32,16 +44,14 @@ export function PipelinePanel({
       return;
     }
 
-    setError(null);
+    clearError();
 
     try {
       const nextContent = appendPendingPipelineUrl(pipelineMarkdown, trimmed);
       await writePipelineMarkdown(nextContent);
       setUrl("");
-    } catch (addError) {
-      setError(
-        addError instanceof Error ? addError.message : "Could not add URL.",
-      );
+    } catch {
+      // useLocalRepoMutations stores the error message for display.
     }
   };
 
@@ -59,6 +69,8 @@ export function PipelinePanel({
         </div>
       </div>
 
+      <LocalWriteModeHint dataSource={dataSource} className="mt-2" />
+
       {canWrite ? (
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <Input
@@ -71,7 +83,7 @@ export function PipelinePanel({
             type="button"
             variant="brand"
             size="pill"
-            disabled={isSaving || url.trim().length === 0}
+            disabled={isSavingPipeline || url.trim().length === 0}
             onClick={() => void handleAddUrl()}
           >
             Add URL
@@ -79,7 +91,12 @@ export function PipelinePanel({
         </div>
       ) : null}
 
-      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+      <LocalDataWriteAlert
+        error={error}
+        isRefreshing={isRefreshing}
+        onRefresh={() => void refreshLoadedData()}
+        onDismiss={clearError}
+      />
 
       {pipeline.pendingPreview.length > 0 ? (
         <ul className="mt-4 space-y-2">

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { LocalDataWriteAlert } from "~/app/_components/local-data-write-alert";
+import { LocalWriteModeHint } from "~/app/_components/local-write-mode-hint";
 import { ApplicationPdfButton } from "~/app/_components/application-pdf-button";
 import { ApplicationReportButton } from "~/app/_components/application-report-button";
 import { ApplicationRoleLink } from "~/app/_components/application-role-link";
@@ -56,8 +58,15 @@ export function TrackerPanel({
   reportFiles,
   outputFiles,
 }: TrackerPanelProps) {
-  const { canWrite, isSaving, writeApplicationsMarkdown } =
-    useLocalRepoMutations();
+  const {
+    canWrite,
+    savingApplicationNum,
+    error,
+    isRefreshing,
+    clearError,
+    refreshLoadedData,
+    writeApplicationsMarkdown,
+  } = useLocalRepoMutations();
   const [view, setView] = useState<TrackerView>("table");
   const [tableQuery, setTableQuery] = useState<TrackerTableQuery>(() =>
     createDefaultTrackerQuery(),
@@ -97,16 +106,23 @@ export function TrackerPanel({
 
   const handleStatusChange = async (applicationNum: number, status: string) => {
     if (applicationsMarkdown === null) {
-      throw new Error("The applications file is not available.");
+      return;
     }
 
-    await writeApplicationsMarkdown(
-      updateApplicationStatusInMarkdown(
-        applicationsMarkdown,
+    clearError();
+
+    try {
+      await writeApplicationsMarkdown(
+        updateApplicationStatusInMarkdown(
+          applicationsMarkdown,
+          applicationNum,
+          status,
+        ),
         applicationNum,
-        status,
-      ),
-    );
+      );
+    } catch {
+      // useLocalRepoMutations stores the error message for display.
+    }
   };
 
   const handleSort = (column: TrackerSortColumn) => {
@@ -146,6 +162,7 @@ export function TrackerPanel({
               search and scoping. Open attached PDFs and evaluation reports
               inline.
             </p>
+            <LocalWriteModeHint dataSource={dataSource} className="mt-2" />
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -167,6 +184,13 @@ export function TrackerPanel({
           {applications.length === 1 ? "" : "s"}
           {` · sorted by ${getTrackerSortLabel(tableQuery.sortColumn, tableQuery.sortDirection)}`}
         </p>
+
+        <LocalDataWriteAlert
+          error={error}
+          isRefreshing={isRefreshing}
+          onRefresh={() => void refreshLoadedData()}
+          onDismiss={clearError}
+        />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -188,7 +212,7 @@ export function TrackerPanel({
             tableQuery={tableQuery}
             statusOptions={statusOptions}
             canEditStatus={canWrite}
-            isSavingStatus={isSaving}
+            savingApplicationNum={savingApplicationNum}
             onSort={handleSort}
             onStatusChange={(applicationNum, status) => {
               void handleStatusChange(applicationNum, status);

@@ -219,6 +219,7 @@ function RepoDataContent({
           order={50}
         >
           <PipelinePanel
+            dataSource={activeSource}
             pipeline={parsed.pipeline}
             pipelineMarkdown={raw.pipelineMarkdown}
           />

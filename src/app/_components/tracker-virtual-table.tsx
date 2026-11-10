@@ -41,7 +41,7 @@ type TrackerVirtualTableProps = {
   tableQuery: TrackerTableQuery;
   statusOptions: string[];
   canEditStatus: boolean;
-  isSavingStatus: boolean;
+  savingApplicationNum: number | null;
   onSort: (column: TrackerSortColumn) => void;
   onStatusChange: (applicationNum: number, status: string) => void;
 };
@@ -55,7 +55,7 @@ export function TrackerVirtualTable({
   tableQuery,
   statusOptions,
   canEditStatus,
-  isSavingStatus,
+  savingApplicationNum,
   onSort,
   onStatusChange,
 }: TrackerVirtualTableProps) {
@@ -229,7 +229,8 @@ export function TrackerVirtualTable({
                       <TrackerStatusSelect
                         value={entry.status}
                         options={statusOptions}
-                        disabled={isSavingStatus}
+                        disabled={savingApplicationNum === entry.num}
+                        aria-busy={savingApplicationNum === entry.num}
                         onChange={(status) => onStatusChange(entry.num, status)}
                       />
                     ) : (

@@ -12,16 +12,25 @@ import {
   writeLocalRepoTextFile,
 } from "~/lib/local-repo/repo-file-access";
 
+type SaveContext = "applications" | "pipeline";
+
 export function useLocalRepoMutations() {
   const queryClient = useQueryClient();
-  const { activeSource, localDataQuery } = useCareerOpsDataSource();
-  const [isSaving, setIsSaving] = useState(false);
+  const { activeSource, localDataQuery, localRepo } = useCareerOpsDataSource();
+  const [saveContext, setSaveContext] = useState<SaveContext | null>(null);
+  const [savingApplicationNum, setSavingApplicationNum] = useState<
+    number | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const canWrite =
     activeSource?.kind === "local" &&
     activeSource.directoryHandle != null &&
     activeSource.fileHandle == null;
+
+  const isSavingApplications = saveContext === "applications";
+  const isSavingPipeline = saveContext === "pipeline";
 
   const invalidateLocalData = useCallback(async () => {
     if (activeSource?.kind !== "local") {
@@ -38,6 +47,24 @@ export function useLocalRepoMutations() {
     await localDataQuery.refetch();
   }, [activeSource, localDataQuery, queryClient]);
 
+  const refreshLoadedData = useCallback(async () => {
+    setIsRefreshing(true);
+    setError(null);
+
+    try {
+      if (activeSource?.kind === "local") {
+        await localRepo.refresh();
+      }
+      await invalidateLocalData();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [activeSource?.kind, invalidateLocalData, localRepo]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   const writeTextFile = useCallback(
     async (
       relativePath: string,
@@ -50,7 +77,6 @@ export function useLocalRepoMutations() {
         );
       }
 
-      setIsSaving(true);
       setError(null);
 
       try {
@@ -81,8 +107,6 @@ export function useLocalRepoMutations() {
             : "Could not save changes.";
         setError(message);
         throw writeError;
-      } finally {
-        setIsSaving(false);
       }
     },
     [activeSource, canWrite, invalidateLocalData],
@@ -93,25 +117,52 @@ export function useLocalRepoMutations() {
     CAREER_OPS_PATHS.applications;
   const loadedApplicationsMarkdown =
     localDataQuery.data?.applicationsMarkdown ?? null;
+
   const writeApplicationsMarkdown = useCallback(
-    async (content: string) =>
-      writeTextFile(applicationsWritePath, content, loadedApplicationsMarkdown),
+    async (content: string, applicationNum?: number) => {
+      setSaveContext("applications");
+      setSavingApplicationNum(applicationNum ?? null);
+
+      try {
+        await writeTextFile(
+          applicationsWritePath,
+          content,
+          loadedApplicationsMarkdown,
+        );
+      } finally {
+        setSaveContext(null);
+        setSavingApplicationNum(null);
+      }
+    },
     [applicationsWritePath, loadedApplicationsMarkdown, writeTextFile],
   );
 
   const pipelineWritePath =
     localDataQuery.data?.layout.pipelineWritePath ?? CAREER_OPS_PATHS.pipeline;
   const loadedPipelineMarkdown = localDataQuery.data?.pipelineMarkdown ?? null;
+
   const writePipelineMarkdown = useCallback(
-    async (content: string) =>
-      writeTextFile(pipelineWritePath, content, loadedPipelineMarkdown),
+    async (content: string) => {
+      setSaveContext("pipeline");
+
+      try {
+        await writeTextFile(pipelineWritePath, content, loadedPipelineMarkdown);
+      } finally {
+        setSaveContext(null);
+      }
+    },
     [loadedPipelineMarkdown, pipelineWritePath, writeTextFile],
   );
 
   return {
     canWrite,
-    isSaving,
+    isSavingApplications,
+    isSavingPipeline,
+    savingApplicationNum,
     error,
+    isRefreshing,
+    clearError,
+    refreshLoadedData,
     writeApplicationsMarkdown,
     writePipelineMarkdown,
   };
