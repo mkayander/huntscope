@@ -17,6 +17,7 @@ type TrackerStatusSelectProps = {
   value: string;
   options: string[];
   disabled?: boolean;
+  "aria-busy"?: boolean;
   onChange: (status: string) => void;
 };
 
@@ -24,6 +25,7 @@ export function TrackerStatusSelect({
   value,
   options,
   disabled = false,
+  "aria-busy": ariaBusy = false,
   onChange,
 }: TrackerStatusSelectProps) {
   const [open, setOpen] = useState(false);
@@ -44,6 +46,7 @@ export function TrackerStatusSelect({
           type="button"
           variant="brandSecondary"
           disabled={disabled}
+          aria-busy={ariaBusy || undefined}
           className="h-8 w-full justify-between border-white/15 bg-[#15162c] px-2.5 text-xs font-normal text-white hover:bg-[#1a1b35]"
         >
           <span className="truncate">{value || "Select status"}</span>
